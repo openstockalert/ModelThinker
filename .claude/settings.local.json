@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m uv sync --extra dev)",
+      "Bash(python -m uv run pytest tests/test_normal.py -v)",
+      "Bash(python *)",
+      "Bash(curl -sf http://localhost:8901/_stcore/health)",
+      "Bash(curl -s http://localhost:8901/_stcore/health)",
+      "Read(//c/Users/opens/AppData/Local/Temp/claude/C--Users-opens-source-repos-ModelThinker/ebdb4ca8-4697-432b-8b42-c46686ec101a/tasks/**)",
+      "Bash(curl -s -o /dev/null -w '%{http_code}' http://localhost:8901/__TRACKED_VAR__)"
+    ]
+  }
+}
