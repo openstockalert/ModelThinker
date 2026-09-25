@@ -1,10 +1,11 @@
-// NK landscape story — two sims: landscape shape as K grows, and a strategy race.
+// NK landscape story — two sims: interactive climb game, and a strategy race.
 
-import { fitCanvas, onResize } from '../shared/canvas.js';
+import { easeOut, fitCanvas, makeLoop, onResize } from '../shared/canvas.js';
 import { bindSlider, makeRng, setMetric, shuffle } from '../shared/ui.js';
 
 const P = { primary: '#4C6EF5', accent: '#F76707', muted: '#868E96',
-            danger: '#E03131', success: '#37B24D', line: '#E9ECEF', ink: '#212529' };
+            danger: '#E03131', success: '#37B24D', warn: '#F59F00',
+            line: '#E9ECEF', ink: '#212529' };
 
 // ---------- Model -----------------------------------------------------------
 
@@ -119,78 +120,292 @@ function longJump(L, { budget, flipP, rng }) {
   return { fitness: f, trajectory: traj };
 }
 
-// ---------- Sim 1 · landscape shape -----------------------------------------
+// ---------- Sim 1 · Interactive climb game ---------------------------------
+// N=6 binary decisions the user can flip. Each is a themed "design choice"
+// so the NK abstraction is grounded in something tangible.
 
-function initSim1() {
-  const canvas = document.getElementById('sim1');
-  const mPeaks = document.getElementById('sim1-peaks');
-  const mMax = document.getElementById('sim1-max');
-  const slider = canvas.parentElement.querySelector('.slider-block');
+const CLIMB_N = 6;
+const BIT_ICON = ['🎨', '📦', '⚙️', '🎵', '🚀', '💰'];
+const BIT_STATE = [
+  ['Muted',    'Bright' ],   // 🎨 colour
+  ['Big',      'Small'  ],   // 📦 size
+  ['Minimal',  'Loaded' ],   // ⚙️ features
+  ['Silent',   'Sounds' ],   // 🎵 sound
+  ['Steady',   'Fast'   ],   // 🚀 speed
+  ['Budget',   'Premium'],   // 💰 price
+];
+
+function roundRectPath(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y,     x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x,     y + h, r);
+  ctx.arcTo(x,     y + h, x,     y,     r);
+  ctx.arcTo(x,     y,     x + w, y,     r);
+  ctx.closePath();
+}
+
+function initClimberGame() {
+  const canvas = document.getElementById('sim-climber');
+  if (!canvas) return;
+  const hintBtn    = document.getElementById('climber-hint');
+  const jumpBtn    = document.getElementById('climber-jump');
+  const restartBtn = document.getElementById('climber-restart');
+  const newBtn     = document.getElementById('climber-new');
+  const mFit    = document.getElementById('climber-fit');
+  const mMax    = document.getElementById('climber-max');
+  const mMoves  = document.getElementById('climber-moves');
+  const mPeaks  = document.getElementById('climber-peaks');
+  const sliderRoot = canvas.parentElement.querySelector('.slider-block');
+
+  const CANVAS_H = 380;
   let K = 2;
-  bindSlider(slider, v => { K = v; render(); });
+  let seed = Math.floor(Math.random() * 1e6);
+  let rng = makeRng(seed);
+  let L = makeLandscape({ N: CLIMB_N, K, seed });
+  let F = allFitnesses(L);
+  let globalMax = Math.max(...F);
+  let nPeaks = countLocalPeaks(F, CLIMB_N);
+  let x = new Int8Array(CLIMB_N);
+  let moves = 0;
+  let hint = false;
+  const cardBounds = new Array(CLIMB_N).fill(null);   // filled by draw for hit-testing
+  let flashBit = -1, flashStart = 0;                   // click feedback
+
+  function rebuildLandscape() {
+    L = makeLandscape({ N: CLIMB_N, K, seed });
+    F = allFitnesses(L);
+    globalMax = Math.max(...F);
+    nPeaks = countLocalPeaks(F, CLIMB_N);
+  }
+  function randomStart() {
+    for (let i = 0; i < CLIMB_N; i++) x[i] = rng() < 0.5 ? 0 : 1;
+    moves = 0;
+    hint = false;
+  }
+  randomStart();
+
+  function currentF() { return fitness(x, L); }
+  function neighbourF(bit) {
+    x[bit] = 1 - x[bit];
+    const f = fitness(x, L);
+    x[bit] = 1 - x[bit];
+    return f;
+  }
+  function bestNeighbour() {
+    const cur = currentF();
+    let bestBit = -1, bestF = cur;
+    for (let i = 0; i < CLIMB_N; i++) {
+      const nf = neighbourF(i);
+      if (nf > bestF + 1e-9) { bestF = nf; bestBit = i; }
+    }
+    return { bit: bestBit, fitness: bestF, delta: bestF - cur };
+  }
 
   function render() {
-    const N = 10;
-    const L = makeLandscape({ N, K, seed: 7 });
-    const F = allFitnesses(L);
-    const peaks = countLocalPeaks(F, N);
-    setMetric(mPeaks, String(peaks));
-    setMetric(mMax, Math.max(...F).toFixed(3));
-
-    const { ctx, width: W, height: H } = fitCanvas(canvas, 320);
+    const { ctx, width: W, height: H } = fitCanvas(canvas, CANVAS_H);
     ctx.fillStyle = 'white'; ctx.fillRect(0, 0, W, H);
-    const M = { l: 40, r: 12, t: 12, b: 30 };
-    ctx.strokeStyle = P.line;
-    ctx.beginPath(); ctx.moveTo(M.l, M.t); ctx.lineTo(M.l, H - M.b); ctx.lineTo(W - M.r, H - M.b); ctx.stroke();
-    // Fill under curve
-    ctx.fillStyle = 'rgba(76,110,245,0.18)';
-    ctx.beginPath();
-    ctx.moveTo(M.l, H - M.b);
-    for (let i = 0; i < F.length; i++) {
-      const x = M.l + (i / (F.length - 1)) * (W - M.l - M.r);
-      const y = H - M.b - F[i] * (H - M.b - M.t);
-      ctx.lineTo(x, y);
-    }
-    ctx.lineTo(W - M.r, H - M.b);
-    ctx.closePath(); ctx.fill();
-    // Line
-    ctx.strokeStyle = P.primary; ctx.lineWidth = 1.6;
-    ctx.beginPath();
-    for (let i = 0; i < F.length; i++) {
-      const x = M.l + (i / (F.length - 1)) * (W - M.l - M.r);
-      const y = H - M.b - F[i] * (H - M.b - M.t);
-      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-    }
-    ctx.stroke();
-    // Mark peaks
-    for (let i = 0; i < F.length; i++) {
-      let peak = true;
-      for (let b = 0; b < N; b++) {
-        const nb = i ^ (1 << (N - 1 - b));
-        if (F[nb] > F[i]) { peak = false; break; }
+    const now = performance.now();
+
+    // ---------- fitness gauge (top) --------------------------------------
+    const cur = currentF();
+    const gaugeX = 24, gaugeY = 22, gaugeW = W - 48, gaugeH = 40;
+    // background bar
+    ctx.fillStyle = P.line;
+    roundRectPath(ctx, gaugeX, gaugeY, gaugeW, gaugeH, 10);
+    ctx.fill();
+    // filled portion (proportional to global max)
+    const fillW = Math.max(4, (cur / globalMax) * gaugeW);
+    const grad = ctx.createLinearGradient(gaugeX, 0, gaugeX + fillW, 0);
+    grad.addColorStop(0, P.primary);
+    grad.addColorStop(1, cur >= globalMax - 1e-6 ? P.success : P.accent);
+    ctx.fillStyle = grad;
+    roundRectPath(ctx, gaugeX, gaugeY, fillW, gaugeH, 10);
+    ctx.fill();
+    // labels
+    ctx.font = 'bold 16px Inter, system-ui, sans-serif';
+    ctx.fillStyle = 'white';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillText(`Fitness ${cur.toFixed(3)}`, gaugeX + 12, gaugeY + gaugeH / 2);
+    ctx.textAlign = 'right'; ctx.fillStyle = P.ink; ctx.font = '13px Inter, sans-serif';
+    ctx.fillText(`global max ${globalMax.toFixed(3)}`, gaugeX + gaugeW - 6, gaugeY + gaugeH / 2);
+
+    // ---------- decision cards (middle) -----------------------------------
+    const cardsY = gaugeY + gaugeH + 22;
+    const cardsH = 230;
+    const gap = 8;
+    const cardW = (W - 48 - (CLIMB_N - 1) * gap) / CLIMB_N;
+    const cur2 = cur;
+    const best = bestNeighbour();
+
+    for (let i = 0; i < CLIMB_N; i++) {
+      const cx = 24 + i * (cardW + gap);
+      const cy = cardsY;
+
+      const nf = neighbourF(i);
+      const delta = nf - cur2;
+
+      // Background colour by delta
+      let bg;
+      if (delta > 0.001) bg = 'rgba(55,178,77,0.14)';       // green
+      else if (delta < -0.001) bg = 'rgba(224,49,49,0.09)'; // red
+      else bg = 'rgba(134,142,150,0.09)';                    // grey
+
+      // Card body
+      ctx.fillStyle = bg;
+      roundRectPath(ctx, cx, cy, cardW, cardsH, 14);
+      ctx.fill();
+
+      // Border — thicker + accent for the best neighbour (only if hint on)
+      if (hint && i === best.bit && best.delta > 0.001) {
+        ctx.strokeStyle = P.accent;
+        ctx.lineWidth = 2.5;
+      } else {
+        ctx.strokeStyle = P.line;
+        ctx.lineWidth = 1;
       }
-      if (peak) {
-        const x = M.l + (i / (F.length - 1)) * (W - M.l - M.r);
-        const y = H - M.b - F[i] * (H - M.b - M.t);
-        ctx.fillStyle = P.accent;
-        ctx.beginPath(); ctx.arc(x, y, 3.5, 0, Math.PI * 2); ctx.fill();
+      roundRectPath(ctx, cx, cy, cardW, cardsH, 14);
+      ctx.stroke();
+
+      // Click flash
+      if (flashBit === i) {
+        const t = Math.min(1, (now - flashStart) / 300);
+        ctx.save();
+        ctx.globalAlpha = 1 - easeOut(t);
+        ctx.fillStyle = 'rgba(76,110,245,0.35)';
+        roundRectPath(ctx, cx, cy, cardW, cardsH, 14);
+        ctx.fill();
+        ctx.restore();
+        if (t >= 1) flashBit = -1;
       }
+
+      // Emoji
+      const emojiSize = Math.floor(cardW * 0.42);
+      ctx.font = `${emojiSize}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", system-ui, sans-serif`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.fillText(BIT_ICON[i], cx + cardW / 2, cy + 14);
+
+      // Current state — bold pill
+      const pillLabel = BIT_STATE[i][x[i]];
+      ctx.font = 'bold 13px Inter, system-ui, sans-serif';
+      const pillW = ctx.measureText(pillLabel).width + 16;
+      const pillX = cx + (cardW - pillW) / 2;
+      const pillY = cy + emojiSize + 22;
+      ctx.fillStyle = P.ink;
+      roundRectPath(ctx, pillX, pillY, pillW, 22, 11);
+      ctx.fill();
+      ctx.fillStyle = 'white';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(pillLabel, cx + cardW / 2, pillY + 11);
+
+      // Delta arrow + value
+      const arrow = delta > 0.001 ? '↑' : (delta < -0.001 ? '↓' : '→');
+      const dCol = delta > 0.001 ? P.success : (delta < -0.001 ? P.danger : P.muted);
+      ctx.font = 'bold 14px Inter, system-ui, sans-serif';
+      ctx.fillStyle = dCol;
+      ctx.textBaseline = 'top';
+      ctx.fillText(`${arrow} ${delta >= 0 ? '+' : ''}${delta.toFixed(3)}`, cx + cardW / 2, pillY + 34);
+
+      // "flip to" hint below the delta
+      ctx.font = '11px Inter, system-ui, sans-serif';
+      ctx.fillStyle = P.muted;
+      ctx.fillText(`flip → ${BIT_STATE[i][1 - x[i]]}`, cx + cardW / 2, pillY + 58);
+
+      // "🎯 best" chip on the winning card
+      if (hint && i === best.bit && best.delta > 0.001) {
+        ctx.font = '18px "Apple Color Emoji", "Segoe UI Emoji", system-ui, sans-serif';
+        ctx.textBaseline = 'top'; ctx.fillText('🎯', cx + cardW / 2, cy + cardsH - 34);
+      }
+
+      cardBounds[i] = { x: cx, y: cy, w: cardW, h: cardsH };
     }
-    // Global max marker
-    const maxIdx = F.indexOf(Math.max(...F));
-    const gx = M.l + (maxIdx / (F.length - 1)) * (W - M.l - M.r);
-    const gy = H - M.b - F[maxIdx] * (H - M.b - M.t);
-    ctx.strokeStyle = P.danger; ctx.lineWidth = 2; ctx.setLineDash([3, 3]);
-    ctx.beginPath(); ctx.moveTo(gx, M.t); ctx.lineTo(gx, H - M.b); ctx.stroke(); ctx.setLineDash([]);
-    ctx.fillStyle = P.danger; ctx.font = 'bold 12px Inter'; ctx.textAlign = 'left';
-    ctx.fillText(`global max = ${F[maxIdx].toFixed(3)}`, Math.min(gx + 6, W - 160), M.t + 14);
-    // Legend
-    ctx.textAlign = 'right'; ctx.fillStyle = P.accent;
-    ctx.fillText('local peak (nowhere to climb)', W - M.r - 8, M.t + 14);
-    ctx.fillStyle = P.muted; ctx.font = '11px Inter'; ctx.textAlign = 'center';
-    ctx.fillText('solution index (all 2^10 bit-strings, in order)', (M.l + W - M.r) / 2, H - 8);
+
+    // ---------- status line (bottom) --------------------------------------
+    const statusY = cardsY + cardsH + 18;
+    ctx.font = 'bold 15px Inter, system-ui, sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    if (cur >= globalMax - 1e-6) {
+      ctx.fillStyle = P.success;
+      ctx.fillText(`🏆 GLOBAL MAX in ${moves} moves — this is the best design possible.`, W / 2, statusY);
+    } else if (best.delta <= 1e-9) {
+      ctx.fillStyle = P.warn;
+      ctx.fillText(
+        `🏁 Stuck at a local peak (${(100 * cur / globalMax).toFixed(0)} % of global). ` +
+        `Try 🌪️ big jump or 🎲 restart.`,
+        W / 2, statusY,
+      );
+    } else {
+      ctx.fillStyle = P.muted;
+      ctx.font = '13px Inter, system-ui, sans-serif';
+      ctx.fillText(
+        `${moves} move${moves === 1 ? '' : 's'} · click a green card to climb ` +
+        `(best available: ${BIT_ICON[best.bit]} +${best.delta.toFixed(3)})`,
+        W / 2, statusY,
+      );
+    }
+
+    // Metrics
+    setMetric(mFit, cur.toFixed(3), `${(100 * cur / globalMax).toFixed(0)} %`);
+    setMetric(mMax, globalMax.toFixed(3));
+    setMetric(mMoves, String(moves));
+    setMetric(mPeaks, String(nPeaks));
   }
-  onResize(canvas, 320, render);
+  onResize(canvas, CANVAS_H, render);
+
+  // Repaint loop — needed because of the click-flash animation
+  const loop = makeLoop(() => {
+    render();
+    if (flashBit === -1) return false;
+  });
+
+  function tryFlip(bit) {
+    x[bit] = 1 - x[bit];
+    moves++;
+    flashBit = bit;
+    flashStart = performance.now();
+    hint = false;
+    loop.start();
+  }
+
+  bindSlider(sliderRoot, v => {
+    K = v;
+    rebuildLandscape();
+    randomStart();
+    render();
+  });
+
+  canvas.addEventListener('pointerdown', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const px = (e.clientX - rect.left) * (canvas.width / rect.width) / (window.devicePixelRatio || 1);
+    const py = (e.clientY - rect.top)  * (canvas.height / rect.height) / (window.devicePixelRatio || 1);
+    for (let i = 0; i < CLIMB_N; i++) {
+      const b = cardBounds[i];
+      if (b && px >= b.x && px <= b.x + b.w && py >= b.y && py <= b.y + b.h) {
+        tryFlip(i);
+        return;
+      }
+    }
+  });
+
+  hintBtn.addEventListener('click', () => { hint = !hint; render(); });
+  jumpBtn.addEventListener('click', () => {
+    // Flip 3 distinct random bits
+    const idx = Array.from({ length: CLIMB_N }, (_, i) => i);
+    shuffle(idx, rng);
+    for (let i = 0; i < 3; i++) x[idx[i]] = 1 - x[idx[i]];
+    moves += 3;
+    hint = false;
+    render();
+  });
+  restartBtn.addEventListener('click', () => { randomStart(); render(); });
+  newBtn.addEventListener('click', () => {
+    seed = Math.floor(Math.random() * 1e6);
+    rng = makeRng(seed);
+    rebuildLandscape();
+    randomStart();
+    render();
+  });
+
   render();
 }
 
@@ -279,5 +494,5 @@ function initSim2() {
   render();
 }
 
-initSim1();
+initClimberGame();
 initSim2();
