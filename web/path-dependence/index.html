@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Path dependence · a playable story about when history matters</title>
+<link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+<main class="wrap">
+
+  <nav class="top-nav">
+    <a href="../">← All playable stories</a>
+    <span class="spacer"></span>
+    <span class="crumb">ModelThinker · web</span>
+  </nav>
+
+  <p class="byline">Ch. 14 · Uncertainty &amp; dynamics</p>
+  <h1>Some worlds remember. Some forget. Some don't care.</h1>
+  <p class="subtitle">
+    QWERTY keyboards. Driving on the left. VHS beating Betamax. Silicon Valley being in Silicon Valley.
+    <br>None were inevitable. What separates "history matters" from "history doesn't"?
+  </p>
+
+  <p>
+    An urn. Two starting balls, one red 🔴, one blue 🔵. At each step you reach in, draw one, and then
+    something happens. That "something" — the update rule — is the entire story. Try each of the three
+    below and see how radically it changes what the long run looks like.
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 1 · Interactive urn -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">Pick a rule · draw balls · watch history behave</p>
+
+    <div class="sim-controls" style="margin-bottom:12px;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;" id="urn-rule-tabs">
+        <button class="btn" data-rule="bernoulli">🧊 Bernoulli</button>
+        <button class="btn btn-primary" data-rule="polya">🌊 Pólya</button>
+        <button class="btn" data-rule="balancing">⚖ Balancing</button>
+      </div>
+    </div>
+
+    <div id="urn-rule-hint" style="padding:12px 14px;background:var(--bg-soft);border-radius:var(--radius-sm);margin-bottom:14px;font-size:14px;line-height:1.5;">
+      <!-- populated by JS with the current rule's explanation -->
+    </div>
+
+    <canvas id="urn-canvas" class="sim-canvas"></canvas>
+
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="urn-draw">🎯 Draw a ball</button>
+      <button class="btn" id="urn-auto">⚡ Auto-draw ×20</button>
+      <button class="btn btn-ghost" id="urn-reset">↺ Empty the urn</button>
+    </div>
+
+    <div class="sim-metrics">
+      <div class="metric" id="urn-red"><div class="label">🔴 Red in urn</div><div class="value">1</div></div>
+      <div class="metric" id="urn-blue"><div class="label">🔵 Blue in urn</div><div class="value">1</div></div>
+      <div class="metric" id="urn-frac"><div class="label">Red share</div><div class="value">50%</div></div>
+      <div class="metric" id="urn-draws"><div class="label">Draws so far</div><div class="value">0</div></div>
+    </div>
+  </div>
+
+  <div class="callout aha">
+    <strong>The whole story in three clicks.</strong> On <strong>🧊 Bernoulli</strong> the urn never
+    changes — draws are just random samples from the same jar forever. On <strong>🌊 Pólya</strong>
+    every draw adds one more of the colour you drew, so early luck compounds into a runaway.
+    On <strong>⚖ Balancing</strong> every draw adds one of the <em>opposite</em> colour, quietly pulling
+    the share back to 50/50 no matter where you started.
+  </div>
+
+  <h2>Now run all three worlds at once</h2>
+  <p>
+    Same starting urn (1 red, 1 blue). Same random-number budget. The only difference is the update
+    rule. Watch the three panels below diverge.
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 2 · Three worlds, same start -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">Three urns racing · 40 trajectories each</p>
+    <canvas id="worlds-canvas" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="worlds-play">▶ Run all three</button>
+      <button class="btn btn-ghost" id="worlds-reset">↺ Reset</button>
+    </div>
+    <p style="margin-top:12px;color:var(--muted);font-size:14px;">
+      Each blue line is one trajectory's red-share over time. <strong>Bernoulli</strong>: everyone stays
+      near the starting fraction — that flat line is what "no memory" looks like. <strong>Pólya</strong>:
+      trajectories fan out to fill [0, 1] — that spread is what "history locked in" looks like.
+      <strong>Balancing</strong>: everyone gets pulled to ½ regardless — that convergence is what "history
+      erased" looks like.
+    </p>
+  </div>
+
+  <div class="callout warn">
+    <strong>Pólya's uniform-limit surprise.</strong> Give a Pólya urn <em>infinite</em> steps and the final
+    red share is a random variable, and — for the classic (1, 1) start — it's <strong>uniformly
+    distributed on [0, 1]</strong>. That means ending at 12 % red is exactly as likely as 87 % red is
+    exactly as likely as 50 %. There is no "most likely" outcome. Every possible world is equally
+    represented in the parallel-universe multiverse of Pólya. (Pólya, 1930.)
+  </div>
+
+  <h2>The path-dependence fingerprint</h2>
+  <p>
+    Run a lot of trajectories, record the final red share of each, plot the histogram. The <em>shape</em>
+    tells you everything about whether history mattered.
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 3 · Final-share fingerprint -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">Distribution of final shares · after 800 steps × 1500 trajectories per urn</p>
+    <canvas id="fp-canvas" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="fp-run">🎲 Simulate all three</button>
+      <button class="btn btn-ghost" id="fp-reset">↺ Clear</button>
+    </div>
+    <p style="margin-top:12px;color:var(--muted);font-size:14px;">
+      <strong>Bernoulli</strong>: sharp spike at the initial share (50 %) — <em>every</em> universe ends up
+      in almost the same place. <strong>Pólya</strong>: nearly flat over [0, 1] — every possible outcome
+      is roughly equally likely. <strong>Balancing</strong>: sharp spike at ½ — history erased.
+    </p>
+  </div>
+
+  <div class="callout aha">
+    <strong>Entropy is the sharpest diagnostic.</strong> Compute the Shannon entropy of each final-share
+    distribution. Pólya's is close to the maximum (log₂ of the bin count); the other two are near zero.
+    That single number tells you whether a process is path-dependent. It's how Page distinguishes
+    path dependence from tipping points in the book: same distributional shift, different mechanism.
+  </div>
+
+  <h2>Real-world Pólya-like moments</h2>
+  <ul>
+    <li><strong>Technology standards.</strong> QWERTY vs Dvorak, VHS vs Betamax, TCP/IP vs OSI, GSM vs
+      CDMA — all cases where slight early leads compounded into permanent dominance despite comparable
+      or better competitors.</li>
+    <li><strong>Cities and industries.</strong> Silicon Valley wasn't destined to be Silicon Valley —
+      early Stanford spin-offs seeded a hub that pulled in more talent, which pulled in more spin-offs.
+      Detroit for cars. Hollywood for film. Nashville for country music.</li>
+    <li><strong>Institutions and law.</strong> Early legal precedents shape later ones. First-mover
+      constitutional choices cast a long shadow. Common law is a Pólya urn where the balls are cases.</li>
+    <li><strong>Cultural markets.</strong> Salganik, Dodds &amp; Watts (2006) showed empirically that
+      when people can see other people's music-download counts, popularity locks in randomly — a
+      Pólya urn in the wild. See our <a href="../power-laws/">Power Laws</a> story for the two-worlds
+      version of that experiment.</li>
+  </ul>
+
+  <p style="margin-top:32px;">
+    Want the Beta-distribution overlay, the balancing-urn variance trajectory, and the entropy scan
+    across seed sizes? Open the <a href="../../app/Home.py">Streamlit version</a>. Full theory in the
+    <a href="../../docs/models/ch14_path_dependence.md">model doc</a>.
+  </p>
+
+  <div class="next-nav">
+    <a href="../nk/">← NK landscape</a>
+    <a href="../">All stories →</a>
+  </div>
+</main>
+<script type="module" src="path-dependence.js?v=2"></script>
+</body>
+</html>

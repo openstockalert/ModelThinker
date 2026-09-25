@@ -43,7 +43,7 @@ MODELS: list[IndexEntry] = [
     # Uncertainty & dynamics
     IndexEntry(12, "Entropy",                   "dynamics",      "planned"),
     IndexEntry(13, "Random walks",              "dynamics",      "available", "13_Random_Walks"),
-    IndexEntry(14, "Path dependence (Pólya)",   "dynamics",      "planned"),
+    IndexEntry(14, "Path dependence (urns)",    "dynamics",      "available", "14_Path_Dependence"),
     IndexEntry(15, "Schelling segregation",     "dynamics",      "available", "15_Schelling_Segregation"),
     IndexEntry(16, "Lyapunov & equilibria",     "dynamics",      "planned"),
     IndexEntry(17, "Markov models",             "dynamics",      "planned"),
