@@ -1,6 +1,6 @@
 // Random walk story — five little sims, one page.
 
-import { fitCanvas, makeLoop, onResize } from '../shared/canvas.js';
+import { easeOut, fitCanvas, makeLoop, onResize } from '../shared/canvas.js';
 import { makeRng, setMetric } from '../shared/ui.js';
 
 const P = { primary: '#4C6EF5', accent: '#F76707', muted: '#868E96',
@@ -34,21 +34,78 @@ function initSim1() {
   const mX = document.getElementById('sim1-x');
   const mMax = document.getElementById('sim1-max');
 
+  const STEP_DURATION = 250;    // ms per coin flip — 1.5× the "brisk stroll" pace, ~4 flips/sec
+
   let rng = makeRng(42);
   let trace = [0];
   let maxAbs = 0;
+  let pending = null;           // { fromPos, toPos, fromT, toT, startTime, direction }
+
+  function scheduleNextFlip(now) {
+    const from = trace[trace.length - 1];
+    const direction = rng() < 0.5 ? -1 : 1;
+    pending = {
+      fromPos: from,
+      toPos:   from + direction,
+      fromT:   trace.length - 1,
+      toT:     trace.length,
+      startTime: now,
+      direction,
+    };
+  }
+  function commitFlip() {
+    trace.push(pending.toPos);
+    maxAbs = Math.max(maxAbs, Math.abs(pending.toPos));
+    pending = null;
+  }
+
+  function drawWalker(ctx, cx, cy, facingRight, progress) {
+    // Vertical bounce as we walk — sine wave crests at mid-step
+    const bounce = progress != null ? -Math.abs(Math.sin(progress * Math.PI)) * 8 : 0;
+    ctx.save();
+    ctx.translate(cx, cy + bounce);
+    // 🚶 renders facing left in most emoji fonts; mirror when stepping right so
+    // the walker actually points the way they're going.
+    if (facingRight) ctx.scale(-1, 1);
+    ctx.font = '34px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(0,0,0,0.22)';
+    ctx.shadowBlur = 6;
+    ctx.shadowOffsetY = 3;
+    ctx.fillText('🚶', 0, -18);
+    ctx.restore();
+  }
+
+  function drawStepPuff(ctx, cx, cy, direction, progress) {
+    // A "+1 →" or "← −1" that puffs up and fades during the animation.
+    const alpha = Math.max(0, 1 - progress);          // 1 → 0
+    const rise = -18 - 22 * progress;                  // floats upward
+    if (alpha <= 0) return;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.font = 'bold 15px Inter, system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = direction > 0 ? P.success : P.danger;
+    ctx.fillText(direction > 0 ? '+1 →' : '← −1', cx, cy + rise);
+    ctx.restore();
+  }
 
   function render() {
-    const { ctx, width: W, height: H } = fitCanvas(canvas, 300);
+    const { ctx, width: W, height: H } = fitCanvas(canvas, 340);
     ctx.fillStyle = 'white'; ctx.fillRect(0, 0, W, H);
     const g = axes(ctx, W, H, { xLabel: 'coin flip t', yLabel: 'position' });
-    const T = Math.max(200, trace.length);
-    const yMax = Math.max(20, maxAbs * 1.2);
-    // zero line
+    const projectedLen = trace.length + (pending ? 1 : 0);
+    const T = Math.max(120, projectedLen);
+    const yMax = Math.max(20, maxAbs * 1.4);
     const yZero = g.top + g.plotH / 2;
+
+    // Zero line
     ctx.strokeStyle = P.line; ctx.setLineDash([4, 4]); ctx.beginPath();
     ctx.moveTo(g.left, yZero); ctx.lineTo(g.left + g.plotW, yZero); ctx.stroke(); ctx.setLineDash([]);
-    // trace
+
+    // Trace (finished portion) — a coloured line
     ctx.strokeStyle = P.primary; ctx.lineWidth = 2.5; ctx.beginPath();
     for (let i = 0; i < trace.length; i++) {
       const x = g.left + (i / T) * g.plotW;
@@ -56,29 +113,54 @@ function initSim1() {
       if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
     }
     ctx.stroke();
-    // current position dot
-    if (trace.length > 0) {
-      const x = g.left + ((trace.length - 1) / T) * g.plotW;
-      const y = yZero - (trace[trace.length - 1] / yMax) * (g.plotH / 2);
-      ctx.fillStyle = P.accent;
-      ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI * 2); ctx.fill();
+
+    // Interpolated position of the walker
+    let progress = 0;
+    let displayPos = trace[trace.length - 1];
+    let displayT = trace.length - 1;
+    let direction = pending ? pending.direction : 0;
+    if (pending) {
+      const now = performance.now();
+      progress = Math.min(1, (now - pending.startTime) / STEP_DURATION);
+      const eased = easeOut(progress);
+      displayPos = pending.fromPos + (pending.toPos - pending.fromPos) * eased;
+      displayT = pending.fromT + (pending.toT - pending.fromT) * eased;
+
+      // Dashed leader-line from last committed point to current animated point
+      const x0 = g.left + (pending.fromT / T) * g.plotW;
+      const y0 = yZero - (pending.fromPos / yMax) * (g.plotH / 2);
+      const x1 = g.left + (displayT / T) * g.plotW;
+      const y1 = yZero - (displayPos / yMax) * (g.plotH / 2);
+      ctx.strokeStyle = P.accent; ctx.lineWidth = 2; ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+      ctx.setLineDash([]);
     }
-    setMetric(mT, String(trace.length - 1));
+
+    const cx = g.left + (displayT / T) * g.plotW;
+    const cy = yZero - (displayPos / yMax) * (g.plotH / 2);
+    // Facing direction: mostly the current step direction; when idle, face right by default
+    const facingRight = direction !== 0 ? direction > 0 : true;
+    drawWalker(ctx, cx, cy, facingRight, pending ? progress : null);
+    if (pending) drawStepPuff(ctx, cx, cy, direction, progress);
+
+    setMetric(mT, String(trace.length - 1 + (pending ? Math.min(1, (performance.now() - pending.startTime) / STEP_DURATION) : 0) | 0));
     setMetric(mX, String(trace[trace.length - 1]));
     setMetric(mMax, String(maxAbs));
   }
-  onResize(canvas, 300, render);
+  onResize(canvas, 340, render);
 
   const loop = makeLoop(() => {
-    for (let i = 0; i < 4; i++) {
-      const step = rng() < 0.5 ? -1 : 1;
-      const next = trace[trace.length - 1] + step;
-      trace.push(next);
-      maxAbs = Math.max(maxAbs, Math.abs(next));
-      if (trace.length > 2000) return false;
+    const now = performance.now();
+    if (!pending) {
+      scheduleNextFlip(now);
+    } else if (now - pending.startTime >= STEP_DURATION) {
+      commitFlip();
+      if (trace.length > 2000) { render(); return false; }
+      scheduleNextFlip(now);
     }
     render();
   });
+
   playBtn.addEventListener('click', () => {
     if (loop.running()) { loop.stop(); playBtn.textContent = '▶ Flip coins'; }
     else { loop.start(); playBtn.textContent = '⏸ Pause'; }
@@ -86,7 +168,7 @@ function initSim1() {
   resetBtn.addEventListener('click', () => {
     loop.stop(); playBtn.textContent = '▶ Flip coins';
     rng = makeRng(Math.floor(Math.random() * 100000));
-    trace = [0]; maxAbs = 0; render();
+    trace = [0]; maxAbs = 0; pending = null; render();
   });
   render();
 }
@@ -218,16 +300,26 @@ function initSim3() {
       setMetric(mMed, '—'); setMetric(mP99, '—'); setMetric(mMean, '—');
       return;
     }
-    // Log-uniform bins from 2 to max
+    // Log-uniform bins from 2 to max. Return times are ALWAYS even (a 1-D walk
+    // can only reach 0 after an even number of steps), so we snap each edge to
+    // an even integer and enforce a minimum step of 2 — otherwise low-end bins
+    // land on ranges like (4, 5] that no even integer can fall into, leaving
+    // visually confusing gaps at t = 5, 7, 9, …
     const maxT = Math.max(...times);
-    const nBins = 26;
-    const edges = [];
-    for (let i = 0; i <= nBins; i++) {
-      const e = 2 * Math.pow(maxT / 2, i / nBins);
-      edges.push(Math.round(e));
+    const targetBins = 26;
+    const edges = [2];
+    let last = 2;
+    for (let i = 1; i <= targetBins; i++) {
+      const raw = 2 * Math.pow(maxT / 2, i / targetBins);
+      let e = 2 * Math.round(raw / 2);
+      if (e <= last) e = last + 2;
+      edges.push(e);
+      last = e;
     }
+    const nBins = edges.length - 1;
     const counts = new Array(nBins).fill(0);
     for (const t of times) {
+      if (t < edges[0]) continue;
       let bin = 0;
       while (bin < nBins - 1 && t > edges[bin + 1]) bin++;
       counts[bin]++;
