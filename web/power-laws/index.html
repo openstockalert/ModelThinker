@@ -18,53 +18,59 @@
   <p class="byline">Ch. 6 · Distributions</p>
   <h1>Rich get richer</h1>
   <p class="subtitle">
-    When success feeds success, a few winners take almost everything.
-    <br>Watch a fair-looking process produce a wildly unfair world.
+    Two worlds. Same songs. Same listeners. One knob difference.
+    <br>Result: one world is fair. The other one has a runaway hit.
   </p>
 
   <p>
-    Start with a small network. Add nodes one at a time. Each new node picks a friend to link to —
-    but the probability it picks any given existing node is proportional to how many friends that node
-    already has. Popular nodes attract more links, becoming more popular, attracting more links.
-    "The rich get richer" (Barabási &amp; Albert, 1999).
+    In 2006 Salganik, Dodds &amp; Watts ran a real experiment called <strong>MusicLab</strong>.
+    Thousands of people were split into parallel "worlds" listening to the same set of unknown songs.
+    In one world, listeners couldn't see anyone else's download counts. In another, they could.
+    Same music, same appeal, one difference in what listeners knew. The download distributions came
+    out <em>radically</em> different — and unpredictable. Let's re-run it below.
   </p>
 
   <!-- ============================================================ -->
-  <!-- SIM 1 · Watch a network grow -->
+  <!-- SIM 1 · The two-worlds MusicLab experiment -->
   <!-- ============================================================ -->
   <div class="sim">
-    <p class="sim-title">Preferential attachment · watch it grow</p>
-    <canvas id="sim1" class="sim-canvas"></canvas>
+    <p class="sim-title">The two-worlds experiment · social influence vs independence</p>
+    <canvas id="sim-lab" class="sim-canvas"></canvas>
     <div class="sim-controls">
-      <button class="btn btn-primary" id="sim1-play">▶ Grow it</button>
-      <button class="btn" id="sim1-fast">⏩ Fast-forward to 200 nodes</button>
-      <button class="btn btn-ghost" id="sim1-reset">↺ Reset</button>
+      <button class="btn btn-primary" id="lab-play">▶ Start listening</button>
+      <button class="btn" id="lab-fast">⏩ Skip to 500 listeners</button>
+      <button class="btn btn-ghost" id="lab-reset">🎲 New songs · reset</button>
     </div>
-    <div class="sim-metrics">
-      <div class="metric" id="sim1-n"><div class="label">Nodes</div><div class="value">3</div></div>
-      <div class="metric" id="sim1-max"><div class="label">Top hub degree</div><div class="value">2</div></div>
-      <div class="metric" id="sim1-share"><div class="label">Top 5 nodes own</div><div class="value">—</div><div class="delta">% of all edges</div></div>
-    </div>
+    <p style="margin-top:12px;color:var(--muted);font-size:14px;">
+      <strong>Left world · independent.</strong> Each new listener picks a song using only its
+      inherent appeal (hidden — all songs are of similar quality).
+      &nbsp;·&nbsp;
+      <strong>Right world · social influence.</strong> Each listener also considers how many others have
+      already picked it. Popular = more likely to be picked. Rich get richer.
+    </p>
   </div>
 
   <div class="callout aha">
-    <strong>Watch node #1.</strong> The first few nodes get lucky purely by <em>being early</em>. They then
-    keep winning. This isn't skill — it's compounding. Same dynamic that turns a slightly-better song
-    into a chart-topping hit if listeners can see download counts (MusicLab, Salganik &amp; Watts).
+    <strong>Hit reset a few times.</strong> Each fresh run in the left world stays fairly even. Each
+    fresh run in the right world produces <em>a</em> runaway hit — but <strong>which</strong> song wins
+    changes every time. That's Salganik &amp; Watts's headline finding: with social influence, popularity
+    is not just unequal, it's <em>unpredictable</em>. A song that flops in one alternate universe is the
+    #1 in another. Quality alone doesn't decide.
   </div>
 
   <h2>The signature: a straight line on log-log</h2>
   <p>
-    Draw the histogram of node degrees. Most nodes have a handful of links; a few have hundreds.
-    Zoom out on a log-log plot and the distribution is a <strong>straight line</strong> — the fingerprint
-    of a power law. The slope tells you how heavy the tail is.
+    The right world's histogram — most songs get a handful, a couple get hundreds — is a
+    <strong>power law</strong>. Its fingerprint is a straight line on a log-log plot of "how many songs
+    have this many listeners?" That line shows up in city sizes, word frequencies, wealth, earthquake
+    magnitudes, and Wikipedia edits. Different mechanisms, same shape.
   </p>
 
   <!-- ============================================================ -->
-  <!-- SIM 2 · Degree distribution -->
+  <!-- SIM 2 · Log-log degree distribution -->
   <!-- ============================================================ -->
   <div class="sim">
-    <p class="sim-title">Degree distribution · log-log</p>
+    <p class="sim-title">Log-log degree distribution · the power-law fingerprint</p>
     <canvas id="sim2" class="sim-canvas"></canvas>
     <div class="sim-controls">
       <label class="slider-block">
@@ -121,6 +127,6 @@
     <a href="../nk/">NK landscape →</a>
   </div>
 </main>
-<script type="module" src="power-laws.js"></script>
+<script type="module" src="power-laws.js?v=2"></script>
 </body>
 </html>

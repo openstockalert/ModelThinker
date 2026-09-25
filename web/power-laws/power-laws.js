@@ -1,10 +1,11 @@
-// Power laws story — three sims: grow a network, log-log degree, Lorenz curve.
+// Power laws story — three sims: MusicLab two-worlds, log-log degree, Lorenz.
 
-import { fitCanvas, makeLoop, onResize } from '../shared/canvas.js';
+import { easeOut, fitCanvas, makeLoop, onResize } from '../shared/canvas.js';
 import { bindSlider, makeRng, setMetric } from '../shared/ui.js';
 
 const P = { primary: '#4C6EF5', accent: '#F76707', muted: '#868E96',
-            danger: '#E03131', line: '#E9ECEF', ink: '#212529' };
+            danger: '#E03131', success: '#37B24D', warn: '#F59F00',
+            ink: '#212529', line: '#E9ECEF' };
 
 // Grow a Barabási–Albert graph. Returns { edges, degrees, positions } where
 // positions is a simple radial layout for visualization.
@@ -77,93 +78,206 @@ function lorenz(values) {
   return { xs, ys, gini: 1 - 2 * area };
 }
 
-// ---------- Sim 1 · Watch a network grow ------------------------------------
+// ---------- Sim 1 · The MusicLab two-worlds experiment ---------------------
+// Two parallel worlds, same 8 songs of nearly-identical (hidden) appeal.
+// Every tick, one new listener enters each world and picks a song:
+//   independent world: weights = song appeal alone
+//   social world:      weights = appeal × (1 + current listeners)
+// The social world produces a runaway winner. The winner is different every
+// reset — the point of the sim.
 
-function initSim1() {
-  const canvas = document.getElementById('sim1');
-  const playBtn = document.getElementById('sim1-play');
-  const fastBtn = document.getElementById('sim1-fast');
-  const resetBtn = document.getElementById('sim1-reset');
-  const mN = document.getElementById('sim1-n');
-  const mMax = document.getElementById('sim1-max');
-  const mShare = document.getElementById('sim1-share');
+const SONG_EMOJI = ['🎸', '🎹', '🎤', '🥁', '🎻', '🎺', '🎧', '🎼'];
+const SONG_LETTER = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+const N_SONGS = SONG_EMOJI.length;
+const LAB_TICK_MS = 50;      // ms between listener arrivals — one per world per tick
+const LAB_TARGET = 500;
+const LAB_POP_BONUS = 4;      // multiplies "listeners" weight in social world for a stronger effect
 
-  const m = 2;
-  let rng = makeRng(11);
-  let degrees = [];
-  let edges = [];
+function labWeightedPick(rng, weights) {
+  let total = 0;
+  for (let i = 0; i < weights.length; i++) total += weights[i];
+  let r = rng() * total;
+  for (let i = 0; i < weights.length; i++) {
+    r -= weights[i];
+    if (r <= 0) return i;
+  }
+  return weights.length - 1;
+}
+
+function labGini(counts) {
+  const n = counts.length;
+  const sorted = [...counts].sort((a, b) => a - b);
+  const total = sorted.reduce((a, b) => a + b, 0);
+  if (total === 0) return 0;
+  let cum = 0, area = 0;
+  for (let i = 0; i < n; i++) { cum += sorted[i]; area += cum / total; }
+  return Math.max(0, 1 - 2 * area / n + 1 / n);
+}
+
+function initMusicLab() {
+  const canvas = document.getElementById('sim-lab');
+  if (!canvas) return;
+  const playBtn = document.getElementById('lab-play');
+  const fastBtn = document.getElementById('lab-fast');
+  const resetBtn = document.getElementById('lab-reset');
+
+  const CANVAS_H = 420;
+  let rng, appeals, indep, social;
+  let lastTick = 0;
+  let auto = false;
+  let recentIndep = -1, recentSocial = -1, recentTime = 0;   // for the pulse animation
+
   function reset() {
-    rng = makeRng(Math.floor(Math.random() * 100000));
-    degrees = [];
-    edges = [];
-    const seedN = m + 1;
-    for (let i = 0; i < seedN; i++) degrees.push(0);
-    for (let i = 0; i < seedN; i++) for (let j = i + 1; j < seedN; j++) {
-      edges.push([i, j]); degrees[i]++; degrees[j]++;
-    }
+    rng = makeRng(Math.floor(Math.random() * 1e6));
+    // Appeals: all "similar quality" (0.80 – 1.20). Any variance here would exist
+    // in a real album — no song is drastically worse than another.
+    appeals = new Array(N_SONGS).fill(0).map(() => 0.80 + rng() * 0.40);
+    indep = new Array(N_SONGS).fill(0);
+    social = new Array(N_SONGS).fill(0);
+    recentIndep = recentSocial = -1;
   }
   reset();
 
-  function addNode() {
-    const total = degrees.reduce((a, b) => a + b, 0);
-    const picked = new Set();
-    while (picked.size < m) {
-      let r = rng() * total, t = -1;
-      while (r > 0 && t < degrees.length - 1) { t++; r -= degrees[t]; }
-      picked.add(t);
+  function stepOne(now) {
+    const wIndep = appeals;
+    const iIndep = labWeightedPick(rng, wIndep);
+    indep[iIndep]++;
+    // Social: appeal × (1 + listeners × bonus). Bonus makes preferential attachment
+    // dominate the base appeal quickly, matching Salganik's inequality result.
+    const wSocial = appeals.map((a, i) => a * (1 + LAB_POP_BONUS * social[i]));
+    const iSocial = labWeightedPick(rng, wSocial);
+    social[iSocial]++;
+    recentIndep = iIndep;
+    recentSocial = iSocial;
+    recentTime = now;
+  }
+
+  function drawWorld(ctx, x, y, w, h, title, counts, colour, recentIdx, now) {
+    ctx.fillStyle = P.ink; ctx.font = 'bold 14px Inter, sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    ctx.fillText(title, x + w / 2, y + 4);
+
+    const chartTop    = y + 46;
+    const chartBottom = y + h - 46;
+    const chartH      = chartBottom - chartTop;
+    const gap = w / (N_SONGS + 1);
+    const barW = gap * 0.72;
+    const maxC = Math.max(...counts, 1);
+    const total = counts.reduce((a, b) => a + b, 0);
+
+    // Baseline
+    ctx.strokeStyle = P.line; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x + 12, chartBottom);
+    ctx.lineTo(x + w - 12, chartBottom);
+    ctx.stroke();
+
+    // Bars
+    for (let i = 0; i < N_SONGS; i++) {
+      const cx = x + gap * (i + 1);
+      const barH = (counts[i] / maxC) * chartH;
+      // Recent-arrival pulse — expanding halo just above the bar
+      if (recentIdx === i && counts[i] > 0) {
+        const t = Math.min(1, (now - recentTime) / 380);
+        const eased = easeOut(t);
+        ctx.save();
+        ctx.globalAlpha = 1 - eased;
+        ctx.strokeStyle = colour;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(cx, chartBottom - barH, 8 + eased * 14, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+      // Bar itself
+      ctx.fillStyle = colour;
+      ctx.fillRect(cx - barW / 2, chartBottom - barH, barW, barH);
+      // Emoji above the bar
+      const emojiSize = Math.max(14, Math.min(24, gap * 0.5));
+      ctx.font = `${emojiSize}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", system-ui, sans-serif`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+      ctx.fillText(SONG_EMOJI[i], cx, chartBottom - barH - 6);
+      // Count under bar
+      ctx.font = '11px Inter, sans-serif';
+      ctx.fillStyle = P.muted;
+      ctx.textBaseline = 'top';
+      ctx.fillText(String(counts[i]), cx, chartBottom + 4);
+      // Song letter under count
+      ctx.fillText(SONG_LETTER[i], cx, chartBottom + 18);
     }
-    const newIdx = degrees.length;
-    degrees.push(0);
-    for (const t of picked) {
-      edges.push([t, newIdx]);
-      degrees[t]++; degrees[newIdx]++;
+
+    // Footer: metrics (Total · Top share · Gini)
+    ctx.font = 'bold 12px Inter, sans-serif';
+    ctx.fillStyle = P.ink;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    const topShare = total > 0 ? Math.max(...counts) / total : 0;
+    const gini = labGini(counts);
+    ctx.fillText(
+      `Listeners ${total} · Top song ${(100 * topShare).toFixed(0)}% · Gini ${gini.toFixed(2)}`,
+      x + w / 2, y + h - 8
+    );
+
+    // Crown the top song if there's a clear winner
+    if (total > 40 && topShare > 0.25) {
+      const winner = counts.indexOf(Math.max(...counts));
+      const cx = x + gap * (winner + 1);
+      const barH = (counts[winner] / maxC) * chartH;
+      ctx.font = '18px "Apple Color Emoji", "Segoe UI Emoji", system-ui, sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+      ctx.fillText('👑', cx, chartBottom - barH - 32);
     }
   }
 
   function render() {
-    const { ctx, width: W, height: H } = fitCanvas(canvas, 380);
+    const { ctx, width: W, height: H } = fitCanvas(canvas, CANVAS_H);
     ctx.fillStyle = 'white'; ctx.fillRect(0, 0, W, H);
-    const pos = layout(degrees.length, degrees, W, H);
-    // edges
-    ctx.strokeStyle = 'rgba(76,110,245,0.14)';
-    ctx.lineWidth = 0.7;
-    for (const [a, b] of edges) {
-      ctx.beginPath();
-      ctx.moveTo(pos[a][0], pos[a][1]);
-      ctx.lineTo(pos[b][0], pos[b][1]);
-      ctx.stroke();
-    }
-    // nodes — larger if higher degree
-    const maxD = Math.max(...degrees, 1);
-    for (let i = 0; i < degrees.length; i++) {
-      const r = 2 + Math.sqrt(degrees[i]) * 1.6;
-      ctx.fillStyle = i < m + 1 ? P.accent : P.primary;
-      ctx.beginPath(); ctx.arc(pos[i][0], pos[i][1], r, 0, Math.PI * 2); ctx.fill();
-    }
-    setMetric(mN, String(degrees.length));
-    setMetric(mMax, String(maxD));
-    // top 5 share
-    const totalDeg = degrees.reduce((a, b) => a + b, 0);
-    const sorted = [...degrees].sort((a, b) => b - a).slice(0, 5).reduce((a, b) => a + b, 0);
-    setMetric(mShare, totalDeg > 0 ? `${(100 * sorted / totalDeg).toFixed(1)}%` : '—');
+    const midX = W / 2;
+    // Divider
+    ctx.strokeStyle = P.line; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(midX, 12); ctx.lineTo(midX, H - 12);
+    ctx.stroke();
+
+    const now = performance.now();
+    drawWorld(ctx, 0,    0, midX, H, 'Independent world · pick by taste alone',
+              indep, P.primary, recentIndep, now);
+    drawWorld(ctx, midX, 0, midX, H, 'Social influence world · popular attracts more',
+              social, P.accent,  recentSocial, now);
   }
-  onResize(canvas, 380, render);
-  render();
 
   const loop = makeLoop(() => {
-    for (let i = 0; i < 2; i++) if (degrees.length < 500) addNode();
-    if (degrees.length >= 500) return false;
+    const now = performance.now();
+    if (auto && now - lastTick >= LAB_TICK_MS) {
+      const total = indep.reduce((a, b) => a + b, 0);
+      if (total >= LAB_TARGET) {
+        auto = false; playBtn.textContent = '▶ Start listening';
+      } else {
+        stepOne(now);
+        lastTick = now;
+      }
+    }
     render();
+    if (!auto && (now - recentTime) > 500) return false;
   });
+
+  onResize(canvas, CANVAS_H, render);
+  render();
+
   playBtn.addEventListener('click', () => {
-    if (loop.running()) { loop.stop(); playBtn.textContent = '▶ Grow it'; }
-    else { loop.start(); playBtn.textContent = '⏸ Pause'; }
+    if (auto) { auto = false; playBtn.textContent = '▶ Start listening'; }
+    else       { auto = true;  playBtn.textContent = '⏸ Pause'; lastTick = 0; loop.start(); }
   });
   fastBtn.addEventListener('click', () => {
-    while (degrees.length < 200) addNode();
+    auto = false; playBtn.textContent = '▶ Start listening';
+    const now = performance.now();
+    while (indep.reduce((a, b) => a + b, 0) < LAB_TARGET) stepOne(now);
     render();
   });
-  resetBtn.addEventListener('click', () => { reset(); render(); });
+  resetBtn.addEventListener('click', () => {
+    auto = false; playBtn.textContent = '▶ Start listening';
+    reset(); render();
+  });
 }
 
 // ---------- Sim 2 · Log-log degree distribution -----------------------------
@@ -321,6 +435,6 @@ function initSim3() {
   render();
 }
 
-initSim1();
+initMusicLab();
 initSim2();
 initSim3();
