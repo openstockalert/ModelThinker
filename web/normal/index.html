@@ -18,18 +18,59 @@
   <p class="byline">Ch. 5 · Distributions</p>
   <h1>Where does the bell curve come from?</h1>
   <p class="subtitle">
-    Take any process that adds up many small independent effects. The total is a bell curve.
-    <br>Watch it happen live.
+    Watch it emerge live — from something as dumb as a ball bouncing off pegs.
   </p>
 
   <p>
-    Pick any starting distribution below — even a wild one, like a coin flip with three outcomes
-    or an exponential. Then average <em>n</em> draws together. Do that thousands of times.
-    The histogram of averages will always, always, become bell-shaped.
+    Below is a <strong>Galton board</strong>: a triangle of pegs with bins along the bottom.
+    Every ball you drop makes <strong>n</strong> tiny coin flips as it falls — left or right at each row.
+    Its final bin equals the number of "rights" it took. Drop a hundred balls and watch what shape the pile
+    settles into.
   </p>
 
   <!-- ============================================================ -->
-  <!-- SIM 1 · CLT emerges from anything -->
+  <!-- SIM 1 · Galton board -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">The Galton board · a bell curve building itself</p>
+    <canvas id="sim-galton" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <label class="slider-block">
+        <span class="slider-label"><span>Rows of pegs · n</span><span class="value">12</span></span>
+        <input type="range" min="4" max="18" value="12" step="1" data-fmt="{v}">
+      </label>
+    </div>
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="galton-play">▶ Auto drop</button>
+      <button class="btn" id="galton-drop1">💧 Drop 1</button>
+      <button class="btn" id="galton-drop100">🌊 Drop 100</button>
+      <button class="btn btn-ghost" id="galton-clear">↺ Clear board</button>
+    </div>
+    <div class="sim-metrics">
+      <div class="metric" id="galton-count"><div class="label">Balls landed</div><div class="value">0</div></div>
+      <div class="metric" id="galton-middle"><div class="label">In middle bins</div><div class="value">—</div><div class="delta">the mode of the bell</div></div>
+    </div>
+    <p style="margin-top:12px;color:var(--muted);font-size:14px;">
+      🔵 blue = balls piling up in bins &nbsp;·&nbsp; red curve = the normal
+      <em>N(n/2, √(n/4))</em> the CLT predicts. The pile should hug the curve after a few hundred drops.
+    </p>
+  </div>
+
+  <div class="callout aha">
+    <strong>Try n = 4.</strong> Only 4 coin flips per ball — so only 5 possible bins. The pile is clearly
+    discrete but already vaguely bell-shaped. Push n up to 18. Now each ball is a tiny statistical process,
+    and the pile smooths into a proper bell. That transition, from "wobbly" to "bell", is the CLT.
+  </div>
+
+  <h2>It works for anything, not just coins</h2>
+  <p>
+    The magic isn't the coin flip. Whenever you sum many small independent random things — <em>whatever
+    they individually look like</em> — the total is approximately normal. Pick any source distribution
+    below (even a skewed one) and average n draws together. Bell curve, every time.
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 2 · CLT emerges from any source -->
   <!-- ============================================================ -->
   <div class="sim">
     <p class="sim-title">Any source · bell curve out</p>
@@ -70,7 +111,7 @@
   </p>
 
   <!-- ============================================================ -->
-  <!-- SIM 2 · The √n scan -->
+  <!-- SIM 3 · The √n scan -->
   <!-- ============================================================ -->
   <div class="sim">
     <p class="sim-title">Empirical std vs sample size · log-log</p>
@@ -102,6 +143,6 @@
     <a href="../power-laws/">Power laws →</a>
   </div>
 </main>
-<script type="module" src="normal.js"></script>
+<script type="module" src="normal.js?v=2"></script>
 </body>
 </html>
