@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SIR · a playable story about outbreaks and R₀</title>
+<link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+<main class="wrap">
+
+  <nav class="top-nav">
+    <a href="../">← All playable stories</a>
+    <span class="spacer"></span>
+    <span class="crumb">ModelThinker · web</span>
+  </nav>
+
+  <p class="byline">Ch. 11 · Broadcast, diffusion &amp; contagion</p>
+  <h1>One number decides an outbreak</h1>
+  <p class="subtitle">
+    Three compartments — Susceptible, Infectious, Recovered — plus two rates and a bit of arithmetic.
+    <br>The whole shape of an epidemic follows from a single number: <strong>R₀</strong>.
+  </p>
+
+  <p>
+    Everyone starts <span style="color:#4C6EF5;font-weight:600;">susceptible</span> (blue).
+    A tiny number are <span style="color:#E03131;font-weight:600;">infectious</span> (red).
+    Once you've had it, you're <span style="color:#37B24D;font-weight:600;">recovered</span> (green) and can't catch it again.
+    Watch what happens as we turn one knob.
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 1 · The R₀ dial -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">The R₀ dial · how contagious is it?</p>
+    <canvas id="sim1" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <label class="slider-block">
+        <span class="slider-label"><span>R₀ (contagiousness)</span><span class="value">2.5</span></span>
+        <input type="range" min="0.5" max="6" value="2.5" step="0.1">
+      </label>
+    </div>
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="sim1-play">▶ Release patient zero</button>
+      <button class="btn btn-ghost" id="sim1-reset">↺ New population</button>
+    </div>
+    <div class="sim-metrics">
+      <div class="metric" id="sim1-day"><div class="label">Day</div><div class="value">0</div></div>
+      <div class="metric" id="sim1-inf"><div class="label">Currently infectious</div><div class="value">0.0%</div></div>
+      <div class="metric" id="sim1-rec"><div class="label">Ever infected</div><div class="value">0.0%</div><div class="delta">S → I → R</div></div>
+      <div class="metric" id="sim1-peak"><div class="label">Peak day</div><div class="value">—</div><div class="delta">hospital max</div></div>
+    </div>
+  </div>
+
+  <div class="callout aha">
+    <strong>Try R₀ = 0.9.</strong> The outbreak fizzles — the epidemic <em>can't</em> get off the ground.
+    Now try <strong>R₀ = 1.1.</strong> Different world entirely. That's the single most important threshold
+    in epidemiology.
+  </div>
+
+  <h2>Herd immunity, in one picture</h2>
+  <p>
+    Once enough of the population is immune (recovered or vaccinated), each infectious person meets
+    fewer than one susceptible on average. The chain breaks. The magic threshold is <strong>1 − 1/R₀</strong>:
+  </p>
+  <ul>
+    <li>Flu (R₀ ≈ 1.3): about 23% need immunity</li>
+    <li>COVID-19 ancestral (R₀ ≈ 2.5): about 60%</li>
+    <li>Smallpox (R₀ ≈ 5): about 80%</li>
+    <li>Measles (R₀ ≈ 15): about <strong>93%</strong> — which is why WHO targets 95% coverage</li>
+  </ul>
+
+  <!-- ============================================================ -->
+  <!-- SIM 2 · Vaccinate first, then release -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">Pre-vaccinate a fraction · then release patient zero</p>
+    <canvas id="sim2" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <label class="slider-block">
+        <span class="slider-label"><span>R₀</span><span class="value">3.0</span></span>
+        <input type="range" min="1" max="6" value="3" step="0.1">
+      </label>
+      <label class="slider-block">
+        <span class="slider-label"><span>Vaccinated fraction</span><span class="value">50%</span></span>
+        <input type="range" min="0" max="95" value="50" step="5" data-fmt="{v}%">
+      </label>
+    </div>
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="sim2-play">▶ Start outbreak</button>
+      <button class="btn btn-ghost" id="sim2-reset">↺ Reset</button>
+    </div>
+    <div class="sim-metrics">
+      <div class="metric" id="sim2-thresh"><div class="label">Herd threshold</div><div class="value">67%</div><div class="delta">1 − 1/R₀</div></div>
+      <div class="metric" id="sim2-final"><div class="label">Attack rate</div><div class="value">—</div><div class="delta">final % infected</div></div>
+    </div>
+  </div>
+
+  <div class="callout warn">
+    <strong>Overshoot.</strong> Even after we <em>cross</em> the threshold, infections keep going for a while —
+    the epidemic has momentum. That's why "just let it burn to herd immunity" over-counts what nature
+    would deliver and under-counts the deaths along the way.
+  </div>
+
+  <h2>Time series &amp; the peak</h2>
+  <p>
+    The classic textbook picture: S falls, I rises to a peak, R climbs to whatever the final attack rate
+    is. Interventions can <strong>flatten the curve</strong> — lower the peak, buy time for hospitals — without
+    necessarily changing the <em>total</em> infected.
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 3 · Full ODE + curves -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">S / I / R over time</p>
+    <canvas id="sim3" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <label class="slider-block">
+        <span class="slider-label"><span>β (transmission per day)</span><span class="value">0.30</span></span>
+        <input type="range" min="0.05" max="1.5" value="0.30" step="0.01">
+      </label>
+      <label class="slider-block">
+        <span class="slider-label"><span>γ (recovery rate)</span><span class="value">0.10</span></span>
+        <input type="range" min="0.02" max="0.5" value="0.10" step="0.01">
+      </label>
+    </div>
+    <div class="sim-metrics">
+      <div class="metric" id="sim3-r0"><div class="label">R₀</div><div class="value">3.0</div><div class="delta">β / γ</div></div>
+      <div class="metric" id="sim3-peak"><div class="label">Peak infectious</div><div class="value">—</div></div>
+      <div class="metric" id="sim3-final"><div class="label">Attack rate</div><div class="value">—</div></div>
+    </div>
+  </div>
+
+  <p style="margin-top:32px;">
+    Want R_e(t), network-SIR, and multi-strain extensions? See the
+    <a href="../../app/Home.py">Streamlit version</a> and the
+    <a href="../../docs/models/ch11_sir.md">model doc</a>.
+  </p>
+
+  <div class="next-nav">
+    <a href="../random-walk/">← Random walks</a>
+    <a href="../normal/">Normal / CLT →</a>
+  </div>
+</main>
+<script type="module" src="sir.js"></script>
+</body>
+</html>

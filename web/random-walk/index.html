@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Random walks · a playable story about noise, streaks and drunk birds</title>
+<link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+<main class="wrap">
+
+  <nav class="top-nav">
+    <a href="../">← All playable stories</a>
+    <span class="spacer"></span>
+    <span class="crumb">ModelThinker · web</span>
+  </nav>
+
+  <p class="byline">Ch. 13 · Uncertainty &amp; dynamics</p>
+  <h1>The drunk in the middle of the road</h1>
+  <p class="subtitle">
+    Stand on a number line at 0. Flip a coin. Heads step right, tails step left. Repeat forever.
+    <br>Half the deepest lessons about randomness live inside this game.
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 1 · One walker -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">One walker · watch the coin-flipper</p>
+    <canvas id="sim1" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="sim1-play">▶ Flip coins</button>
+      <button class="btn btn-ghost" id="sim1-reset">↺ Start over</button>
+    </div>
+    <div class="sim-metrics">
+      <div class="metric" id="sim1-t"><div class="label">Coin flips</div><div class="value">0</div></div>
+      <div class="metric" id="sim1-x"><div class="label">Position</div><div class="value">0</div></div>
+      <div class="metric" id="sim1-max"><div class="label">Farthest reached</div><div class="value">0</div></div>
+    </div>
+  </div>
+
+  <p>
+    Watch it long enough and you'll notice something: <strong>you drift away, but slowly.</strong>
+    After 100 flips you're typically about 10 away. After 10,000 flips you're typically about 100 away.
+    Distance grows as the <em>square root</em> of time. Not linear. Not exponential. Slow.
+  </p>
+
+  <h2>Now let's race a hundred of them</h2>
+  <p>
+    Below, a hundred walkers all start at the middle line and flip their own coins. The shaded band is
+    <strong>±√t</strong> — roughly where a typical walker is at time <em>t</em>. Watch the swarm respect it.
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 2 · Swarm + √t envelope -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">100 walkers &amp; the √t envelope</p>
+    <canvas id="sim2" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="sim2-play">▶ Run</button>
+      <button class="btn btn-ghost" id="sim2-reset">↺ Reset</button>
+    </div>
+    <div class="sim-metrics">
+      <div class="metric" id="sim2-t"><div class="label">Time step</div><div class="value">0</div></div>
+      <div class="metric" id="sim2-std"><div class="label">Empirical std</div><div class="value">0</div><div class="delta">theory √t = 0</div></div>
+    </div>
+  </div>
+
+  <div class="callout aha">
+    <strong>The "trend" illusion.</strong> Some of those walkers spend the whole run above the line —
+    they'll look like they've got momentum, a streak, "hot hands." They don't. They're coin flips.
+    Every "trend" you can imagine, this process produces by accident. Now imagine you were shown one of them
+    and asked to explain it. You'd invent a story.
+  </div>
+
+  <h2>The return-time paradox</h2>
+  <p>
+    Here's a fact so counter-intuitive it feels wrong. A one-dimensional walker returns to zero with
+    <strong>probability 1</strong>. Every single walk comes home, eventually. But the <em>average</em>
+    time to come home is <strong>infinite</strong>. Both true. Let's see.
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 3 · Return time histogram -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">First-return times · click Simulate</p>
+    <canvas id="sim3" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="sim3-run">🎲 Simulate 2000 walks</button>
+      <button class="btn btn-ghost" id="sim3-reset">↺ Clear</button>
+    </div>
+    <div class="sim-metrics">
+      <div class="metric" id="sim3-med"><div class="label">Median return</div><div class="value">—</div><div class="delta">typical walk</div></div>
+      <div class="metric" id="sim3-p99"><div class="label">99th percentile</div><div class="value">—</div><div class="delta">the slow tail</div></div>
+      <div class="metric" id="sim3-mean"><div class="label">Empirical mean</div><div class="value">—</div><div class="delta">theory: ∞</div></div>
+    </div>
+  </div>
+
+  <p>
+    Look at what dominates: half the walks come home in exactly <strong>two steps</strong>. The 99th
+    percentile is thousands of steps out. Both facts describe the same distribution — one you cannot
+    summarise with an "average." The mean is undefined; only the <em>median</em> is a fair number.
+  </p>
+
+  <div class="callout warn">
+    <strong>Gambler's ruin.</strong> A gambler on a fair bet is <em>guaranteed</em> to break even —
+    that is a real theorem. But he has finite money and a finite life. Between now and eventually,
+    the walk visits every negative number too. Against an infinitely-rich casino, he goes broke with
+    probability 1. "It'll come back eventually" is mathematically true and financially useless.
+  </div>
+
+  <h2>Drunk man vs drunk bird</h2>
+  <p>
+    Now do the same coin-flip game in <strong>higher dimensions</strong>. Each step, pick an axis at random,
+    move ±1 along it. Does the walker still come home?
+  </p>
+  <p>
+    Pólya (1921) proved: in 1-D and 2-D, <em>yes, with probability 1</em>. In 3-D and above, <em>no</em>.
+    Kakutani summarised it: <em>"A drunk man will find his way home, but a drunk bird may get lost forever."</em>
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 4 · Dimension comparison -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">Pólya's theorem in miniature</p>
+    <canvas id="sim4" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="sim4-run">🎲 Simulate</button>
+      <button class="btn btn-ghost" id="sim4-reset">↺ Reset</button>
+    </div>
+    <p style="margin-top:12px;color:var(--muted);font-size:14px;">
+      Bars = fraction of 500 walks (5,000 steps each) that returned to the origin.
+      Diamonds = theoretical eventual-return probability. 2-D is technically 100% but climbs
+      excruciatingly slowly (1/log t), so a finite budget under-counts it.
+    </p>
+  </div>
+
+  <h2>Bonus: the arcsine surprise</h2>
+  <p>
+    Ask: in a fair coin-flip game between two players, what fraction of the time is one player
+    "in the lead"? Intuition says ½. Probability theory answers: <strong>the extremes are
+    massively more likely than the middle</strong>. In a truly balanced game, one side tends to
+    lead almost the whole time.
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 5 · Arcsine law -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">Fair walks look one-sided</p>
+    <canvas id="sim5" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="sim5-run">🎲 Simulate 3000 walks</button>
+      <button class="btn btn-ghost" id="sim5-reset">↺ Reset</button>
+    </div>
+    <p style="margin-top:12px;color:var(--muted);font-size:14px;">
+      x-axis: fraction of time each walker was above zero. If leading were 50/50 by intuition, this
+      should peak in the middle. It doesn't. It peaks at the extremes.
+    </p>
+  </div>
+
+  <div class="callout aha">
+    <strong>Reader lens for the news.</strong> "One team dominated the whole game" is exactly what a fair,
+    balanced contest looks like <em>most of the time</em>. Same for mutual funds, sales streaks and
+    corporate winning streaks. A random walk generates dominance narratives without any underlying
+    dominance.
+  </div>
+
+  <p style="margin-top:32px;">
+    Want the log-log survival curve, drift experiments, or parametric SEIR-style extensions? Open the
+    <a href="../../app/Home.py">Streamlit version</a>. Full theory in the
+    <a href="../../docs/models/ch13_random_walk.md">model doc</a>.
+  </p>
+
+  <div class="next-nav">
+    <a href="../schelling/">← Schelling</a>
+    <a href="../sir/">SIR epidemic →</a>
+  </div>
+</main>
+<script type="module" src="random-walk.js"></script>
+</body>
+</html>

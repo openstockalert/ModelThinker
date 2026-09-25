@@ -7,7 +7,16 @@
       "Bash(curl -sf http://localhost:8901/_stcore/health)",
       "Bash(curl -s http://localhost:8901/_stcore/health)",
       "Read(//c/Users/opens/AppData/Local/Temp/claude/C--Users-opens-source-repos-ModelThinker/ebdb4ca8-4697-432b-8b42-c46686ec101a/tasks/**)",
-      "Bash(curl -s -o /dev/null -w '%{http_code}' http://localhost:8901/__TRACKED_VAR__)"
+      "Bash(curl -s -o /dev/null -w '%{http_code}' http://localhost:8901/__TRACKED_VAR__)",
+      "Bash(node --check /c/Users/opens/source/repos/ModelThinker/web/sir/sir.js)",
+      "Bash(curl -s -o /dev/null -w \"sir/ -> HTTP %{http_code}\\\\n\" http://localhost:8905/sir/)",
+      "Bash(node --check /c/Users/opens/source/repos/ModelThinker/web/normal/normal.js)",
+      "Bash(curl -s -o /dev/null -w \"normal/ -> HTTP %{http_code}\\\\n\" http://localhost:8905/normal/)",
+      "Bash(node --check /c/Users/opens/source/repos/ModelThinker/web/power-laws/power-laws.js)",
+      "Bash(curl -s -o /dev/null -w \"power-laws/ -> HTTP %{http_code}\\\\n\" http://localhost:8905/power-laws/)",
+      "Bash(node --check /c/Users/opens/source/repos/ModelThinker/web/nk/nk.js)",
+      "Bash(curl -s -o /dev/null -w '%{http_code}' http://localhost:8905/__TRACKED_VAR__)",
+      "Bash(node --check /c/Users/opens/source/repos/ModelThinker/web/schelling/schelling.js)"
     ]
   }
 }

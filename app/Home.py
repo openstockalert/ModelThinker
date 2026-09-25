@@ -43,6 +43,12 @@ with c_right:
         "including models not yet interactive here."
     )
 
+st.markdown(
+    "**🌊 Also new: [playable web stories](../web/index.html)** — the same models rebuilt as "
+    "Parable-of-the-Polygons–style scroll pages. Vanilla HTML/JS, zero-install, phone-friendly. "
+    "Great for reading; Streamlit (this app) stays the analyst's view."
+)
+
 # ------ REDCAPE --------------------------------------------------------------
 st.header("Why model? The REDCAPE framework")
 st.markdown(

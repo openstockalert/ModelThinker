@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Schelling · a playable story about segregation</title>
+<meta name="description" content="Even mild personal biases produce dramatic collective segregation. A playable, scroll-through story of the Schelling model.">
+<link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+<main class="wrap">
+
+  <nav class="top-nav">
+    <a href="../">← All playable stories</a>
+    <span class="spacer"></span>
+    <span class="crumb">ModelThinker · web</span>
+  </nav>
+
+  <p class="byline">Ch. 15 · Local interactions</p>
+  <h1>The polygon paradox</h1>
+  <p class="subtitle">
+    People are pretty tolerant. Neighbourhoods are pretty segregated.
+    <br>How can both be true?
+  </p>
+
+  <p>
+    Let's play a game. Below is a little neighbourhood of blue and orange faces.
+    Each face peeks at its eight closest neighbours and has one tiny preference:
+    <em>"I'd like at least <strong>some</strong> of my neighbours to be like me. Doesn't have to be most.
+    Just, y'know, <strong>some</strong>."</em>
+  </p>
+
+  <p>
+    A face that's happy 🙂 stays put. One that isn't 🙁 hops to a random empty spot.
+    That's the entire rule. Now watch what happens.
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 1 — Meet the neighbourhood -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">Meet the neighbourhood · click a shape to inspect it</p>
+    <canvas id="sim1" class="sim-canvas"></canvas>
+
+    <div id="sim1-inspector" style="margin-top:14px;padding:14px 16px;background:var(--bg-soft);border-radius:var(--radius-sm);font-size:15px;line-height:1.5;">
+      <!-- Populated by JS. Shows the clicked shape's neighbour counts and happiness. -->
+    </div>
+
+    <div class="sim-metrics" style="margin-top:12px;">
+      <div class="metric" id="sim1-seg">
+        <div class="label">Segregation</div>
+        <div class="value">—</div>
+        <div class="delta">0 = fully mixed · 1 = fully separated</div>
+      </div>
+      <div class="metric" id="sim1-unhappy">
+        <div class="label">Unhappy shapes</div>
+        <div class="value">—</div>
+        <div class="delta">at demand τ = 30 %</div>
+      </div>
+    </div>
+  </div>
+
+  <h2>Turn one small dial…</h2>
+  <p>
+    Now let's give each shape a preference. Move the slider to say: <em>"I'm happy if at least this fraction
+    of my neighbours are the same colour as me."</em>
+  </p>
+  <p>
+    Then hit <strong>▶ Let them move</strong>. Every ~⅓ of a second, one unhappy face literally
+    <strong>flies</strong> to a random empty spot — you can watch the smiles ripple through the grid.
+    Or click <strong>⏭ Move one</strong> to advance one shape at a time.
+    Getting impatient? <strong>⏩ Skip to settled</strong> fast-forwards to the final layout.
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 2 — The tolerance dial -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">The tolerance dial</p>
+    <canvas id="sim2" class="sim-canvas"></canvas>
+
+    <div class="sim-controls">
+      <label class="slider-block">
+        <span class="slider-label">
+          <span>Minimum same-colour neighbours to be happy</span>
+          <span class="value">30%</span>
+        </span>
+        <input type="range" min="0" max="90" value="30" step="5" data-fmt="{v}%">
+      </label>
+    </div>
+
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="sim2-play">▶ Let them move</button>
+      <button class="btn" id="sim2-step">⏭ Move one</button>
+      <button class="btn" id="sim2-skip" title="Instantly jump to the fully-settled state">⏩ Skip to settled</button>
+      <button class="btn btn-ghost" id="sim2-reset">↺ Fresh neighbourhood</button>
+    </div>
+
+    <div style="margin-top:16px;">
+      <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:4px;">
+        <span>segregation</span><span id="sim2-seg-text">—</span>
+      </div>
+      <div class="meter"><div class="meter-fill" id="sim2-seg-fill" style="width:50%"></div></div>
+    </div>
+
+    <div class="sim-metrics">
+      <div class="metric" id="sim2-steps">
+        <div class="label">Moves so far</div><div class="value">0</div><div class="delta">one per step</div>
+      </div>
+      <div class="metric" id="sim2-unhappy2">
+        <div class="label">Unhappy shapes</div><div class="value">—</div><div class="delta">wanting to move</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout aha">
+    <strong>Try this.</strong> Set the slider to <strong>30%</strong>. That's not "I want to be in the majority" —
+    it's "I'm fine being 70% minority, as long as I'm not almost <em>completely</em> alone."
+    Hit play and give it a few thousand moves. The segregation meter should climb to ~0.80.
+    Nobody in this simulation asked for that. Yet here we are.
+  </div>
+
+  <h2>What just happened?</h2>
+  <p>
+    The trick is that "unhappy" doesn't require racism — it just requires <em>a lower bound</em>.
+    Some blues will land next to too many oranges by chance. They move. Now the spot they vacated is
+    empty; a nearby orange whose neighbourhood was fine is now surrounded by blanks — its ratio changed
+    too. It might move. Small local moves ripple. Clusters form and, once they form, they self-reinforce
+    because clusters are the very thing that makes agents happy.
+  </p>
+  <p>
+    Thomas Schelling (1971) gave us the sharp version of this: <strong>micro-motives don't equal
+    macro-behaviour.</strong> Individually reasonable preferences aggregate into outcomes nobody wants.
+    That's why "just being tolerant" doesn't dissolve segregation — the geometry itself is against you.
+  </p>
+
+  <blockquote>
+    "The extreme cases are easier to understand than the mild ones… you can be color-blind and still end
+    up in a segregated neighbourhood, because your neighbours aren't."
+    <br>— Thomas Schelling, <em>Micromotives and Macrobehavior</em> (1978)
+  </blockquote>
+
+  <h2>Slide the dial slowly</h2>
+  <p>
+    Here's the surprise. As you crank up the tolerance dial, the equilibrium segregation doesn't rise
+    linearly. It jumps. Below ~10% almost nothing happens. Above ~50% the model can't even settle —
+    too many shapes are permanently frustrated. In the middle band, the same rule that felt harmless
+    produces dramatic separation.
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 3 — The tolerance scan (three snapshots) -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">Three tolerances, same rules</p>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+      <div>
+        <canvas id="sim3a" class="sim-canvas" style="height:180px;"></canvas>
+        <p class="center" style="margin-top:8px;font-size:14px;">
+          <strong>τ = 10 %</strong><br>
+          <span style="color:var(--muted);" id="sim3a-seg">seg —</span>
+        </p>
+      </div>
+      <div>
+        <canvas id="sim3b" class="sim-canvas" style="height:180px;"></canvas>
+        <p class="center" style="margin-top:8px;font-size:14px;">
+          <strong>τ = 30 %</strong><br>
+          <span style="color:var(--muted);" id="sim3b-seg">seg —</span>
+        </p>
+      </div>
+      <div>
+        <canvas id="sim3c" class="sim-canvas" style="height:180px;"></canvas>
+        <p class="center" style="margin-top:8px;font-size:14px;">
+          <strong>τ = 50 %</strong><br>
+          <span style="color:var(--muted);" id="sim3c-seg">seg —</span>
+        </p>
+      </div>
+    </div>
+    <div class="sim-controls" style="margin-top:16px;">
+      <button class="btn btn-primary" id="sim3-run">▶ Run all three</button>
+      <button class="btn btn-ghost" id="sim3-reset">↺ Reset</button>
+    </div>
+  </div>
+
+  <h2>Now you play</h2>
+  <p>
+    The sandbox below has everything: grid size, empty-cell density, tolerance, colour bias, and a
+    reset. This is where models turn into intuition — nothing beats twiddling knobs for an hour.
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 4 — Full sandbox -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">Sandbox</p>
+    <canvas id="sim4" class="sim-canvas"></canvas>
+
+    <div class="sim-controls">
+      <label class="slider-block">
+        <span class="slider-label"><span>Tolerance τ</span><span class="value">30%</span></span>
+        <input type="range" min="0" max="90" value="30" step="5" data-fmt="{v}%">
+      </label>
+      <label class="slider-block">
+        <span class="slider-label"><span>Grid size</span><span class="value">14</span></span>
+        <input type="range" min="8" max="24" value="14" step="2" data-fmt="{v}">
+      </label>
+      <label class="slider-block">
+        <span class="slider-label"><span>Occupied density</span><span class="value">90%</span></span>
+        <input type="range" min="50" max="98" value="90" step="2" data-fmt="{v}%">
+      </label>
+    </div>
+
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="sim4-play">▶ Play</button>
+      <button class="btn btn-ghost" id="sim4-reset">↺ Reset with new seed</button>
+    </div>
+
+    <div style="margin-top:16px;">
+      <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:4px;">
+        <span>segregation</span><span id="sim4-seg-text">—</span>
+      </div>
+      <div class="meter"><div class="meter-fill" id="sim4-seg-fill" style="width:50%"></div></div>
+    </div>
+
+    <div class="sim-metrics">
+      <div class="metric" id="sim4-steps"><div class="label">Moves</div><div class="value">0</div></div>
+      <div class="metric" id="sim4-unhappy"><div class="label">Unhappy</div><div class="value">—</div></div>
+      <div class="metric" id="sim4-status"><div class="label">Status</div><div class="value">idle</div></div>
+    </div>
+  </div>
+
+  <div class="callout warn">
+    <strong>Worth pausing on.</strong> The Schelling model is a caricature — real housing choice involves
+    prices, schools, family, commute. It isn't a literal account of segregation. What it <em>does</em> tell
+    you is that "the outcome must reflect what people wanted" is often just wrong. Institutions
+    (school zoning, mortgage lending, tax incentives) shape the moves; nobody's individual preference
+    graph explains the map.
+  </div>
+
+  <h2>Reader's homework</h2>
+  <ol>
+    <li>Set <em>τ</em> to <strong>90%</strong> in the sandbox. The system can never settle — shapes are
+      almost always unhappy. Does the meter still rise?</li>
+    <li>Set density to <strong>98%</strong> and <em>τ</em> to <strong>40%</strong>. Watch how
+      "trapped" shapes behave. This is the housing-market friction argument.</li>
+    <li>Try tiny grids (size 15) vs bigger (size 60). Small samples get louder-looking segregation
+      by chance — a <a href="../normal/">CLT</a> story hiding in the corner.</li>
+  </ol>
+
+  <p style="margin-top:32px;">
+    Want more knobs, the segregation-over-time chart, and side-by-side seeds? Open the
+    <a href="../../app/Home.py">Streamlit version</a>. Want the theory in one place? See the
+    <a href="../../docs/model_guide.md">book guide</a> or the
+    <a href="../../docs/models/ch15_schelling.md">model doc</a>.
+  </p>
+
+  <div class="next-nav">
+    <a href="../">← All stories</a>
+    <a href="../random-walk/">Random walks →</a>
+  </div>
+
+</main>
+
+<script type="module" src="schelling.js?v=3"></script>
+</body>
+</html>

@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Power laws · a playable story about rich-get-richer</title>
+<link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+<main class="wrap">
+
+  <nav class="top-nav">
+    <a href="../">← All playable stories</a>
+    <span class="spacer"></span>
+    <span class="crumb">ModelThinker · web</span>
+  </nav>
+
+  <p class="byline">Ch. 6 · Distributions</p>
+  <h1>Rich get richer</h1>
+  <p class="subtitle">
+    When success feeds success, a few winners take almost everything.
+    <br>Watch a fair-looking process produce a wildly unfair world.
+  </p>
+
+  <p>
+    Start with a small network. Add nodes one at a time. Each new node picks a friend to link to —
+    but the probability it picks any given existing node is proportional to how many friends that node
+    already has. Popular nodes attract more links, becoming more popular, attracting more links.
+    "The rich get richer" (Barabási &amp; Albert, 1999).
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 1 · Watch a network grow -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">Preferential attachment · watch it grow</p>
+    <canvas id="sim1" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="sim1-play">▶ Grow it</button>
+      <button class="btn" id="sim1-fast">⏩ Fast-forward to 200 nodes</button>
+      <button class="btn btn-ghost" id="sim1-reset">↺ Reset</button>
+    </div>
+    <div class="sim-metrics">
+      <div class="metric" id="sim1-n"><div class="label">Nodes</div><div class="value">3</div></div>
+      <div class="metric" id="sim1-max"><div class="label">Top hub degree</div><div class="value">2</div></div>
+      <div class="metric" id="sim1-share"><div class="label">Top 5 nodes own</div><div class="value">—</div><div class="delta">% of all edges</div></div>
+    </div>
+  </div>
+
+  <div class="callout aha">
+    <strong>Watch node #1.</strong> The first few nodes get lucky purely by <em>being early</em>. They then
+    keep winning. This isn't skill — it's compounding. Same dynamic that turns a slightly-better song
+    into a chart-topping hit if listeners can see download counts (MusicLab, Salganik &amp; Watts).
+  </div>
+
+  <h2>The signature: a straight line on log-log</h2>
+  <p>
+    Draw the histogram of node degrees. Most nodes have a handful of links; a few have hundreds.
+    Zoom out on a log-log plot and the distribution is a <strong>straight line</strong> — the fingerprint
+    of a power law. The slope tells you how heavy the tail is.
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 2 · Degree distribution -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">Degree distribution · log-log</p>
+    <canvas id="sim2" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <label class="slider-block">
+        <span class="slider-label"><span>Network size</span><span class="value">2000</span></span>
+        <input type="range" min="200" max="5000" value="2000" step="100" data-fmt="{v}">
+      </label>
+      <label class="slider-block">
+        <span class="slider-label"><span>Edges per new node (m)</span><span class="value">2</span></span>
+        <input type="range" min="1" max="6" value="2" step="1" data-fmt="{v}">
+      </label>
+    </div>
+    <div class="sim-metrics">
+      <div class="metric" id="sim2-slope"><div class="label">Fitted exponent γ̂</div><div class="value">—</div><div class="delta">theory ≈ 3</div></div>
+    </div>
+  </div>
+
+  <h2>How unequal is it, really?</h2>
+  <p>
+    A <strong>Lorenz curve</strong> answers the question in one picture. On the x-axis: nodes ranked from
+    least to most connected. On the y-axis: cumulative share of all links. A perfectly equal world
+    would be a straight diagonal. Reality — anything preferential-attachment produces — bulges downward.
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 3 · Lorenz curve -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">Lorenz curve · concentration of degree</p>
+    <canvas id="sim3" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="sim3-run">🎲 Grow &amp; draw</button>
+    </div>
+    <div class="sim-metrics">
+      <div class="metric" id="sim3-gini"><div class="label">Gini coefficient</div><div class="value">—</div><div class="delta">0 = equal · 1 = one hub only</div></div>
+      <div class="metric" id="sim3-8020"><div class="label">Top 20% own</div><div class="value">—</div><div class="delta">the "80/20 rule" if ≥ 80%</div></div>
+    </div>
+  </div>
+
+  <div class="callout warn">
+    <strong>Where power laws appear.</strong> City sizes, earthquake magnitudes, casualties in wars, book
+    and music sales, website in-links, word frequencies (Zipf), wealth, firm sizes, forest-fire areas.
+    Different generating mechanisms, same shape — meaning fitting a straight line to log-log doesn't
+    identify the cause.
+  </div>
+
+  <p style="margin-top:32px;">
+    Want the sandpile self-organized-criticality generator and MLE-vs-least-squares exponent estimation? Open the
+    <a href="../../app/Home.py">Streamlit version</a>. See the
+    <a href="../../docs/models/ch06_power_law.md">model doc</a> for the full theory.
+  </p>
+
+  <div class="next-nav">
+    <a href="../normal/">← Normal / CLT</a>
+    <a href="../nk/">NK landscape →</a>
+  </div>
+</main>
+<script type="module" src="power-laws.js"></script>
+</body>
+</html>

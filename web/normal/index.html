@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Normal / CLT · a playable story about bell curves</title>
+<link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+<main class="wrap">
+
+  <nav class="top-nav">
+    <a href="../">← All playable stories</a>
+    <span class="spacer"></span>
+    <span class="crumb">ModelThinker · web</span>
+  </nav>
+
+  <p class="byline">Ch. 5 · Distributions</p>
+  <h1>Where does the bell curve come from?</h1>
+  <p class="subtitle">
+    Take any process that adds up many small independent effects. The total is a bell curve.
+    <br>Watch it happen live.
+  </p>
+
+  <p>
+    Pick any starting distribution below — even a wild one, like a coin flip with three outcomes
+    or an exponential. Then average <em>n</em> draws together. Do that thousands of times.
+    The histogram of averages will always, always, become bell-shaped.
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 1 · CLT emerges from anything -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">Any source · bell curve out</p>
+    <canvas id="sim1" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <label class="slider-block" style="min-width:220px;">
+        <span class="slider-label"><span>Source distribution</span><span></span></span>
+        <select id="sim1-src" style="padding:8px 12px;border-radius:8px;border:1.5px solid var(--line);font-family:inherit;font-size:14px;background:white;">
+          <option value="uniform">Uniform 0–1</option>
+          <option value="exp" selected>Exponential (skewed)</option>
+          <option value="bern">Coin flip (Bernoulli)</option>
+          <option value="lognormal">Lognormal (heavy tail)</option>
+        </select>
+      </label>
+      <label class="slider-block">
+        <span class="slider-label"><span>n · draws per sample mean</span><span class="value">30</span></span>
+        <input type="range" min="1" max="300" value="30" step="1" data-fmt="{v}">
+      </label>
+    </div>
+    <div class="sim-metrics">
+      <div class="metric" id="sim1-mu"><div class="label">Empirical mean</div><div class="value">—</div></div>
+      <div class="metric" id="sim1-std"><div class="label">Empirical std</div><div class="value">—</div><div class="delta">theory σ/√n</div></div>
+    </div>
+    <p style="margin-top:12px;color:var(--muted);font-size:14px;">
+      🔵 blue = the raw source distribution &nbsp;·&nbsp; 🟠 orange = the sample-mean distribution &nbsp;·&nbsp; red = the normal the CLT predicts
+    </p>
+  </div>
+
+  <div class="callout aha">
+    <strong>Try n = 1.</strong> The orange histogram <em>is</em> the source. Now push n up. Watch how quickly
+    (or slowly, for lognormal) the shape symmetrises into a bell.
+  </div>
+
+  <h2>The √n rule</h2>
+  <p>
+    The bell doesn't just appear — it also <strong>tightens</strong>. Doubling <em>n</em> only shrinks its
+    width by √2. That's why <em>quadrupling</em> the sample size halves the standard error, not doubling.
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 2 · The √n scan -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">Empirical std vs sample size · log-log</p>
+    <canvas id="sim2" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="sim2-run">🎲 Run the scan</button>
+    </div>
+    <p style="margin-top:12px;color:var(--muted);font-size:14px;">
+      Slope on log-log should be −½ if the √n rule holds. Every step to the right = 4× the sample size = ½× the error.
+    </p>
+  </div>
+
+  <div class="callout warn">
+    <strong>The small-schools puzzle.</strong> A famous US education initiative funded splitting big schools
+    into small ones because small schools kept showing up among the <em>top</em> test performers. But
+    small schools also showed up among the <em>bottom</em> performers — for exactly the same statistical
+    reason. σ/√n is bigger when n is small. Wider extremes on both sides. The signal wasn't school
+    quality; it was sample size.
+  </div>
+
+  <p style="margin-top:32px;">
+    Want overlays of six-sigma quality zones, per-source theoretical curves, and the lognormal-in-log-space
+    view? Open the <a href="../../app/Home.py">Streamlit version</a>. Full theory in the
+    <a href="../../docs/models/ch05_normal.md">model doc</a>.
+  </p>
+
+  <div class="next-nav">
+    <a href="../sir/">← SIR epidemic</a>
+    <a href="../power-laws/">Power laws →</a>
+  </div>
+</main>
+<script type="module" src="normal.js"></script>
+</body>
+</html>

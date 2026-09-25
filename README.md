@@ -6,9 +6,13 @@ The v1 release ships **5 flagship models** — one from each major book part —
 
 **Book companion.** For the full picture — including chapters that don't yet have a live model — see [`docs/model_guide.md`](docs/model_guide.md), a chapter-by-chapter reader's guide to all 29 chapters. Each in-app model doc points back to the relevant section.
 
+**Two ways to experience the models:**
+1. **Streamlit** (this repo, `app/`) — the analyst's view. All parameters, side plots, log-log tails, downloadable simulations. Best on a laptop; needs Python.
+2. **Web stories** ([`web/`](web/)) — the reader's view. Long-scroll playable pages in the spirit of [Parable of the Polygons](https://ncase.me/polygons/). Vanilla HTML/CSS/JS, no build step, no third-party dependencies. Phone-friendly.
+
 ---
 
-## Quickstart
+## Quickstart — Streamlit (Python)
 
 ```bash
 # 1. Install (uses uv — https://github.com/astral-sh/uv)
@@ -28,6 +32,22 @@ uv run jupyter lab notebooks/
 ```
 
 If you don't have `uv`, install it with `pip install --user uv`.
+
+---
+
+## Quickstart — Web stories
+
+The pages use ES modules (`<script type="module">`), so most browsers refuse to load them from a raw `file://` URL. You need any tiny static file server — the built-in Python one works:
+
+```bash
+# From the repo root, serve the web/ directory on port 8000:
+python -m http.server 8000 --directory web
+# Then open http://localhost:8000 in a browser.
+```
+
+Any equivalent works (`npx serve web`, `php -S localhost:8000 -t web`, Live Server in VS Code, etc.). Once served, the whole thing runs in the browser — no Python involved after the server is up.
+
+To deploy: `web/` is fully static. Upload it as-is to GitHub Pages, Netlify, Cloudflare Pages, or any static host.
 
 ---
 

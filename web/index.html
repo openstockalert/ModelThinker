@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ModelThinker — playable stories</title>
+<meta name="description" content="Playable, scroll-through stories for each of the models in Scott E. Page's The Model Thinker.">
+<link rel="stylesheet" href="shared/style.css">
+</head>
+<body>
+<main class="wide">
+  <p class="byline">ModelThinker · playable stories</p>
+  <h1>Little models. Big ideas. Nothing to install.</h1>
+  <p class="subtitle">
+    Twelve chapters from Scott E. Page's <em>The Model Thinker</em> — one playable page each.
+    Scroll, drag, tap. Learn a model in five minutes without opening a stats book.
+  </p>
+
+  <p>
+    These pages are the <strong>reader's view</strong> of ModelThinker.
+    For deeper controls — sweep parameters, log-log tails, side-by-side comparisons — open the
+    <a href="../app/Home.py">Streamlit companion</a>.
+    For the theory read the <a href="../docs/model_guide.md">chapter-by-chapter book guide</a>.
+  </p>
+
+  <div class="card-grid">
+
+    <a class="card" href="schelling/">
+      <span class="badge live">● live</span>
+      <h3>🟦🟧 Schelling · segregation</h3>
+      <p>Mild personal biases produce dramatic collective segregation. The direct analog to
+        <em>Parable of the Polygons</em>.</p>
+    </a>
+
+    <a class="card" href="random-walk/">
+      <span class="badge live">● live</span>
+      <h3>🚶 Random walks</h3>
+      <p>The √t rule, the return-time paradox, drunk man vs drunk bird — the null model for streaks.</p>
+    </a>
+
+    <a class="card" href="sir/">
+      <span class="badge live">● live</span>
+      <h3>🦠 SIR epidemic</h3>
+      <p>Three compartments, two rates, one number: R₀ decides whether an outbreak explodes or fades.</p>
+    </a>
+
+    <a class="card" href="normal/">
+      <span class="badge live">● live</span>
+      <h3>🔔 Normal / CLT</h3>
+      <p>Watch bell curves emerge from any starting shape — and see the √n rule shrink the noise.</p>
+    </a>
+
+    <a class="card" href="power-laws/">
+      <span class="badge live">● live</span>
+      <h3>📈 Power laws</h3>
+      <p>Rich-get-richer produces hubs, straight log-log lines, and 80/20 concentration.</p>
+    </a>
+
+    <a class="card" href="nk/">
+      <span class="badge live">● live</span>
+      <h3>🏔 NK rugged landscape</h3>
+      <p>When decisions interact, hill climbing gets stuck. See why exploration beats greed on complex terrain.</p>
+    </a>
+
+  </div>
+
+  <h2>What's the difference between "web" and "streamlit"?</h2>
+  <p>
+    <strong>Web stories</strong> (you are here) are for reading — long-form scrolls with vignettes, direct
+    manipulation, and personality. Best on your phone. No Python needed.
+  </p>
+  <p>
+    <strong>Streamlit pages</strong> are for exploring — every model exposes every parameter, side plots,
+    log-log tails, and downloadable simulations. Best on a laptop. Uses Python under the hood.
+  </p>
+
+  <div class="callout aha">
+    <strong>Inspired by</strong> <a href="https://ncase.me/polygons/" target="_blank" rel="noreferrer">Parable of the Polygons</a>
+    (Vi Hart &amp; Nicky Case, 2014) and Bret Victor's <em>Explorable Explanations</em>.
+    All simulations run entirely in your browser — no server, no tracking, no dependencies.
+  </div>
+
+  <p style="margin-top:48px;color:var(--muted);font-size:14px;">
+    Based on Scott E. Page, <em>The Model Thinker</em> (Basic Books, 2018).
+    Source and Python versions on the parent repository.
+  </p>
+</main>
+</body>
+</html>

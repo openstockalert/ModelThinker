@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NK landscape · a playable story about rugged terrain</title>
+<link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+<main class="wrap">
+
+  <nav class="top-nav">
+    <a href="../">← All playable stories</a>
+    <span class="spacer"></span>
+    <span class="crumb">ModelThinker · web</span>
+  </nav>
+
+  <p class="byline">Ch. 28 · Learning &amp; search</p>
+  <h1>When smart hill-climbing gets stuck</h1>
+  <p class="subtitle">
+    On a smooth hill, greed works. On a rugged one, greed fails.
+    <br>How much ruggedness comes from how much interdependence.
+  </p>
+
+  <p>
+    You're tuning <em>N</em> yes/no decisions — features on a product, genes in an organism,
+    policies in a plan. Each decision contributes to fitness, and its contribution depends on
+    itself <strong>plus K other decisions</strong>. K = 0 means every decision is independent (a smooth
+    "Mount Fuji" landscape, one peak). K = N−1 means everything depends on everything (maximum
+    ruggedness, exponentially many local peaks).
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 1 · Landscape shape as K changes -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">Move K · watch the terrain get rugged</p>
+    <canvas id="sim1" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <label class="slider-block">
+        <span class="slider-label"><span>K · interactions per bit</span><span class="value">2</span></span>
+        <input type="range" min="0" max="9" value="2" step="1" data-fmt="{v}">
+      </label>
+    </div>
+    <div class="sim-metrics">
+      <div class="metric" id="sim1-peaks"><div class="label">Local peaks</div><div class="value">—</div><div class="delta">nowhere to climb from</div></div>
+      <div class="metric" id="sim1-max"><div class="label">Global max fitness</div><div class="value">—</div></div>
+    </div>
+  </div>
+
+  <div class="callout aha">
+    <strong>Move the K slider slowly.</strong> At K = 0 there's a single peak. At K = 3 you already have
+    several. At K = 9 the terrain is essentially noise. And the highest peak on the noisy terrain is
+    almost always <em>higher</em> than the single peak on the smooth one — but nobody using hill-climbing can find it.
+  </div>
+
+  <h2>Race three strategies on the same terrain</h2>
+  <p>
+    Now give three searchers the same budget of moves on the same landscape:
+  </p>
+  <ul>
+    <li><strong>Hill climb</strong> — always take the best neighbouring bit-flip. Greedy. Stops at the first
+      local peak it finds.</li>
+    <li><strong>Random restart</strong> — hill climb, but from ten different random starts. Diversity insurance.</li>
+    <li><strong>Long jumps</strong> — mostly hill climb, occasionally flip many bits at once. Costly, but
+      escapes local peaks.</li>
+  </ul>
+
+  <!-- ============================================================ -->
+  <!-- SIM 2 · Strategy race -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">Best-fitness-so-far · same landscape, three strategies</p>
+    <canvas id="sim2" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <label class="slider-block">
+        <span class="slider-label"><span>K</span><span class="value">4</span></span>
+        <input type="range" min="0" max="9" value="4" step="1" data-fmt="{v}">
+      </label>
+      <label class="slider-block">
+        <span class="slider-label"><span>Budget (moves)</span><span class="value">300</span></span>
+        <input type="range" min="50" max="1000" value="300" step="50" data-fmt="{v}">
+      </label>
+    </div>
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="sim2-run">🏁 Race them</button>
+    </div>
+    <div class="sim-metrics">
+      <div class="metric" id="sim2-hc"><div class="label">Hill climb best</div><div class="value">—</div></div>
+      <div class="metric" id="sim2-rr"><div class="label">Random restart</div><div class="value">—</div></div>
+      <div class="metric" id="sim2-lj"><div class="label">Long jumps</div><div class="value">—</div></div>
+      <div class="metric" id="sim2-max"><div class="label">Global max</div><div class="value">—</div></div>
+    </div>
+  </div>
+
+  <div class="callout warn">
+    <strong>The management-strategy translation.</strong> Kauffman &amp; Levinthal's argument, restated: on a
+    <em>smooth</em> landscape (few interactions, low K), incremental optimisation wins. On a <em>rugged</em>
+    landscape (product features that constrain each other, policies that ripple), pure incrementalism
+    strands you on a local hilltop. That's why radically-different competitors sometimes outperform
+    "best-in-class" incumbents — they climb a different hill entirely.
+  </div>
+
+  <h2>Diverse teams &gt; homogeneous experts (on rugged terrain)</h2>
+  <p>
+    Page's <em>The Difference</em> generalises this: if smart searchers all start from the same place with
+    the same heuristic, they all get stuck on the same local peak. Different searchers get stuck on
+    <em>different</em> peaks — and can share their moves. The mathematical case for diversity, hiding in an
+    NK landscape.
+  </p>
+
+  <p style="margin-top:32px;">
+    Want the full 2^N enumeration, K sweeps averaged over seeds, and the co-evolutionary NKC extension?
+    Open the <a href="../../app/Home.py">Streamlit version</a>. Full theory in the
+    <a href="../../docs/models/ch28_nk_landscape.md">model doc</a>.
+  </p>
+
+  <div class="next-nav">
+    <a href="../power-laws/">← Power laws</a>
+    <a href="../">All stories →</a>
+  </div>
+</main>
+<script type="module" src="nk.js"></script>
+</body>
+</html>
