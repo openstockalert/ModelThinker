@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Markov chains · a playable story about when history matters (and when it doesn't)</title>
+<link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+<main class="wrap">
+
+  <nav class="top-nav">
+    <a href="../">← All playable stories</a>
+    <span class="spacer"></span>
+    <span class="crumb">ModelThinker · web</span>
+  </nav>
+
+  <p class="byline">Ch. 17 · Uncertainty &amp; dynamics</p>
+  <h1>The world forgets</h1>
+  <p class="subtitle">
+    Weather patterns. Attention spans. Political freedom. Brand loyalty. Addiction.
+    <br>All Markov chains. All bound by one surprising theorem.
+  </p>
+
+  <p>
+    A <strong>Markov chain</strong> has states and transition probabilities — no memory. Where you go next depends only
+    on where you are, not how you got there. That's it. That's the whole model. Yet from those simple rules comes
+    a startling theorem: any Markov chain (with four mild conditions) converges to a <strong>unique long-run distribution
+    called π</strong>. Same destination, no matter where you started. Below, watch it happen.
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 1 · State graph with walker -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">Pick a scenario · watch a walker wander · see time-in-state converge to π</p>
+
+    <div class="sim-controls" style="margin-bottom:12px;">
+      <div id="mkv-preset-tabs" style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-primary" data-preset="students">🧑‍🎓 Attention span</button>
+        <button class="btn" data-preset="weather">🌤 Weather</button>
+        <button class="btn" data-preset="democracy">🌍 Democracy</button>
+        <button class="btn" data-preset="drug">👤 Addiction cycle</button>
+        <button class="btn" data-preset="brands">🛒 Brand loyalty</button>
+      </div>
+    </div>
+
+    <div id="mkv-hook" style="padding:12px 14px;background:var(--bg-soft);border-radius:var(--radius-sm);margin-bottom:14px;font-size:14px;line-height:1.5;">
+      <!-- populated by JS -->
+    </div>
+
+    <canvas id="mkv-graph" class="sim-canvas"></canvas>
+
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="mkv-play">▶ Auto-walk</button>
+      <button class="btn" id="mkv-step">⏭ One step</button>
+      <button class="btn btn-ghost" id="mkv-reset">↺ Reset walker</button>
+    </div>
+
+    <div class="sim-metrics">
+      <div class="metric" id="mkv-time"><div class="label">Time steps</div><div class="value">0</div></div>
+      <div class="metric" id="mkv-here"><div class="label">Currently in</div><div class="value">—</div></div>
+      <div class="metric" id="mkv-mix"><div class="label">Empirical mix</div><div class="value">—</div><div class="delta">→ approaches π</div></div>
+    </div>
+
+    <p style="margin-top:12px;color:var(--muted);font-size:14px;">
+      The <strong>bars on the right</strong> show the walker's fraction of time in each state so far. The
+      <strong>red diamonds</strong> mark the theoretical stationary distribution π. Give it a few hundred
+      steps and the bars line up with the diamonds — <em>regardless of where you started</em>. That's the theorem.
+    </p>
+  </div>
+
+  <div class="callout aha">
+    <strong>The mechanism.</strong> Each state has an outgoing set of "if I'm here, where might I go next?" probabilities.
+    Watch the walker's arrows: thicker means more likely. Over time the walker naturally spends most time in the
+    <em>most-connected</em> states. That's what π captures — not "where you are now" but "where you end up if you wait
+    long enough."
+  </div>
+
+  <h2>Three different starts, one common destination</h2>
+  <p>
+    So a single walker converges to π. But so does a whole <em>population</em> of walkers, even if they all
+    started in different states. Watch three worlds run in parallel.
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 2 · Convergence race -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">Three worlds · same rules · totally different starts</p>
+    <canvas id="mkv-race" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="mkv-race-play">▶ Race them</button>
+      <button class="btn btn-ghost" id="mkv-race-reset">↺ Reset</button>
+    </div>
+    <p style="margin-top:12px;color:var(--muted);font-size:14px;">
+      Each panel starts <strong>1000 walkers</strong> in a different state (all in the first, all in the last, or
+      spread uniformly). Every panel runs the <em>same</em> transition rules P. Watch the coloured stacked areas
+      shift and stabilise — and notice how all three panels end up with the same shape. <strong>History dies.</strong>
+    </p>
+  </div>
+
+  <div class="callout warn">
+    <strong>The Markov Convergence Theorem in one sentence.</strong> If every state can reach every other, and the
+    chain doesn't cycle in perfect lock-step, then no matter where you start, the state distribution converges to
+    the same π. All three worlds above ended in the same place. That's <em>the</em> theorem — proved by A. A. Markov
+    around 1906, and central to everything from PageRank to political economy.
+  </div>
+
+  <h2>A one-time fix vs. a change in the rules</h2>
+  <p>
+    Here's where Markov chains reshape how we think about policy. Say you're a mayor with a drug crisis.
+    You can spend the budget on a <em>one-time intervention</em> — pay to send every addict to rehab today —
+    or you can invest in <em>changing the rules</em> — better education, treatment infrastructure, harm reduction.
+    Which one actually moves the equilibrium?
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 3 · Intervention vs rule change -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">Two policies · one runs the "addiction cycle" chain forever</p>
+    <canvas id="mkv-int" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="mkv-int-intervene">🚨 One-time intervention</button>
+      <button class="btn btn-accent" id="mkv-int-change">🔧 Change the rules</button>
+      <button class="btn btn-ghost" id="mkv-int-reset">↺ Reset</button>
+    </div>
+    <p style="margin-top:12px;color:var(--muted);font-size:14px;">
+      The chart shows the fraction of the population in each state over time. Click
+      <strong>🚨 One-time intervention</strong> to instantly move everyone into "✅ Sober" — then watch it decay
+      back to the original π. Click <strong>🔧 Change the rules</strong> to permanently reduce the transition
+      from Sober → Using — and watch a <em>new</em>, lower stationary emerge.
+    </p>
+  </div>
+
+  <div class="callout aha">
+    <strong>The lesson every policy-maker should tattoo somewhere.</strong> One-time interventions <em>always</em>
+    decay — the transition probabilities pull the system back to its original π. Only <strong>changing the
+    transition probabilities</strong> creates lasting change. This isn't cynicism; it's arithmetic. And it applies
+    to organisations, teams, personal habits, retirement policy, addiction treatment, and just about every "why
+    doesn't this fix stick?" question you've ever asked.
+  </div>
+
+  <h2>Markov chains are everywhere</h2>
+  <ul>
+    <li><strong>Google's original PageRank</strong> is the stationary distribution of a random surfer clicking links
+      on the web. High-π pages rank high.</li>
+    <li><strong>Weather forecasting</strong> uses (much bigger) Markov models to predict tomorrow from today.</li>
+    <li><strong>Democracy studies</strong> (Freedom House data) show countries drift among Free / Partly Free / Not
+      Free at nearly stationary rates — one of the more sobering applications.</li>
+    <li><strong>Card shuffling</strong>: how many riffle shuffles until a deck is "random"? Markov analysis says
+      <em>seven</em> (Bayer &amp; Diaconis, 1992).</li>
+    <li><strong>Speech recognition, machine translation, and reinforcement learning</strong> all lean on Markov
+      structure at their core.</li>
+    <li><strong>Board games</strong>: Snakes &amp; Ladders is literally a Markov chain — solvable in closed form.</li>
+  </ul>
+
+  <p style="margin-top:32px;">
+    Want the full transition-matrix heatmap, editable initial distributions, and the analytical eigenvector
+    solver? Open the <a href="../../app/Home.py">Streamlit version</a>. Full theory in the
+    <a href="../../docs/models/ch17_markov.md">model doc</a>.
+  </p>
+
+  <div class="next-nav">
+    <a href="../path-dependence/">← Path dependence</a>
+    <a href="../">All stories →</a>
+  </div>
+</main>
+<script type="module" src="markov.js?v=5"></script>
+</body>
+</html>
