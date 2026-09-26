@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Entropy · a playable story about surprise</title>
+<link rel="stylesheet" href="../shared/style.css">
+<style>
+  /* --- Concept diagram (Sim 2 intro) --- */
+  .concept-strip {
+    background: #0F1420;
+    border-radius: var(--radius);
+    padding: 16px 16px 18px;
+    color: #F1F3F5;
+    margin: 20px 0;
+  }
+  .concept-strip canvas {
+    display: block;
+    width: 100%;
+    background: #060811;
+    border-radius: 8px;
+  }
+  .concept-strip p {
+    margin: 10px 0 0;
+    font-size: 13px;
+    color: rgba(241,243,245,0.75);
+    line-height: 1.4;
+  }
+
+  /* --- Four-fates zoo (Sim 2) --- */
+  .fates-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 12px;
+  }
+  .fate-card {
+    background: #0F1420;
+    border-radius: var(--radius);
+    padding: 12px 12px 14px;
+    color: #F1F3F5;
+  }
+  .fate-card .fate-title {
+    font-size: 14px;
+    font-weight: 700;
+    margin: 0 0 8px;
+  }
+  .fate-card .fate-title-sub {
+    display: block;
+    font-size: 11px;
+    font-weight: 500;
+    color: rgba(241,243,245,0.55);
+    letter-spacing: 0.03em;
+    margin-top: 2px;
+  }
+  .fate-card canvas {
+    display: block;
+    width: 100%;
+    background: #060811;
+    border-radius: 6px;
+  }
+  .fate-card .fate-meter {
+    margin-top: 8px;
+    height: 10px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.08);
+    overflow: hidden;
+  }
+  .fate-card .fate-meter-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4C6EF5, #F76707);
+    transition: width 0.2s ease;
+    border-radius: 999px;
+  }
+  .fate-card .fate-caption {
+    margin: 8px 0 0;
+    font-size: 12px;
+    color: rgba(241,243,245,0.7);
+    line-height: 1.4;
+  }
+
+  /* --- Preset gallery (Sim 3) --- */
+  .rule-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .rule-thumb {
+    display: flex;
+    flex-direction: column;
+    background: white;
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
+    padding: 6px;
+    cursor: pointer;
+    transition: transform 0.1s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    font-family: inherit;
+  }
+  .rule-thumb:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(28,34,56,0.10);
+    border-color: var(--primary);
+  }
+  .rule-thumb.active {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(247,103,7,0.18);
+  }
+  .rule-thumb canvas {
+    display: block;
+    width: 100%;
+    background: #060811;
+    border-radius: 4px;
+  }
+  .rule-thumb-label {
+    margin-top: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink);
+    text-align: center;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .rule-thumb-class {
+    font-size: 10px;
+    padding: 1px 5px;
+    border-radius: 4px;
+    color: white;
+    font-weight: 600;
+  }
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <nav class="top-nav">
+    <a href="../">← All playable stories</a>
+    <span class="spacer"></span>
+    <span class="crumb">ModelThinker · web</span>
+  </nav>
+
+  <p class="byline">Ch. 12 · Uncertainty</p>
+  <h1>One number for surprise</h1>
+  <p class="subtitle">
+    How surprised should you be by a coin, a market, or a rainforest?
+    <br>Shannon (1948) gave us one number that answers all three. In <em>bits</em>.
+  </p>
+
+  <p>
+    Below is a little machine. The four coloured bars are the odds of four outcomes.
+    <strong>Grab any bar and drag it up or down</strong> — you're rewriting the odds. Samples start
+    firing instantly. Each colored ball that pops out has a "<strong>+1.42 bits</strong>" chip
+    above it: that's how <em>surprised</em> you should be by that sample. Rare things pop with
+    bigger chips. The average pop size, over many samples, is what Shannon called
+    <strong>entropy</strong> — one number, in bits, that says "how unpredictable is this?"
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 1 · The Surprise Machine -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">Drag the bars · watch the surprise per sample</p>
+    <canvas id="sim-machine" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="mach-fair">🎲 Fair (uniform)</button>
+      <button class="btn" id="mach-certain">🎯 Almost certain</button>
+      <button class="btn" id="mach-skew">📉 Power-law</button>
+      <button class="btn" id="mach-bimodal">🎪 Bimodal</button>
+      <button class="btn btn-ghost" id="mach-pause">⏸ Pause stream</button>
+    </div>
+    <div class="sim-metrics">
+      <div class="metric" id="mach-h"><div class="label">Entropy H</div><div class="value">—</div><div class="delta">theoretical · bits/sample</div></div>
+      <div class="metric" id="mach-hmax"><div class="label">Ceiling</div><div class="value">2.00</div><div class="delta">= log₂ 4 · uniform</div></div>
+      <div class="metric" id="mach-empirical"><div class="label">Running mean surprise</div><div class="value">—</div><div class="delta">what samples actually delivered</div></div>
+    </div>
+  </div>
+
+  <div class="callout aha">
+    <strong>Try the presets.</strong> "Fair" fills the gauge to <strong>2 bits</strong> — every
+    sample is maximally surprising. "Almost certain" collapses it toward <strong>0</strong>: you
+    already know what's coming. Watch the <em>running mean</em> at the bottom converge to H after
+    a few dozen samples. That convergence <em>is</em> the definition of entropy in action.
+  </div>
+
+  <h2>Same math, second job — diversity</h2>
+  <p>
+    An ecologist calls this the <strong>Shannon–Wiener index</strong> and uses it to score how
+    varied a forest is. An economist calls $e^H$ the <strong>effective brand count</strong> and
+    uses it to score market variety. Same formula, three vocabularies. A pine plantation has
+    entropy near zero. A rainforest has entropy near $\log_2 K$. One dominant brand? Low. All
+    niches evenly filled? High.
+  </p>
+
+  <h2>Same math, third job — one number sorts every story into four kinds</h2>
+  <p>
+    Watch <em>anything</em> long enough — a clock, a market, a fluid, an ecosystem — and Stephen
+    Wolfram (2002) noticed you'll see exactly one of four kinds of long-run behaviour. Entropy is
+    what tells them apart. Instead of proving that here, let's just watch it in the simplest
+    possible playground: a row of pixels that follow a tiny rule.
+  </p>
+
+  <div class="concept-strip">
+    <canvas id="concept-diagram" style="height:170px;"></canvas>
+    <p>
+      <strong>How the pixel world works.</strong> A row of black-and-white cells lives across the
+      top. Every tick, each cell looks at <em>itself and its two neighbours</em> — three cells in
+      all. The rule looks up "when I see this 3-cell pattern, what colour do I become?" — and
+      applies it everywhere at once. The row of pixels evolves downward like a fabric being
+      woven. Different rules → different fabrics.
+    </p>
+  </div>
+
+  <p>
+    Below are four of these pixel worlds, all running side by side. Every one uses the setup you
+    just read — three cells in, one cell out — but with a <em>different</em> lookup rule inside.
+    Look at what each rule produces, not at the numbers.
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 2 · Meet the Four Fates (auto-playing zoo) -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">Four rules · four fates · playing live</p>
+    <div class="fates-grid" id="fates-grid"></div>
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="fates-toggle">⏸ Pause</button>
+      <button class="btn" id="fates-random">🎲 Random start</button>
+      <button class="btn btn-ghost" id="fates-reset">↺ Reset · single pixel</button>
+    </div>
+  </div>
+
+  <div class="callout aha">
+    <strong>Same rulebook. Four completely different destinies.</strong> A clock ticks
+    (<em>periodic</em>). A roulette wheel is chaos (<em>random</em>). An ecosystem produces
+    structure without repetition (<em>complex</em>). Ice cubes in a warm room melt to nothing
+    (<em>equilibrium</em>). Once you notice these four regimes, they show up everywhere.
+  </div>
+
+  <h2>Now build a rule of your own</h2>
+  <p>
+    So what <em>is</em> a "rule"? It's a lookup table. There are exactly <strong>8 possible
+    3-cell input patterns</strong> — from <span style="font-family:monospace;">░░░</span> (all
+    off) through <span style="font-family:monospace;">▓▓▓</span> (all on). For each pattern, the
+    rule says "output on" or "output off". So a rule is just <strong>8 yes-or-no choices</strong>
+    — 2⁸ = <strong>256 possible rules in total</strong>. Most produce chaos. A few produce
+    stillness. A rare handful produce structures nobody has ever seen twice.
+  </p>
+  <p>
+    Below is your lookup table. <strong>Click any of the 8 output squares to flip it</strong>.
+    Watch your custom rule play out live. Or hit a preset — those <em>are</em> the four rules
+    from the zoo above, revealed.
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 3 · The Rule Builder -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">Design a 3-cell rule · click any output to flip it</p>
+    <canvas id="sim-builder" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <button class="btn" data-preset="0" title="Rule 0 — every input → off">🏁 Silent</button>
+      <button class="btn" data-preset="184" title="Rule 184 — the 'traffic' rule">🔁 Ticker</button>
+      <button class="btn" data-preset="30" title="Rule 30 — Wolfram's PRNG">🎲 Wild</button>
+      <button class="btn" data-preset="110" title="Rule 110 — Turing complete">🧠 Weird</button>
+      <button class="btn btn-ghost" id="rule-dice">🎲 Surprise me · random rule</button>
+    </div>
+    <div class="sim-controls">
+      <label class="slider-block" style="flex:1 1 260px;">
+        <span class="slider-label"><span>Or dial any rule 0–255</span><span class="value">30</span></span>
+        <input type="range" min="0" max="255" value="30" step="1" data-fmt="{v}">
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted);white-space:nowrap;">
+        <input type="checkbox" id="rule-random"> random start (else 1 lit pixel)
+      </label>
+    </div>
+    <div class="sim-metrics">
+      <div class="metric" id="rule-detected"><div class="label">Detected fate</div><div class="value">—</div><div class="delta">from tail entropy</div></div>
+      <div class="metric" id="rule-known"><div class="label">Known (Wolfram)</div><div class="value">—</div><div class="delta">hand-classified</div></div>
+      <div class="metric" id="rule-h"><div class="label">Mean row H</div><div class="value">—</div><div class="delta">bits · 1.0 = 50/50 max</div></div>
+    </div>
+    <p style="margin:16px 0 4px;font-size:13px;font-weight:700;color:var(--ink);">Or browse the gallery — click any tile</p>
+    <div class="rule-gallery" id="rule-gallery"></div>
+  </div>
+
+  <div class="callout warn">
+    <strong>The random / complex frontier is fuzzy.</strong> When the automatic detector
+    disagrees with Wolfram's hand-classification, that mismatch is the whole point — the
+    "wild" fate and the "weird" fate can look statistically identical from far away. Real markets
+    and ecosystems have exactly the same problem: statistical randomness at scale, hidden
+    structure at every zoom level. One number can't always tell them apart.
+  </div>
+
+  <h2>Where entropy shows up</h2>
+  <p>
+    File compression (fewer bits per symbol when a language has lower entropy), cryptography
+    (unpredictability = security), machine learning (cross-entropy is the loss function of
+    almost every classifier), physics (Boltzmann's version differs from Shannon's only in units),
+    diversity measurement in ecology and antitrust. One number. Everywhere.
+  </p>
+
+  <div class="next-nav">
+    <a href="../sir/">← SIR epidemic</a>
+    <a href="../random-walk/">Random walks →</a>
+  </div>
+</main>
+<script type="module" src="entropy.js?v=3"></script>
+</body>
+</html>
