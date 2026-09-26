@@ -41,7 +41,7 @@ MODELS: list[IndexEntry] = [
     IndexEntry(10, "Network models",            "networks",      "planned"),
     IndexEntry(11, "SIR epidemic (contagion)",  "networks",      "available", "11_SIR_Epidemic"),
     # Uncertainty & dynamics
-    IndexEntry(12, "Entropy",                   "dynamics",      "planned"),
+    IndexEntry(12, "Entropy",                   "dynamics",      "available", "12_Entropy"),
     IndexEntry(13, "Random walks",              "dynamics",      "available", "13_Random_Walks"),
     IndexEntry(14, "Path dependence (urns)",    "dynamics",      "available", "14_Path_Dependence"),
     IndexEntry(15, "Schelling segregation",     "dynamics",      "available", "15_Schelling_Segregation"),
