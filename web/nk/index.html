@@ -16,108 +16,148 @@
   </nav>
 
   <p class="byline">Ch. 28 · Learning &amp; search</p>
-  <h1>When smart hill-climbing gets stuck</h1>
+  <h1>The map has traps</h1>
   <p class="subtitle">
-    You're designing a product with 6 yes/no decisions.
-    <br>The rules keep changing under your feet. Try to reach the best version.
+    You're designing something with 6 yes/no decisions.
+    <br>Every decision tugs on the others. Find the best version.
   </p>
 
   <p>
-    Six decisions: <strong>🎨 colour · 📦 size · ⚙️ features · 🎵 sound · 🚀 speed · 💰 price</strong>.
-    Every combination has a "fitness" (call it customer love, or evolutionary fitness — same math).
-    If each decision were <em>independent</em>, you could just tweak them one at a time and reach the
-    best version. But when decisions <strong>interact</strong> — a loud sound is great on a fast big product
-    but obnoxious on a small quiet one — you land in a maze of local peaks. Try climbing to the top:
+    Below is your search space: <strong>64 possible designs</strong>, laid out as an 8×8 map.
+    Every square has a hidden <em>fitness</em> — how much customers love that combination.
+    <span style="color:#ebcf50;font-weight:600;">Yellow</span> squares are wins.
+    <span style="color:#3d3a70;font-weight:600;">Deep purple</span> squares are duds.
+    <strong>Neighbouring squares differ by exactly one flipped decision</strong> — a small step in design-space
+    is a small step on the map.
+  </p>
+
+  <p>
+    If your six decisions worked <em>independently</em>, the map would be a single smooth hill: tweak one
+    thing at a time and climb. But real decisions <strong>interact</strong> — a loud sound is great on a big
+    fast product, obnoxious on a small quiet one. As interactions grow, the smooth hill shatters into a
+    minefield of little peaks. Turn the K dial and watch:
   </p>
 
   <!-- ============================================================ -->
-  <!-- SIM 1 · Interactive climb game -->
+  <!-- SIM 1 · The ruggedness dial -->
   <!-- ============================================================ -->
   <div class="sim">
-    <p class="sim-title">Play the climber · click any decision to flip it</p>
-    <canvas id="sim-climber" class="sim-canvas"></canvas>
+    <p class="sim-title">Turn the ruggedness dial · K = how much decisions interact</p>
+    <canvas id="sim-terrain" class="sim-canvas"></canvas>
     <div class="sim-controls">
       <label class="slider-block">
-        <span class="slider-label"><span>K · how much decisions interact</span><span class="value">2</span></span>
-        <input type="range" min="0" max="5" value="2" step="1" data-fmt="{v}">
+        <span class="slider-label"><span>K · interactions per decision</span><span class="value">0</span></span>
+        <input type="range" min="0" max="5" value="0" step="1" data-fmt="{v}">
       </label>
-    </div>
-    <div class="sim-controls">
-      <button class="btn btn-primary" id="climber-hint">🎯 Show the best move</button>
-      <button class="btn" id="climber-jump">🌪️ Big jump (flip 3 random bits)</button>
-      <button class="btn" id="climber-restart">🎲 Random restart</button>
-      <button class="btn btn-ghost" id="climber-new">🎨 New landscape</button>
+      <button class="btn btn-ghost" id="terrain-new">🎲 New landscape</button>
     </div>
     <div class="sim-metrics">
-      <div class="metric" id="climber-fit"><div class="label">Your fitness</div><div class="value">—</div><div class="delta">% of global max</div></div>
-      <div class="metric" id="climber-max"><div class="label">Global max</div><div class="value">—</div><div class="delta">best any design can do</div></div>
-      <div class="metric" id="climber-moves"><div class="label">Moves</div><div class="value">0</div></div>
-      <div class="metric" id="climber-peaks"><div class="label">Local peaks</div><div class="value">—</div><div class="delta">traps in the terrain</div></div>
+      <div class="metric" id="terrain-peaks"><div class="label">Local peaks</div><div class="value">1</div><div class="delta">traps in the terrain</div></div>
+      <div class="metric" id="terrain-max"><div class="label">Global max</div><div class="value">—</div><div class="delta">best fitness possible</div></div>
     </div>
   </div>
 
   <div class="callout aha">
-    <strong>Turn K up gradually.</strong> At <strong>K = 0</strong>, every card shows one obvious best flip
-    (green +something). You'll click your way to the top in ~6 moves. At <strong>K = 3</strong>, most cards
-    show red or zero deltas and you get stuck on a mediocre peak with no way up. That's the whole story:
-    interactions kill greedy search. <strong>Try the same K a few times</strong> — different random starts
-    strand you on different local peaks. That's why <em>diverse teams</em> beat single searchers on rugged
-    problems (Page, <em>The Difference</em>).
+    <strong>Drag K from 0 to 5.</strong> The single golden hill fractures into a dozen mini-peaks (the white
+    rings). Every ring is a valid <em>"local best"</em> — a design where every one-flip neighbour is worse.
+    You can't tell from your neighbours that you're not at the top. That's the whole trap.
   </div>
 
-  <h2>Race three strategies on the same terrain</h2>
+  <h2>Now you climb it</h2>
   <p>
-    Now give three searchers the same budget of moves on the same landscape:
+    You start at a random design (the blue walker). Your six decisions are the cards below the map. Each card
+    shows what happens if you flip that decision — <span style="color:var(--success);font-weight:600;">green ↑</span>
+    the design gets better, <span style="color:var(--danger);font-weight:600;">red ↓</span> it gets worse.
+    Click any card to flip it. The walker teleports to its new home on the map.
   </p>
-  <ul>
-    <li><strong>Hill climb</strong> — always take the best neighbouring bit-flip. Greedy. Stops at the first
-      local peak it finds.</li>
-    <li><strong>Random restart</strong> — hill climb, but from ten different random starts. Diversity insurance.</li>
-    <li><strong>Long jumps</strong> — mostly hill climb, occasionally flip many bits at once. Costly, but
-      escapes local peaks.</li>
-  </ul>
 
   <!-- ============================================================ -->
-  <!-- SIM 2 · Strategy race -->
+  <!-- SIM 2 · The climber game -->
   <!-- ============================================================ -->
   <div class="sim">
-    <p class="sim-title">Best-fitness-so-far · same landscape, three strategies</p>
-    <canvas id="sim2" class="sim-canvas"></canvas>
+    <p class="sim-title">Climb it yourself · click a card to flip that decision</p>
+    <canvas id="sim-climb" class="sim-canvas"></canvas>
     <div class="sim-controls">
       <label class="slider-block">
-        <span class="slider-label"><span>K</span><span class="value">4</span></span>
-        <input type="range" min="0" max="9" value="4" step="1" data-fmt="{v}">
-      </label>
-      <label class="slider-block">
-        <span class="slider-label"><span>Budget (moves)</span><span class="value">300</span></span>
-        <input type="range" min="50" max="1000" value="300" step="50" data-fmt="{v}">
+        <span class="slider-label"><span>K · interactions per decision</span><span class="value">2</span></span>
+        <input type="range" min="0" max="5" value="2" step="1" data-fmt="{v}">
       </label>
     </div>
     <div class="sim-controls">
-      <button class="btn btn-primary" id="sim2-run">🏁 Race them</button>
+      <button class="btn btn-primary" id="climb-hint">🎯 Show the best move</button>
+      <button class="btn" id="climb-jump">🌪️ Big jump (flip 3 random)</button>
+      <button class="btn" id="climb-restart">🎲 Random restart</button>
+      <button class="btn btn-ghost" id="climb-new">🎨 New landscape</button>
     </div>
     <div class="sim-metrics">
-      <div class="metric" id="sim2-hc"><div class="label">Hill climb best</div><div class="value">—</div></div>
-      <div class="metric" id="sim2-rr"><div class="label">Random restart</div><div class="value">—</div></div>
-      <div class="metric" id="sim2-lj"><div class="label">Long jumps</div><div class="value">—</div></div>
-      <div class="metric" id="sim2-max"><div class="label">Global max</div><div class="value">—</div></div>
+      <div class="metric" id="climb-fit"><div class="label">Your fitness</div><div class="value">—</div><div class="delta">% of global max</div></div>
+      <div class="metric" id="climb-max"><div class="label">Global max</div><div class="value">—</div><div class="delta">best design possible</div></div>
+      <div class="metric" id="climb-moves"><div class="label">Moves</div><div class="value">0</div></div>
+      <div class="metric" id="climb-peaks"><div class="label">Local peaks</div><div class="value">—</div><div class="delta">traps on the map</div></div>
+    </div>
+  </div>
+
+  <div class="callout aha">
+    <strong>Try this.</strong> Set K = 4. Take <em>only green-card</em> steps. Eventually every card
+    goes red or grey — you're stuck. Now peek at the map: usually not the golden 🏆. Hit
+    <strong>🌪️ big jump</strong> and try again. You land on a totally different local peak. That's the
+    story of NK: greedy climbing wins on smooth terrain, dooms you on rugged terrain, and different starts
+    reach different tops.
+  </div>
+
+  <h2>Three explorers, same terrain</h2>
+  <p>
+    Same map. Same move budget. Three personalities:
+  </p>
+  <ul>
+    <li><strong style="color:#4C6EF5;">H · Hill climb.</strong> Always takes the best-improving flip. Fastest to
+      a peak — then stuck forever.</li>
+    <li><strong style="color:#37B24D;">R · Restart squad.</strong> Hill-climbs; when stuck, teleports to a fresh
+      random start. Diversity insurance.</li>
+    <li><strong style="color:#F76707;">L · Long-jumper.</strong> Mostly climbs, but every so often flips several
+      bits at once. Costly. Escapes local peaks.</li>
+  </ul>
+  <p>
+    Watch them move. Each walker leaves a trail in its own colour. The bars below race
+    <em>best-fitness-so-far</em> — that's what actually counts, since you'd remember your best design.
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 3 · Strategy race -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">The race · three explorers, one map, one budget</p>
+    <canvas id="sim-race" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <label class="slider-block">
+        <span class="slider-label"><span>K · terrain ruggedness</span><span class="value">3</span></span>
+        <input type="range" min="1" max="5" value="3" step="1" data-fmt="{v}">
+      </label>
+      <button class="btn btn-primary" id="race-run">🏁 Race them</button>
+      <button class="btn btn-ghost" id="race-new">🎨 New landscape</button>
+    </div>
+    <div class="sim-metrics">
+      <div class="metric" id="race-hc"><div class="label">🎯 Hill climb</div><div class="value">—</div><div class="delta">greedy</div></div>
+      <div class="metric" id="race-rr"><div class="label">🎲 Restart squad</div><div class="value">—</div><div class="delta">random restarts</div></div>
+      <div class="metric" id="race-lj"><div class="label">🌪️ Long-jumper</div><div class="value">—</div><div class="delta">occasional big flips</div></div>
     </div>
   </div>
 
   <div class="callout warn">
-    <strong>The management-strategy translation.</strong> Kauffman &amp; Levinthal's argument, restated: on a
-    <em>smooth</em> landscape (few interactions, low K), incremental optimisation wins. On a <em>rugged</em>
-    landscape (product features that constrain each other, policies that ripple), pure incrementalism
-    strands you on a local hilltop. That's why radically-different competitors sometimes outperform
-    "best-in-class" incumbents — they climb a different hill entirely.
+    <strong>The management-strategy translation.</strong> Kauffman &amp; Levinthal's argument in plain
+    English: on a <em>smooth</em> landscape (few interactions, low K), incremental optimisation wins — go
+    faster than your rivals. On a <em>rugged</em> landscape (product features that constrain each other,
+    policies that ripple), pure incrementalism strands you on a mid-height hilltop while a competitor
+    starting from a wildly different design climbs a taller one. That's why radical entrants sometimes
+    beat best-in-class incumbents — they climb a different hill entirely.
   </div>
 
-  <h2>Diverse teams &gt; homogeneous experts (on rugged terrain)</h2>
+  <h2>Diverse teams &gt; homogeneous experts</h2>
   <p>
-    Page's <em>The Difference</em> generalises this: if smart searchers all start from the same place with
-    the same heuristic, they all get stuck on the same local peak. Different searchers get stuck on
-    <em>different</em> peaks — and can share their moves. The mathematical case for diversity, hiding in an
-    NK landscape.
+    Scott Page's <em>The Difference</em> generalises the restart squad. If smart searchers all start from the
+    same place with the same heuristic, they all get stuck on the same local peak. Different searchers get
+    stuck on <em>different</em> peaks — and can share their moves. The mathematical case for cognitive
+    diversity, hiding inside an NK landscape.
   </p>
 
   <div class="next-nav">
@@ -125,6 +165,6 @@
     <a href="../">All stories →</a>
   </div>
 </main>
-<script type="module" src="nk.js?v=2"></script>
+<script type="module" src="nk.js?v=3"></script>
 </body>
 </html>
