@@ -80,6 +80,11 @@ function initUrnSim() {
   const rng = makeRng(Math.floor(Math.random() * 1e6));
   function jitter() { return (rng() - 0.5) * 0.4; }
 
+  // After applyStep() transitions to 'idle', we need one more render frame so
+  // the balls are all drawn uniformly from the array — instead of leaving the
+  // "just-committed" balls drawn with shadow at slightly-different positions.
+  let extraSettleFrames = 0;
+
   function reset() {
     balls = [
       { color: 'red',  jx: jitter(), jy: jitter() },
@@ -167,6 +172,9 @@ function initUrnSim() {
     drawnColor = drawnFromXY = newBallColor = null;
     phase = 'idle';
     phaseStart = performance.now();
+    // Force one extra render so the loop redraws the urn uniformly from the
+    // array instead of leaving the transition frame's mixed rendering on screen.
+    extraSettleFrames = 1;
     updateMetrics();
   }
 
@@ -325,11 +333,16 @@ function initUrnSim() {
       const drawnColorCached = drawnColor;
       const newBallColorCached = newBallColor;
       let x, y;
+      // Drawn-ball size multiplier: grows from 1.0 to 1.15 as it leaves the urn,
+      // stays at 1.15 while it's shown, then shrinks back to 1.0 as it lands so
+      // it sits at the same size as the other balls in the grid.
+      let drawnScale = 1.15;
       if (phase === 'drawing') {
         const t = Math.min(1, (now - phaseStart) / DRAW_UP_MS);
         const eased = easeOut(t);
         x = drawnFromXY.x + (W / 2 - drawnFromXY.x) * eased;
         y = drawnFromXY.y + (holdY - drawnFromXY.y) * eased;
+        drawnScale = 1.0 + 0.15 * eased;
         if (t >= 1) { phase = 'showing'; phaseStart = now; }
       } else if (phase === 'showing') {
         x = W / 2; y = holdY;
@@ -344,6 +357,7 @@ function initUrnSim() {
         const eased = easeOut(t);
         x = W / 2 + (tx - W / 2) * eased;
         y = holdY + (ty - holdY) * (eased * eased);
+        drawnScale = 1.15 - 0.15 * eased;
         // New ball drops in in parallel
         if (newBallColorCached) {
           const nCol = (balls.length + 1) % layout.cols;
@@ -358,7 +372,7 @@ function initUrnSim() {
         }
         if (t >= 1) applyStep();
       }
-      drawBall(ctx, x, y, rBall * 1.15, drawnColorCached, { shadow: true });
+      drawBall(ctx, x, y, rBall * drawnScale, drawnColorCached, { shadow: true });
     }
 
     // Draw history strip at bottom
@@ -376,7 +390,10 @@ function initUrnSim() {
   // Animation loop — kept running while there's animation or auto-draws.
   const loop = makeLoop(() => {
     render();
-    if (phase === 'idle' && auto === 0) return false;
+    if (phase !== 'idle') return;
+    if (auto > 0) return;
+    if (extraSettleFrames > 0) { extraSettleFrames--; return; }
+    return false;
   });
 
   onResize(canvas, CANVAS_H, () => render());
