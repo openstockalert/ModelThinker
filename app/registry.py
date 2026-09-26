@@ -46,7 +46,7 @@ MODELS: list[IndexEntry] = [
     IndexEntry(14, "Path dependence (urns)",    "dynamics",      "available", "14_Path_Dependence"),
     IndexEntry(15, "Schelling segregation",     "dynamics",      "available", "15_Schelling_Segregation"),
     IndexEntry(16, "Lyapunov & equilibria",     "dynamics",      "planned"),
-    IndexEntry(17, "Markov models",             "dynamics",      "planned"),
+    IndexEntry(17, "Markov chains",             "dynamics",      "available", "17_Markov_Chains"),
     IndexEntry(18, "Systems dynamics",          "dynamics",      "planned"),
     IndexEntry(19, "Threshold models (feedback)","dynamics",     "planned"),
     # Choice and strategy
