@@ -72,16 +72,16 @@ ES modules mean a `file://` URL won't work — you need any tiny static server (
 
 | Chapter | Model | Python module | Streamlit page | Web story | Doc |
 |---|---|---|---|---|---|
-| 5  | Normal / CLT             | `modelthinker.distributions.normal`         | `05_Normal_Distribution`     | [web](web/normal/)          | [doc](docs/models/ch05_normal.md) |
-| 6  | Power laws               | `modelthinker.distributions.power_law`      | `06_Power_Laws`              | [web](web/power-laws/)      | [doc](docs/models/ch06_power_law.md) |
-| 11 | SIR epidemic             | `modelthinker.networks.sir`                 | `11_SIR_Epidemic`            | [web](web/sir/)             | [doc](docs/models/ch11_sir.md) |
-| 12 | Entropy                  | `modelthinker.dynamics.entropy`             | `12_Entropy`                 | [web](web/entropy/)         | [doc](docs/models/ch12_entropy.md) |
-| 13 | Random walks             | `modelthinker.dynamics.random_walk`         | `13_Random_Walks`            | [web](web/random-walk/)     | [doc](docs/models/ch13_random_walk.md) |
-| 14 | Path dependence          | `modelthinker.dynamics.path_dependence`     | `14_Path_Dependence`         | [web](web/path-dependence/) | [doc](docs/models/ch14_path_dependence.md) |
-| 15 | Schelling segregation    | `modelthinker.dynamics.schelling`           | `15_Schelling_Segregation`   | [web](web/schelling/)       | [doc](docs/models/ch15_schelling.md) |
-| 15 | Life & Local Majority    | `modelthinker.dynamics.life_and_majority`   | `15_Life_and_Majority`       | [web](web/life-and-majority/) | [doc](docs/models/ch15b_life_and_majority.md) |
-| 17 | Markov chains            | `modelthinker.dynamics.markov`              | `17_Markov_Chains`           | [web](web/markov/)          | [doc](docs/models/ch17_markov.md) |
-| 28 | NK rugged landscape      | `modelthinker.learning.nk_landscape`        | `28_NK_Landscape`            | [web](web/nk/)              | [doc](docs/models/ch28_nk_landscape.md) |
+| 5  | Normal / CLT             | `modelthinker.distributions.normal`         | `05_Normal_Distribution`     | [web ↗](https://openstockalert.github.io/ModelThinker/normal/)          | [doc](docs/models/ch05_normal.md) |
+| 6  | Power laws               | `modelthinker.distributions.power_law`      | `06_Power_Laws`              | [web ↗](https://openstockalert.github.io/ModelThinker/power-laws/)      | [doc](docs/models/ch06_power_law.md) |
+| 11 | SIR epidemic             | `modelthinker.networks.sir`                 | `11_SIR_Epidemic`            | [web ↗](https://openstockalert.github.io/ModelThinker/sir/)             | [doc](docs/models/ch11_sir.md) |
+| 12 | Entropy                  | `modelthinker.dynamics.entropy`             | `12_Entropy`                 | [web ↗](https://openstockalert.github.io/ModelThinker/entropy/)         | [doc](docs/models/ch12_entropy.md) |
+| 13 | Random walks             | `modelthinker.dynamics.random_walk`         | `13_Random_Walks`            | [web ↗](https://openstockalert.github.io/ModelThinker/random-walk/)     | [doc](docs/models/ch13_random_walk.md) |
+| 14 | Path dependence          | `modelthinker.dynamics.path_dependence`     | `14_Path_Dependence`         | [web ↗](https://openstockalert.github.io/ModelThinker/path-dependence/) | [doc](docs/models/ch14_path_dependence.md) |
+| 15 | Schelling segregation    | `modelthinker.dynamics.schelling`           | `15_Schelling_Segregation`   | [web ↗](https://openstockalert.github.io/ModelThinker/schelling/)       | [doc](docs/models/ch15_schelling.md) |
+| 15 | Life & Local Majority    | `modelthinker.dynamics.life_and_majority`   | `15_Life_and_Majority`       | [web ↗](https://openstockalert.github.io/ModelThinker/life-and-majority/) | [doc](docs/models/ch15b_life_and_majority.md) |
+| 17 | Markov chains            | `modelthinker.dynamics.markov`              | `17_Markov_Chains`           | [web ↗](https://openstockalert.github.io/ModelThinker/markov/)          | [doc](docs/models/ch17_markov.md) |
+| 28 | NK rugged landscape      | `modelthinker.learning.nk_landscape`        | `28_NK_Landscape`            | [web ↗](https://openstockalert.github.io/ModelThinker/nk/)              | [doc](docs/models/ch28_nk_landscape.md) |
 
 The remaining chapters (7–10, 16, 18–27, 29) are stubbed out in `app/registry.py` as `planned` — the package structure is ready, just drop in a module + page + doc + notebook.
 
