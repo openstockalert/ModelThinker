@@ -136,7 +136,9 @@ function initSim1() {
   const CANVAS_H = 340;
   const N = N_AGENTS;
   let R0 = 2.5;
-  let state = makeAgents({ N, seed: 1 });
+  // Random seed so the first click doesn't hit a deterministic dud where
+  // patient zero happens to recover on day 1 without infecting anyone.
+  let state = makeAgents({ N, seed: Math.floor(Math.random() * 100000) });
   let day = 0, peakI = 0, peakDay = 0;
   let pulses = new Map();       // idx → { kind, startTime }
   let lastTick = 0;             // ms timestamp of last "day advance"
@@ -167,7 +169,20 @@ function initSim1() {
     // prune expired pulses
     for (const [idx, p] of pulses) if (now - p.startTime > PULSE_MS) pulses.delete(idx);
     render();
-    if (countState(state.arr, 1) === 0) { playBtn.textContent = '▶ Release patient zero'; return false; }
+    if (countState(state.arr, 1) === 0) {
+      // Fizzle guard: if patient zero recovered within a day or two without
+      // infecting anyone, silently reroll and keep running. This is a real
+      // stochastic outcome (~10% at R0=2.5) but a terrible first-click UX,
+      // and the reset button is right there for anyone who wants a rerun.
+      if (day <= 2 && countState(state.arr, 2) === 1) {
+        state = makeAgents({ N, seed: Math.floor(Math.random() * 100000) });
+        day = 0; peakI = 0; peakDay = 0; pulses.clear();
+        lastTick = now;
+        return true;
+      }
+      playBtn.textContent = '▶ Release patient zero';
+      return false;
+    }
     if (day > 500) return false;
   });
 
@@ -200,7 +215,7 @@ function initSim2() {
   const CANVAS_H = 320;
   const N = N_AGENTS;
   let R0 = 3.0, vFrac = 0.5;
-  let state = makeAgents({ N, seed: 3, immuneFrac: vFrac });
+  let state = makeAgents({ N, seed: Math.floor(Math.random() * 100000), immuneFrac: vFrac });
   let day = 0;
   let pulses = new Map();
   let lastTick = 0;
@@ -233,7 +248,20 @@ function initSim2() {
     }
     for (const [idx, p] of pulses) if (now - p.startTime > PULSE_MS) pulses.delete(idx);
     render();
-    if (countState(state.arr, 1) === 0) { playBtn.textContent = '▶ Start outbreak'; return false; }
+    if (countState(state.arr, 1) === 0) {
+      // Fizzle guard (see sim1) — reroll only if the outbreak died before
+      // spreading beyond patient zero. Existing pre-vaccinated recoveries
+      // don't count against the "only patient zero recovered" test.
+      const preVax = Math.round(N * vFrac);
+      if (day <= 2 && countState(state.arr, 2) - preVax === 1) {
+        state = makeAgents({ N, seed: Math.floor(Math.random() * 100000), immuneFrac: vFrac });
+        day = 0; pulses.clear();
+        lastTick = now;
+        return true;
+      }
+      playBtn.textContent = '▶ Start outbreak';
+      return false;
+    }
     if (day > 500) return false;
   });
 
