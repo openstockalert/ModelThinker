@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Life &amp; Local Majority · a playable story about emergence</title>
+<link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+<main class="wrap">
+
+  <nav class="top-nav">
+    <a href="../">← All playable stories</a>
+    <span class="spacer"></span>
+    <span class="crumb">ModelThinker · web</span>
+  </nav>
+
+  <p class="byline">Ch. 15 · Local interactions</p>
+  <h1>Three rules. Endless universes.</h1>
+  <p class="subtitle">
+    In 1970, John Conway put down three rules for cells on a grid. Fifty years later, people are
+    still finding surprises hidden in them.
+  </p>
+
+  <p>
+    A cell is <strong>alive</strong> or <strong>dead</strong>. Each step every cell counts its 8
+    Moore neighbours and updates itself using <em>three lines of rules</em>:
+  </p>
+  <ul>
+    <li>A live cell with <strong>2 or 3</strong> live neighbours <em>survives</em>.</li>
+    <li>A dead cell with <strong>exactly 3</strong> live neighbours <em>is born</em>.</li>
+    <li>Any other cell <em>dies</em>.</li>
+  </ul>
+  <p>
+    That's it. That's the whole game. What comes out of these three rules is astonishing:
+    still lifes, oscillators, spaceships that move across the grid, patterns that emit new
+    patterns forever, and — proven in 2000 — a full universal Turing machine. This is <strong>emergence</strong>,
+    the canonical demonstration that arbitrary complexity can hide inside arbitrarily simple local
+    rules.
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 1 · Life sandbox -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">Pick a pattern · hit play · watch three rules produce a universe</p>
+
+    <div id="life-patterns" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+      <!-- Populated by JS from PATTERNS -->
+    </div>
+
+    <div id="life-info" style="padding:10px 14px;background:var(--bg-soft);border-radius:var(--radius-sm);margin-bottom:12px;font-size:14px;line-height:1.5;min-height:24px;"></div>
+
+    <canvas id="life-canvas" class="sim-canvas" style="cursor:crosshair;"></canvas>
+
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="life-play">▶ Play</button>
+      <button class="btn" id="life-step">⏭ Step</button>
+      <button class="btn" id="life-clear">✖ Clear</button>
+      <button class="btn btn-ghost" id="life-random">🎲 Randomise</button>
+      <label class="slider-block" style="min-width:180px;flex:0 1 220px;">
+        <span class="slider-label"><span>Speed</span><span class="value">10 /s</span></span>
+        <input type="range" min="1" max="30" value="10" step="1" data-fmt="{v} /s">
+      </label>
+    </div>
+
+    <div class="sim-metrics">
+      <div class="metric" id="life-gen"><div class="label">Generation</div><div class="value">0</div></div>
+      <div class="metric" id="life-pop"><div class="label">Live cells</div><div class="value">0</div></div>
+      <div class="metric" id="life-peak"><div class="label">Peak population</div><div class="value">0</div><div class="delta">most ever alive</div></div>
+      <div class="metric" id="life-mode"><div class="label">Status</div><div class="value">🎨 Draw mode</div></div>
+    </div>
+
+    <p style="margin-top:12px;color:var(--muted);font-size:14px;">
+      🖱 <strong>Click any cell</strong> to toggle it — or drag to paint. Newly born cells glow
+      <span style="color:#F76707;font-weight:600;">orange</span>; cells that have survived a while
+      settle into <span style="color:#4C6EF5;font-weight:600;">blue</span>. Toroidal edges (top wraps
+      to bottom, left to right) mean gliders keep circling forever.
+    </p>
+  </div>
+
+  <div class="callout aha">
+    <strong>Try 🌰 Acorn.</strong> Seven cells. Set speed to 30/s and press play. This little seed produces
+    over a thousand generations of chaos before it settles down at generation <strong>5206</strong> —
+    when it finally quiets, it has left behind 41 stable objects and thrown 13 gliders off into space.
+    Or try 🔫 Gosper glider gun: the first pattern <em>proven</em> to grow forever, and how Bill Gosper won
+    Conway's original $50 prize in 1970.
+  </div>
+
+  <h2>A much quieter cellular automaton</h2>
+  <p>
+    Same grid. Same 8-cell Moore neighbourhood. One tiny rule change: instead of Conway's 2/3
+    survival rule, <strong>each cell just copies whichever value most of its neighbours hold</strong>.
+    That's it. Local majority wins. Let's watch it play out.
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 2 · Local Majority -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">Watch consensus solidify into stable clusters</p>
+    <canvas id="maj-canvas" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="maj-play">▶ Play</button>
+      <button class="btn btn-ghost" id="maj-reset">🎲 New random start</button>
+      <label class="slider-block" style="min-width:220px;">
+        <span class="slider-label"><span>Initial 1-density</span><span class="value">50%</span></span>
+        <input type="range" min="15" max="85" value="50" step="5" data-fmt="{v}%">
+      </label>
+    </div>
+    <div class="sim-metrics">
+      <div class="metric" id="maj-step"><div class="label">Step</div><div class="value">0</div></div>
+      <div class="metric" id="maj-share"><div class="label">Blue share</div><div class="value">50%</div></div>
+      <div class="metric" id="maj-clusters"><div class="label">Blue clusters</div><div class="value">—</div><div class="delta">fewer = more consensus</div></div>
+      <div class="metric" id="maj-flips"><div class="label">Cells flipped</div><div class="value">0</div><div class="delta">stops changing when 0</div></div>
+    </div>
+    <p style="margin-top:12px;color:var(--muted);font-size:14px;">
+      Try a fresh start at low density (say 25%) — the minority side gets absorbed almost entirely.
+      Try 50% — the grid crystallises into a small handful of large regions. Try 75% — mirror
+      image of the low-density outcome. Consensus is <em>always</em> local, never global.
+    </p>
+  </div>
+
+  <div class="callout warn">
+    <strong>Two automata. One neighbourhood. Two worlds.</strong> Both simulators above use the exact
+    same 8-cell Moore-neighbourhood update; only the update rule differs. Conway's Life is <em>class 4</em>
+    on Wolfram's cellular-automaton scale — complex, unpredictable, Turing-complete. Local Majority is
+    <em>class 2</em> — always settles to a stable clustered fixed point. The difference between "eternally
+    surprising" and "predictably boring" is literally three lines of code.
+  </div>
+
+  <h2>Where these show up</h2>
+  <ul>
+    <li><strong>Conway's Life.</strong> The direct study is niche, but the *idea* — that huge state
+      spaces can emerge from small rules — reshaped how physicists, biologists, and complexity
+      scientists think about pattern formation. Stephen Wolfram's <em>A New Kind of Science</em>
+      pushed the argument to its limits.</li>
+    <li><strong>Local Majority.</strong> Voter models, opinion dynamics, dialects, network coordination.
+      Every time you notice that your neighbourhood, workplace, or friend group agrees on things
+      you'd have no strong opinion on alone, some flavour of local-majority dynamics is at work.</li>
+    <li><strong>Same-grid siblings.</strong> Schelling segregation (Ch 15.3) sits alongside these
+      — cells with preferences moving around. See our <a href="../schelling/">Schelling story</a>
+      for the direct comparison.</li>
+  </ul>
+
+  <p style="margin-top:32px;">
+    Want cluster counts, quantitative pattern taxonomy, and multi-step overlays? Open the
+    <a href="../../app/Home.py">Streamlit version</a>. Full theory in the
+    <a href="../../docs/models/ch15b_life_and_majority.md">model doc</a>.
+  </p>
+
+  <div class="next-nav">
+    <a href="../markov/">← Markov chains</a>
+    <a href="../">All stories →</a>
+  </div>
+</main>
+<script type="module" src="life-and-majority.js?v=1"></script>
+</body>
+</html>
