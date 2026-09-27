@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Networks · a playable story about who knows whom</title>
+<link rel="stylesheet" href="../shared/style.css">
+<style>
+  /* --- Friendship-paradox score bars (Sim 2) --- */
+  .fp-scores {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .fp-score {
+    background: var(--bg-soft);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+  }
+  .fp-score .fp-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .fp-score .fp-num {
+    font-size: 34px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    margin: 6px 0;
+  }
+  .fp-score .fp-hint {
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .fp-score.friend .fp-num { color: var(--accent); }
+  .fp-score.person .fp-num { color: var(--primary); }
+
+  /* --- Attack sim (Sim 3) mini captions --- */
+  .attack-caption {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 8px;
+  }
+  .attack-caption > div {
+    text-align: center;
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-soft);
+    font-size: 13px;
+  }
+  .attack-caption .cap-title {
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+  .attack-caption .cap-hint {
+    font-size: 11px;
+    color: var(--muted);
+  }
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <nav class="top-nav">
+    <a href="../">← All playable stories</a>
+    <span class="spacer"></span>
+    <span class="crumb">ModelThinker · web</span>
+  </nav>
+
+  <p class="byline">Ch. 10 · Networks</p>
+  <h1>Who you know shapes what happens</h1>
+  <p class="subtitle">
+    Same people. Different wiring. Different world.
+    <br>Networks aren't about the people. They're about the connections between them.
+  </p>
+
+  <p>
+    A network is a bunch of dots (call them <em>people</em>) and lines connecting them (call them
+    <em>friendships</em>). Sounds trivial. It isn't. Change the pattern of lines — leaving every
+    person otherwise identical — and rumors spread faster, ideas travel further, crises cascade
+    or fizzle, and the whole system either shrugs off failures or collapses at the first attack.
+    <strong>The wiring is the model.</strong>
+  </p>
+
+  <p>
+    Below we'll build up to three surprising facts. Along the way we'll play with three of the
+    canonical network shapes: <strong>ring lattices</strong> where you only know your neighbours,
+    <strong>small-world networks</strong> where a few random shortcuts change everything, and
+    <strong>scale-free networks</strong> where a handful of super-connected hubs dominate.
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 1 · The rewiring switch — small-world in action -->
+  <!-- ============================================================ -->
+  <h2>Fact 1: A few shortcuts turn a village into a small world</h2>
+  <p>
+    Below is a village of 40 people. Everyone knows their 4 nearest neighbours — just like a
+    real village where you know the folks next door but not the family across town. To get a
+    message across, it has to be passed from neighbour to neighbour to neighbour…
+    that takes many steps.
+  </p>
+  <p>
+    Now drag the <strong>rewiring slider</strong>. Each notch takes a random neighbour edge and
+    replaces it with a random long-distance one — a <em>shortcut</em>. Watch what happens to the
+    "typical steps between two people" number. Then watch what happens to how <em>clustered</em>
+    the village stays.
+  </p>
+
+  <div class="sim">
+    <p class="sim-title">The rewiring switch · drag to add shortcuts</p>
+    <canvas id="sim-rewire" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <label class="slider-block" style="flex:1 1 300px;">
+        <span class="slider-label"><span>Rewiring probability p</span><span class="value">0.00</span></span>
+        <input type="range" min="0" max="100" value="0" step="1" data-fmt="{v}">
+      </label>
+      <button class="btn btn-ghost" id="rewire-preset-0">🏘️ Village (p=0)</button>
+      <button class="btn btn-ghost" id="rewire-preset-small">🌐 Small-world (p=0.1)</button>
+      <button class="btn btn-ghost" id="rewire-preset-random">🎲 Random (p=1)</button>
+    </div>
+    <div class="sim-metrics">
+      <div class="metric" id="rewire-path"><div class="label">Typical steps between two people</div><div class="value">—</div><div class="delta">the "six degrees" number</div></div>
+      <div class="metric" id="rewire-clust"><div class="label">Clustering</div><div class="value">—</div><div class="delta">how many of your friends know each other</div></div>
+      <div class="metric" id="rewire-shortcuts"><div class="label">Shortcuts added</div><div class="value">0</div><div class="delta">rewired long-distance edges</div></div>
+    </div>
+  </div>
+
+  <div class="callout aha">
+    <strong>The surprise.</strong> You only need a <em>tiny</em> amount of rewiring (try p = 0.05)
+    for the "typical steps" number to crash — the network becomes a small world. But clustering
+    barely moves. That's the Watts–Strogatz result: real friendship networks combine
+    "everyone knows their neighbours" with "six degrees of separation" because they only need a
+    handful of long-distance connections to shrink.
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SIM 2 · The friendship paradox -->
+  <!-- ============================================================ -->
+  <h2>Fact 2: Your friends have more friends than you do</h2>
+  <p>
+    Below is a different network — one where a few people are extremely popular hubs, and most
+    people know only a couple of others. (This is what real Twitter follower graphs, citation
+    networks, and airline route maps look like.)
+  </p>
+  <p>
+    Let's play a game. There are two ways to sample a person:
+  </p>
+  <ul>
+    <li><strong>🎲 Random person.</strong> Pick anyone at random.</li>
+    <li><strong>👥 Random friend.</strong> Pick a random person, then pick one of <em>their</em>
+      friends at random. That's the friend you sampled.</li>
+  </ul>
+  <p>
+    Click either button (or hold "×20 fast") and watch the two averages fight it out. Common
+    sense says they should be about the same. Common sense is spectacularly wrong.
+  </p>
+
+  <div class="sim">
+    <p class="sim-title">The friendship paradox · sample a person, or sample a friend</p>
+    <canvas id="sim-paradox" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="fp-random-person">🎲 Random person</button>
+      <button class="btn" id="fp-random-friend">👥 Random friend</button>
+      <button class="btn" id="fp-many-person">×20 people</button>
+      <button class="btn" id="fp-many-friend">×20 friends</button>
+      <button class="btn btn-ghost" id="fp-reset">↺ Reset tally</button>
+    </div>
+    <div class="fp-scores">
+      <div class="fp-score person">
+        <div class="fp-label">🎲 Random-person average friends</div>
+        <div class="fp-num" id="fp-person-num">—</div>
+        <div class="fp-hint" id="fp-person-hint">click "Random person" to sample</div>
+      </div>
+      <div class="fp-score friend">
+        <div class="fp-label">👥 Random-friend average friends</div>
+        <div class="fp-num" id="fp-friend-num">—</div>
+        <div class="fp-hint" id="fp-friend-hint">click "Random friend" to sample</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout aha">
+    <strong>Why it works.</strong> Popular people show up in <em>many</em> friend lists — so when
+    you sample "a friend of a random person", you're much more likely to land on a hub than if you
+    sampled uniformly. This isn't sociology. It's plain combinatorics, and it holds for every
+    non-uniform network ever built. Practical use: to catch an outbreak two weeks earlier, monitor
+    <em>friends of</em> random people — you'll hit the central nodes disproportionately often.
+    Christakis &amp; Fowler (2010) used exactly this trick to spot a Harvard flu wave ahead of
+    population surveillance.
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SIM 3 · Attack the network -->
+  <!-- ============================================================ -->
+  <h2>Fact 3: Hubs are both a superpower and a soft spot</h2>
+  <p>
+    Same network family. Two ways it can lose people. On the left, random failures — a laptop
+    crashes, someone loses their phone, an airport shuts for a snowstorm. On the right, a
+    deliberate hub-first attack — an adversary who knows the topology and always removes the
+    most-connected node next.
+  </p>
+  <p>
+    Watch both destroy the same starting network at the same rate. The colored bars below each
+    panel track the size of the largest surviving cluster. The chart at the bottom overlays the
+    two curves.
+  </p>
+
+  <div class="sim">
+    <p class="sim-title">Random failures vs targeted attacks · same starting network</p>
+    <canvas id="sim-attack" class="sim-canvas"></canvas>
+    <div class="attack-caption">
+      <div>
+        <div class="cap-title" style="color:var(--primary);">🎲 Random failures</div>
+        <div class="cap-hint">nodes chosen uniformly at random</div>
+      </div>
+      <div>
+        <div class="cap-title" style="color:var(--danger);">🎯 Targeted attack</div>
+        <div class="cap-hint">highest-degree node next, every time</div>
+      </div>
+    </div>
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="attack-play">▶ Attack them both</button>
+      <button class="btn" id="attack-reset">↺ New starting network</button>
+    </div>
+    <div class="sim-metrics">
+      <div class="metric" id="attack-nodes"><div class="label">Nodes removed</div><div class="value">0 / 0</div><div class="delta">out of the original network</div></div>
+      <div class="metric" id="attack-rand-lcc"><div class="label">🎲 Largest cluster (random)</div><div class="value">—</div><div class="delta">% of original</div></div>
+      <div class="metric" id="attack-targ-lcc"><div class="label">🎯 Largest cluster (targeted)</div><div class="value">—</div><div class="delta">% of original</div></div>
+    </div>
+  </div>
+
+  <div class="callout warn">
+    <strong>The design lesson.</strong> The internet, airline route maps, and power grids are all
+    scale-free — dominated by hubs. That gives you <em>robustness</em> for free against random
+    failures (most breaks hit unimportant peripheral nodes) and <em>fragility</em> against a smart
+    adversary (a handful of hub failures cascade instantly). The same wiring; two opposite
+    security stories.
+  </div>
+
+  <h2>Where networks matter</h2>
+  <p>
+    Every "how does <em>this</em> spread?" question in this book is really a network question
+    underneath. Contagion (Ch 11), diffusion of ideas, financial contagion in the 2008 crisis,
+    the spread of gossip, terrorist and crime networks, the friendship paradox in disease
+    surveillance, the small-world magic behind six degrees of separation. Change the wiring,
+    change the story.
+  </p>
+
+  <div class="next-nav">
+    <a href="../sir/">← SIR epidemic</a>
+    <a href="../entropy/">Entropy →</a>
+  </div>
+</main>
+<script type="module" src="network.js?v=1"></script>
+</body>
+</html>
