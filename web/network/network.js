@@ -559,19 +559,46 @@ function initParadoxSim() {
       ctx.stroke();
     }
 
-    // Highlight the sampled person's neighbourhood edges
+    // Highlight edges of the *sampled* node — the one whose degree was counted.
+    // For "random person": that IS the person, so show their edges (blue).
+    // For "random friend":  that's the FRIEND (a random neighbour of a random
+    //   person), so show the friend's edges (orange). Draw a small dashed blue
+    //   line from the person → friend to explain how we got there.
     if (highlight.person >= 0) {
       const age = now - highlight.startTime;
       const t = Math.min(1, age / 1600);
       const alpha = 1 - easeOut(t) * 0.7;
-      // Colored edges from person to its neighbours
-      ctx.strokeStyle = highlight.kind === 'friend' ? `rgba(247,103,7,${alpha})` : `rgba(76,110,245,${alpha})`;
-      ctx.lineWidth = 2.5;
-      for (const nb of adj[highlight.person]) {
+
+      if (highlight.kind === 'friend' && highlight.friend >= 0) {
+        // Dashed "we started at the person and hopped to this friend" edge
+        ctx.save();
+        ctx.strokeStyle = `rgba(76,110,245,${alpha * 0.65})`;
+        ctx.lineWidth = 1.6;
+        ctx.setLineDash([5, 4]);
         ctx.beginPath();
         ctx.moveTo(np[highlight.person].x, np[highlight.person].y);
-        ctx.lineTo(np[nb].x, np[nb].y);
+        ctx.lineTo(np[highlight.friend].x, np[highlight.friend].y);
         ctx.stroke();
+        ctx.restore();
+        // The friend's actual neighbourhood — how many friends the sampled friend has
+        ctx.strokeStyle = `rgba(247,103,7,${alpha})`;
+        ctx.lineWidth = 2.5;
+        for (const nb of adj[highlight.friend]) {
+          ctx.beginPath();
+          ctx.moveTo(np[highlight.friend].x, np[highlight.friend].y);
+          ctx.lineTo(np[nb].x, np[nb].y);
+          ctx.stroke();
+        }
+      } else {
+        // "person" case — highlight the person's neighbourhood
+        ctx.strokeStyle = `rgba(76,110,245,${alpha})`;
+        ctx.lineWidth = 2.5;
+        for (const nb of adj[highlight.person]) {
+          ctx.beginPath();
+          ctx.moveTo(np[highlight.person].x, np[highlight.person].y);
+          ctx.lineTo(np[nb].x, np[nb].y);
+          ctx.stroke();
+        }
       }
     }
 
