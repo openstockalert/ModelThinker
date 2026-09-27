@@ -38,7 +38,7 @@ MODELS: list[IndexEntry] = [
     IndexEntry(8,  "Concavity and convexity",   "functional",    "planned"),
     IndexEntry(9,  "Value and power (Shapley)", "functional",    "planned"),
     # Networks and spread
-    IndexEntry(10, "Network models",            "networks",      "planned"),
+    IndexEntry(10, "Network models",            "networks",      "available", "10_Network_Models"),
     IndexEntry(11, "SIR epidemic (contagion)",  "networks",      "available", "11_SIR_Epidemic"),
     # Uncertainty & dynamics
     IndexEntry(12, "Entropy",                   "dynamics",      "available", "12_Entropy"),
