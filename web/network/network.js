@@ -457,8 +457,6 @@ function initParadoxSim() {
   if (!canvas) return;
   const btnPerson    = document.getElementById('fp-random-person');
   const btnFriend    = document.getElementById('fp-random-friend');
-  const btnManyPer   = document.getElementById('fp-many-person');
-  const btnManyFri   = document.getElementById('fp-many-friend');
   const btnReset     = document.getElementById('fp-reset');
   const numPerson    = document.getElementById('fp-person-num');
   const hintPerson   = document.getElementById('fp-person-hint');
@@ -528,8 +526,6 @@ function initParadoxSim() {
 
   btnPerson.onclick = samplePerson;
   btnFriend.onclick = sampleFriend;
-  btnManyPer.onclick = () => { for (let i = 0; i < 20; i++) samplePerson(); };
-  btnManyFri.onclick = () => { for (let i = 0; i < 20; i++) sampleFriend(); };
   btnReset.onclick = () => {
     personSamples.length = 0;
     friendSamples.length = 0;
