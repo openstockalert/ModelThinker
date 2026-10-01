@@ -49,7 +49,7 @@ MODELS: list[IndexEntry] = [
     IndexEntry(16, "Lyapunov & equilibria",     "dynamics",      "planned"),
     IndexEntry(17, "Markov chains",             "dynamics",      "available", "17_Markov_Chains"),
     IndexEntry(18, "Systems dynamics",          "dynamics",      "planned"),
-    IndexEntry(19, "Threshold models (feedback)","dynamics",     "planned"),
+    IndexEntry(19, "Threshold models (feedback)","dynamics",     "available", "19_Threshold_Feedback"),
     # Choice and strategy
     IndexEntry(20, "Spatial & hedonic choice",  "strategy",      "planned"),
     IndexEntry(21, "Game theory",               "strategy",      "planned"),
