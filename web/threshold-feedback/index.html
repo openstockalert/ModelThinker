@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thresholds &amp; feedback · riots, bar crowds, tipping points</title>
+<link rel="stylesheet" href="../shared/style.css">
+<style>
+  /* --- Preset buttons for the head-to-head sim --- */
+  .preset-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+    margin-top: 8px;
+  }
+  .preset-btn {
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 2px solid var(--line);
+    background: white;
+    cursor: pointer;
+    font-family: inherit;
+    text-align: left;
+    color: var(--ink);
+    transition: transform 0.1s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .preset-btn:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent);
+    box-shadow: 0 4px 14px rgba(28,34,56,0.08);
+  }
+  .preset-btn.active {
+    border-color: var(--accent);
+    background: rgba(247,103,7,0.08);
+  }
+  .preset-btn .p-title { font-weight: 700; font-size: 14px; margin-bottom: 4px; }
+  .preset-btn .p-hint  { font-size: 12px; color: var(--muted); line-height: 1.35; }
+
+  /* --- El Farol toggle switch --- */
+  .ef-toggle {
+    display: inline-flex;
+    background: var(--bg-soft);
+    border-radius: 999px;
+    padding: 4px;
+    gap: 4px;
+  }
+  .ef-toggle button {
+    padding: 8px 16px;
+    border-radius: 999px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    transition: all 0.15s ease;
+  }
+  .ef-toggle button.active {
+    background: white;
+    color: var(--ink);
+    box-shadow: 0 1px 4px rgba(28,34,56,0.10);
+  }
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <nav class="top-nav">
+    <a href="../">← All playable stories</a>
+    <span class="spacer"></span>
+    <span class="crumb">ModelThinker · web</span>
+  </nav>
+
+  <p class="byline">Ch. 19 · Threshold feedback</p>
+  <h1>The riot, the bar, and the tipping point</h1>
+  <p class="subtitle">
+    Same rule shape — "I watch what others do, then decide."
+    <br>Flip the sign of the feedback and get opposite worlds.
+  </p>
+
+  <p>
+    Two kinds of decision structure produce nearly everything interesting in social dynamics.
+    <strong>Positive feedback</strong> — "I'll join if enough others have" — runs to extremes:
+    riots, standing ovations, fashion trends, bank runs. <strong>Negative feedback</strong> — "I'll
+    go if few others have" — stabilises: bar crowds, traffic, gym attendance. Both have the same
+    skeleton. Both hinge on <em>thresholds</em>. Both hide a genuine surprise you're about to see
+    below.
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 1 · Head-to-head cascade comparison -->
+  <!-- ============================================================ -->
+  <h2>Fact 1: Tiny difference. Opposite outcome.</h2>
+  <p>
+    Every person has a private <em>threshold</em>: the number of others they'd need to see acting
+    before joining themselves. Hotheads: threshold 0. Holdouts: threshold 99. The cascade climbs
+    like a ladder — <strong>and it needs every rung</strong>. Miss one, and it stops dead.
+  </p>
+  <p>
+    Below we run <em>two</em> crowds at once, so you can compare them directly. Each face is a
+    person; a face turns <span style="color:var(--danger);font-weight:600;">red and angry</span>
+    when they've been pulled into the riot. The 100 faces in each crowd are sorted by threshold
+    (hotheads top-left, holdouts bottom-right), so the wave sweeps in reading order until it hits
+    a gap. Pick a preset and watch both crowds play out — you should see two dramatically
+    different outcomes from tiny structural differences.
+  </p>
+
+  <div class="preset-row" id="pair-presets">
+    <button class="preset-btn active" data-pair="canonical">
+      <div class="p-title">🪜 vs 🕳️ · The missing rung</div>
+      <div class="p-hint">Ladder (0,1,2,…,99) vs the same but with threshold 1 → 2. Mean moves by 0.01. Outcome: 100 vs 1.</div>
+    </button>
+    <button class="preset-btn" data-pair="luck">
+      <div class="p-title">🎲 Same recipe, opposite fates</div>
+      <div class="p-hint">Two random crowds from the <em>identical</em> distribution (mean 25, SD 15). One roars, the other fizzles. Not a bug — it's the point.</div>
+    </button>
+    <button class="preset-btn" data-pair="sparks">
+      <div class="p-title">⚡ The instigator's leverage</div>
+      <div class="p-hint">Same 100 people (mean 25, SD 10). One version has 1 spark. The other has 10. Turns "nothing happens" into "everybody joins".</div>
+    </button>
+  </div>
+
+  <div class="sim">
+    <canvas id="sim-cascade" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="cascade-spark">🔥 Spark both</button>
+      <button class="btn" id="cascade-reroll">🎲 Fresh draw</button>
+    </div>
+  </div>
+
+  <div class="callout aha">
+    <strong>What you just saw.</strong> Every one of these three presets shows the same lesson
+    from a different angle: <em>the mean threshold doesn't determine the outcome</em>. Whether a
+    cascade fires depends on the shape of the ladder, on random luck-of-the-draw, and on how many
+    people are willing to be first. Averages are useless. Structure is everything.
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SIM 2 · El Farol Bar -->
+  <!-- ============================================================ -->
+  <h2>Fact 2: Now flip the sign — the same rule stabilises things</h2>
+  <p>
+    Same skeleton — "I watch what others are doing, then decide" — but change the direction of
+    the feedback. Brian Arthur's <strong>El Farol bar</strong>: 100 people, one bar, capacity 60.
+    Going is fun if fewer than 60 show up and miserable if more do. Each week, each person tries
+    to forecast next week's attendance from history. If their forecast is below capacity, they go.
+  </p>
+  <p>
+    The kicker: <strong>any shared forecast destroys itself</strong>. If everyone predicts
+    "quiet," everyone goes — packed. If everyone predicts "packed," nobody goes — empty. There's
+    no rule everyone can use. Below: toggle between "everyone uses the same forecasting rule"
+    and "everyone has their own diverse mix," and watch attendance behave in polar opposite ways.
+  </p>
+
+  <div class="sim">
+    <p class="sim-title">El Farol · attendance over time</p>
+    <canvas id="sim-bar" class="sim-canvas"></canvas>
+
+    <div class="sim-controls" style="align-items:center;">
+      <div class="ef-toggle" id="ef-mode-toggle">
+        <button class="active" data-mode="diverse">🧠 Diverse predictors</button>
+        <button data-mode="homogeneous">🤖 Everyone thinks the same</button>
+      </div>
+      <button class="btn btn-primary" id="bar-play">▶ Play</button>
+      <button class="btn btn-ghost" id="bar-reset">↺ Reset</button>
+    </div>
+
+    <div class="sim-metrics">
+      <div class="metric" id="b-attend"><div class="label">This week's attendance</div><div class="value">—</div><div class="delta">capacity is 60</div></div>
+      <div class="metric" id="b-mean"><div class="label">Long-run mean</div><div class="value">—</div><div class="delta">average across all weeks</div></div>
+      <div class="metric" id="b-std"><div class="label">Week-to-week SD</div><div class="value">—</div><div class="delta">how wildly it swings</div></div>
+    </div>
+  </div>
+
+  <div class="callout aha">
+    <strong>The two lessons.</strong> With diverse rules, attendance settles just under capacity
+    — no one intending it, no one able to forecast next week, yet the aggregate is *right*. With
+    homogeneous rules, the same 100 people produce a catastrophic two-cycle: packed, empty,
+    packed, empty. <strong>Diversity of belief</strong> is what stabilises. Same lesson as the
+    Diversity Prediction Theorem (Ch 3) and the flash-crash worry about everyone running the
+    same trading model.
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SIM 3 · The Chaos Field -->
+  <!-- ============================================================ -->
+  <h2>Fact 3: 100 crowds tell the story one crowd can't</h2>
+  <p>
+    Would <em>this specific crowd</em> riot? Nobody can answer that. But if you drew 100 crowds
+    from the same distribution and looked at what happens, the pattern becomes obvious. Below
+    are exactly that — 100 fresh crowds sampled from Normal(mean = 25, SD = you-choose). Each
+    face shows one crowd's final fate: <strong style="color:#F03E3E;">😠 angry</strong> = full
+    riot, <strong style="color:#F5A623;">😐 tense</strong> = partial cascade,
+    <strong style="color:#F5A623;">🙂 calm</strong> = fizzle.
+  </p>
+  <p>
+    Drag the SD slider and watch the giant badge at the top change: <strong>SAFE</strong> →
+    <strong>TIPPING POINT</strong> → <strong>ROARING</strong> → <strong>STUCK</strong>. The
+    tipping point is the one you can't predict — the same recipe gives full riots and total
+    calms on the exact same board.
+  </p>
+
+  <div class="sim">
+    <canvas id="sim-tip" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <label class="slider-block" style="flex:1 1 100%;">
+        <span class="slider-label"><span>SD of thresholds (mean fixed at 25)</span><span class="value">15</span></span>
+        <input type="range" min="1" max="60" value="15" step="1" data-fmt="{v}">
+      </label>
+    </div>
+    <div class="sim-controls">
+      <button class="btn" data-sd-jump="3"  style="flex:1 1 0;">🎯 SD 3 (safe)</button>
+      <button class="btn" data-sd-jump="15" style="flex:1 1 0;">🌊 SD 15 (bimodal)</button>
+      <button class="btn" data-sd-jump="25" style="flex:1 1 0;">🔥 SD 25 (roaring)</button>
+      <button class="btn" data-sd-jump="60" style="flex:1 1 0;">🌪 SD 60 (stuck)</button>
+    </div>
+    <div class="sim-metrics">
+      <div class="metric" id="t-full"><div class="label">😠 Full riots</div><div class="value">—</div><div class="delta">crowds where ≥90 joined</div></div>
+      <div class="metric" id="t-fizzle"><div class="label">🙂 Fizzles</div><div class="value">—</div><div class="delta">crowds where ≤10 joined</div></div>
+      <div class="metric" id="t-entropy"><div class="label">Predictability</div><div class="value">—</div><div class="delta">"if I bet on the majority outcome, how often am I right?"</div></div>
+    </div>
+  </div>
+
+  <div class="callout warn">
+    <strong>The design lesson.</strong> Chase the entropy peak, not the smooth mean line. A
+    system near a tipping point looks predictable on the average but the *variance* explodes.
+    Levers that work: change payoffs so the threshold is never reached (deposit insurance for
+    bank runs); raise thresholds where the ladder is thin; remove or deter instigators; preserve
+    diversity of belief in negative-feedback systems. Levers that don't work: chasing the spark
+    that ignited the last cascade. Structure did the work; the spark got the credit.
+  </div>
+
+  <h2>Where thresholds show up</h2>
+  <p>
+    Riots, standing ovations, bank runs, protest movements, fashion adoption, viral videos,
+    citation cascades, flash mobs, the "silent" majority of research chatter that suddenly boils
+    into a scientific consensus. Then on the negative side: traffic re-routing, gyms in January,
+    beaches on hot days, water conservation appeals. Once you notice the rule shape, and the
+    sign of the feedback, you see them everywhere.
+  </p>
+
+  <div class="next-nav">
+    <a href="../network/">← Networks</a>
+    <a href="../entropy/">Entropy →</a>
+  </div>
+</main>
+<script type="module" src="threshold_feedback.js?v=7"></script>
+</body>
+</html>
