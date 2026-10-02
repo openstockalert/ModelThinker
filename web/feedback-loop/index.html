@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Feedback loops · a playable story about why systems behave weird</title>
+<link rel="stylesheet" href="../shared/style.css">
+<style>
+  /* Preset buttons */
+  .preset-row {
+    display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px;
+  }
+  .preset-btn {
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 2px solid var(--line);
+    background: white;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    transition: all 0.15s ease;
+    flex: 1 1 140px;
+    text-align: left;
+  }
+  .preset-btn:hover {
+    transform: translateY(-1px);
+    border-color: var(--primary);
+    box-shadow: 0 3px 10px rgba(28,34,56,0.08);
+  }
+  .preset-btn.active {
+    border-color: var(--accent);
+    background: rgba(247,103,7,0.08);
+    color: var(--accent);
+  }
+  .preset-btn .p-hint {
+    display: block;
+    font-weight: 400;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .preset-btn.active .p-hint { color: #D9480F; }
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <nav class="top-nav">
+    <a href="../">← All playable stories</a>
+    <span class="spacer"></span>
+    <span class="crumb">ModelThinker · web</span>
+  </nav>
+
+  <p class="byline">Ch. 18 · Systems dynamics</p>
+  <h1>Loops, delays, and policies that backfire</h1>
+  <p class="subtitle">
+    Three simple ideas — <strong>stocks</strong>, <strong>flows</strong>,
+    <strong>feedback loops</strong> — plus one modifier: <strong>delay</strong>.
+    <br>Together they explain why so much of the world refuses to behave the way
+    your intuition insists it should.
+  </p>
+
+  <p>
+    Jay Forrester invented this toolkit at MIT in the late 1950s and used it to
+    explain why cities decline, why supply chains explode, why forests burn
+    bigger when you suppress small fires. Below are three facts the toolkit
+    makes obvious — and that most people get wrong on first look.
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 1 · The Bathtub -->
+  <!-- ============================================================ -->
+  <h2>Fact 1: A bathtub keeps filling even while you turn the faucet down</h2>
+  <p>
+    A <em>stock</em> is anything that accumulates — water in a tub, CO₂ in the
+    atmosphere, people in a city, cash in the bank, debt. A <em>flow</em> is a
+    rate — litres per minute, tonnes per year, hires per month. The rule is
+    laughably simple: <strong>the stock grows whenever inflow is bigger than
+    outflow, period</strong>. Yet John Sterman found that even MIT engineering
+    students, shown an identical bathtub with the labels swapped to
+    "atmospheric CO₂" and "emissions," confidently concluded that falling
+    emissions means falling concentrations.
+  </p>
+  <p>
+    It doesn't. Below: a tub with 1000 litres, draining at 40/year. The faucet
+    starts at 100/year and ticks down as you crank the handle. Pick an
+    "aggressiveness" and watch what the stock actually does.
+  </p>
+
+  <div class="sim">
+    <p class="sim-title">The bathtub · the inflow drops but the stock keeps rising</p>
+    <canvas id="sim-bathtub" class="sim-canvas"></canvas>
+    <div class="preset-row">
+      <button class="preset-btn active" data-tub="hold">
+        🚰 Hold steady
+        <span class="p-hint">cut 0/yr · emissions never change</span>
+      </button>
+      <button class="preset-btn" data-tub="gentle">
+        🐌 Gentle cut
+        <span class="p-hint">cut 2/yr · "we're acting"</span>
+      </button>
+      <button class="preset-btn" data-tub="aggressive">
+        🏃 Aggressive cut
+        <span class="p-hint">cut 8/yr · heroic effort</span>
+      </button>
+      <button class="preset-btn" data-tub="match">
+        ⚡ Match the drain
+        <span class="p-hint">straight to 40/yr</span>
+      </button>
+    </div>
+    <div class="sim-metrics">
+      <div class="metric" id="b-peak"><div class="label">Peak stock</div><div class="value">—</div><div class="delta">how high the tub climbs</div></div>
+      <div class="metric" id="b-peakyear"><div class="label">Peak year</div><div class="value">—</div><div class="delta">when the climb stops</div></div>
+      <div class="metric" id="b-final"><div class="label">Stock after 50 yrs</div><div class="value">—</div><div class="delta">started at 1000</div></div>
+    </div>
+  </div>
+
+  <div class="callout aha">
+    <strong>Try "Gentle cut".</strong> You cut emissions by 2 units every single
+    year — a steady, visible effort. The stock still climbs for about 30 years
+    before finally turning around. Even "Aggressive" takes 7 years to peak.
+    Only "Match the drain" (instantly dropping inflow to equal outflow)
+    stabilises the stock immediately. The lesson for climate, debt, city
+    population, inventory: <strong>stabilising a stock means getting the flow
+    all the way down to the outflow rate, not merely reducing it.</strong>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SIM 2 · The Shower -->
+  <!-- ============================================================ -->
+  <h2>Fact 2: Delays turn gentle correction into violent oscillation</h2>
+  <p>
+    Everyone has lived this one. Shower is cold. You turn the knob toward hot.
+    Nothing happens, so you turn it further. Scalding water hits. You panic,
+    yank it back, freezing water hits. Repeat until you give up or shower
+    partially dressed. <strong>The feedback was correct in sign and useless in
+    timing.</strong>
+  </p>
+  <p>
+    Below is an auto-pilot that tries to hold the water at 70°F. The pipes
+    have length — temperature changes take a few seconds to reach the
+    showerhead. Drag the delay slider and watch a well-behaved controller
+    turn into a chaos machine.
+  </p>
+
+  <div class="sim">
+    <p class="sim-title">The shower · a sensible rule becomes an oscillator when the pipe gets long</p>
+    <canvas id="sim-shower" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <label class="slider-block" style="flex:1 1 100%;">
+        <span class="slider-label"><span>Pipe length — how long before a tap change reaches the shower</span><span class="value">8</span></span>
+        <input type="range" min="0" max="30" value="8" step="1" data-fmt="{v} s">
+      </label>
+    </div>
+    <div class="sim-controls">
+      <button class="btn" data-shower-delay="0"  style="flex:1 1 0;">⚡ Instant (0 s)</button>
+      <button class="btn" data-shower-delay="5"  style="flex:1 1 0;">🚿 Short pipe (5 s)</button>
+      <button class="btn" data-shower-delay="15" style="flex:1 1 0;">🛁 Long pipe (15 s)</button>
+      <button class="btn" data-shower-delay="28" style="flex:1 1 0;">🏚 Trans-Siberian (28 s)</button>
+    </div>
+    <div class="sim-metrics">
+      <div class="metric" id="s-swing"><div class="label">Temperature swing</div><div class="value">—</div><div class="delta">max − min over 60 s</div></div>
+      <div class="metric" id="s-comfort"><div class="label">Time in comfort band</div><div class="value">—</div><div class="delta">% of seconds within ±3 °F</div></div>
+      <div class="metric" id="s-vibe"><div class="label">Verdict</div><div class="value">—</div><div class="delta">how the shower feels</div></div>
+    </div>
+  </div>
+
+  <div class="callout aha">
+    <strong>Click the four presets in order.</strong> Instant feedback →
+    smooth. Short pipe → mild overshoot. Long pipe → permanent oscillation.
+    Trans-Siberian → scalding/freezing extremes. <strong>Same equations.
+    Same auto-pilot. Only the delay changed.</strong> This is exactly why
+    central banks fight inflation badly when the lag between rate changes
+    and effect is long, why boom-bust real-estate cycles exist, and why
+    adding staff to a late software project makes it later.
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SIM 3 · The Pest Spray (Volterra) -->
+  <!-- ============================================================ -->
+  <h2>Fact 3: Spray the pest, get MORE pests</h2>
+  <p>
+    Here's the one that makes the whole chapter worth it. Rabbits (🐰) are
+    a crop pest. Foxes (🦊) are their natural predator. The populations
+    oscillate — classic predator/prey. A farmer decides to spray a
+    broad-spectrum poison that kills rabbits AND foxes equally.
+    <strong>Average pest population goes up.</strong> Not short-term: average,
+    over many cycles.
+  </p>
+  <p>
+    This is Vito Volterra's result (1926) and it's the structural reason the
+    DDT era produced record spider-mite outbreaks, and why integrated pest
+    management replaced broad-spectrum spraying. Below: slide the spray dial
+    and watch the long-run average rabbit count <em>rise</em>.
+  </p>
+
+  <div class="sim">
+    <p class="sim-title">Volterra's spray · killing both the pest and the predator helps the pest</p>
+    <canvas id="sim-spray" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <label class="slider-block" style="flex:1 1 100%;">
+        <span class="slider-label"><span>Spray intensity — kills rabbits AND foxes at the same rate</span><span class="value">0.00</span></span>
+        <input type="range" min="0" max="40" value="0" step="1" data-fmt="{v}">
+      </label>
+    </div>
+    <div class="sim-controls">
+      <button class="btn" data-spray="0"  style="flex:1 1 0;">🌿 No spray</button>
+      <button class="btn" data-spray="10" style="flex:1 1 0;">💧 Light</button>
+      <button class="btn" data-spray="20" style="flex:1 1 0;">💦 Medium</button>
+      <button class="btn" data-spray="35" style="flex:1 1 0;">☠️ Heavy</button>
+    </div>
+    <div class="sim-metrics">
+      <div class="metric" id="v-rabbit"><div class="label">🐰 Average rabbits</div><div class="value">—</div><div class="delta">long-run equilibrium</div></div>
+      <div class="metric" id="v-fox"><div class="label">🦊 Average foxes</div><div class="value">—</div><div class="delta">long-run equilibrium</div></div>
+      <div class="metric" id="v-change"><div class="label">Rabbits vs no-spray</div><div class="value">—</div><div class="delta">change in average</div></div>
+    </div>
+  </div>
+
+  <div class="callout warn">
+    <strong>The lesson, in one line:</strong> if your intervention hits a
+    problem and its natural check with similar force, you may be strengthening
+    the problem. Pests breed fast, predators breed slow — the regulator
+    recovers slower than what it was regulating. Same shape applies to
+    broad-spectrum antibiotics (clearing competing flora, enabling
+    <em>C. difficile</em>), suppressing every small forest fire (fuel
+    accumulates, next one is catastrophic), and across-the-board budget cuts
+    that remove the monitoring function along with the waste.
+  </div>
+
+  <h2>The real power: pattern recognition</h2>
+  <p>
+    Systems dynamics' quiet gift is a short list of loop patterns that recur
+    everywhere. Once you've seen them you recognise them instantly:
+  </p>
+  <ul>
+    <li><strong>Limits to growth</strong> — reinforcing loop meets balancing loop. Every startup eventually hits it.</li>
+    <li><strong>Fixes that fail</strong> — a fix relieves the symptom but worsens the cause with a delay. Borrowing to cover a shortfall.</li>
+    <li><strong>Shifting the burden</strong> — external fix erodes internal capacity. Consultants replace in-house skill. Painkillers mask the pain and delay the diagnosis.</li>
+    <li><strong>Drifting goals</strong> — the standard adjusts toward whatever you're actually achieving. How safety cultures decay.</li>
+    <li><strong>Escalation</strong> — each side responds to the gap with the other. Arms races, price wars.</li>
+  </ul>
+  <p>
+    Donella Meadows ranked policy leverage points weakest to strongest:
+    parameters (tax rates) → buffer sizes → <strong>delays</strong> → loop strengths →
+    new loops → <strong>rules</strong> → <strong>goals</strong> → the paradigm. Note that
+    shortening a delay sits above every parameter tweak — exactly what Fact 2
+    just showed you.
+  </p>
+
+  <div class="next-nav">
+    <a href="../network/">← Networks</a>
+    <a href="../entropy/">Entropy →</a>
+  </div>
+</main>
+<script type="module" src="feedback_loop.js?v=2"></script>
+</body>
+</html>
