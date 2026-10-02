@@ -1,0 +1,705 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Game theory · a playable story about who moves and when</title>
+<link rel="stylesheet" href="../shared/style.css">
+<style>
+  /* ======================================================================
+     Game theory story — bespoke styles
+     ====================================================================== */
+  :root {
+    --amber:   #E8590C;    /* Row player */
+    --amber-lite: #FFF4E6;
+    --cyan:    #0C8599;    /* Column player */
+    --cyan-lite:  #E3FAFC;
+    --nash:    #2F9E44;    /* Agreement / Nash */
+    --nash-lite:  #D3F9D8;
+  }
+
+  /* ---- Game preset buttons -------------------------------------------- */
+  .game-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .game-btn {
+    padding: 12px 10px;
+    border-radius: 12px;
+    border: 2px solid var(--line);
+    background: white;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    transition: all 0.15s ease;
+    text-align: center;
+  }
+  .game-btn:hover {
+    transform: translateY(-2px);
+    border-color: var(--amber);
+    box-shadow: 0 4px 12px rgba(28,34,56,0.10);
+  }
+  .game-btn.active {
+    border-color: var(--amber);
+    background: var(--amber-lite);
+    color: var(--amber);
+  }
+  .game-btn .g-hint {
+    display: block;
+    font-weight: 400;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 3px;
+  }
+  .game-btn.active .g-hint { color: var(--amber); opacity: 0.8; }
+
+  /* ---- Payoff matrix layout ------------------------------------------- */
+  .matrix-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: stretch;
+  }
+  .matrix-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .player-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+  .player-tag.row { background: var(--amber-lite); color: var(--amber); }
+  .player-tag.col { background: var(--cyan-lite);  color: var(--cyan); }
+
+  .matrix-table {
+    border-collapse: separate;
+    border-spacing: 6px;
+    margin: 0 auto;
+  }
+  .matrix-table .col-head,
+  .matrix-table .row-head {
+    text-align: center;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--muted);
+    padding: 4px 8px;
+  }
+  .matrix-table .col-head { padding-bottom: 2px; }
+  .matrix-table .strat {
+    display: block;
+    font-size: 15px;
+    color: var(--ink);
+    letter-spacing: 0.01em;
+  }
+  .matrix-table .corner-note {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 500;
+    text-align: center;
+    padding: 6px;
+    vertical-align: middle;
+  }
+
+  .cell {
+    position: relative;
+    width: 150px;
+    height: 100px;
+    background: white;
+    border: 2px solid var(--line);
+    border-radius: 12px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    box-shadow: 0 2px 6px rgba(28,34,56,0.06);
+    transition: all 0.2s ease;
+  }
+  .cell .payoffs {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+  .cell input.payoff {
+    width: 48px;
+    padding: 4px 2px;
+    border: none;
+    background: transparent;
+    text-align: center;
+    font-family: inherit;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--ink);
+    border-radius: 6px;
+    transition: background 0.15s ease;
+  }
+  .cell input.payoff.row { color: var(--amber); }
+  .cell input.payoff.col { color: var(--cyan); }
+  .cell input.payoff:hover,
+  .cell input.payoff:focus {
+    background: var(--bg-soft);
+    outline: none;
+  }
+  .cell .divider {
+    color: var(--muted);
+    font-weight: 400;
+    font-size: 18px;
+  }
+  .cell .cell-labels {
+    font-size: 10px;
+    color: var(--muted);
+    display: flex;
+    justify-content: center;
+    gap: 46px;
+    padding-top: 1px;
+  }
+  .cell .cell-labels .r { color: var(--amber); }
+  .cell .cell-labels .c { color: var(--cyan); }
+
+  /* Row player's best reply (within this column) → amber top & bottom bars */
+  .cell.row-best::before {
+    content: '';
+    position: absolute;
+    top: -3px;
+    left: 15%;
+    right: 15%;
+    height: 5px;
+    background: var(--amber);
+    border-radius: 3px;
+  }
+  .cell.row-best::after {
+    content: '';
+    position: absolute;
+    bottom: -3px;
+    left: 15%;
+    right: 15%;
+    height: 5px;
+    background: var(--amber);
+    border-radius: 3px;
+  }
+  /* Column player's best reply (within this row) → cyan left & right bars */
+  .cell.col-best {
+    box-shadow: inset 5px 0 0 var(--cyan),
+                inset -5px 0 0 var(--cyan),
+                0 2px 6px rgba(28,34,56,0.06);
+  }
+  /* Nash equilibrium — both players best-responding → green background */
+  .cell.nash {
+    background: var(--nash-lite);
+    border-color: var(--nash);
+  }
+  .cell.nash::after,
+  .cell.nash::before { background: var(--nash); }
+
+  /* ---- Analysis panel ------------------------------------------------- */
+  .analysis-panel {
+    background: var(--bg-soft);
+    border-radius: var(--radius);
+    padding: 20px 20px 22px;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .analysis-panel h3 {
+    margin: 0 0 14px;
+    font-size: 15px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .analysis-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .analysis-item:last-child { border-bottom: none; }
+  .analysis-item .ai-icon {
+    font-size: 18px;
+    flex: 0 0 24px;
+    text-align: center;
+  }
+  .analysis-item .ai-label {
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 2px;
+  }
+  .analysis-item .ai-detail {
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .verdict {
+    margin-top: 16px;
+    padding: 14px;
+    border-radius: 12px;
+    background: white;
+    border-left: 4px solid var(--nash);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .verdict.trap { border-left-color: var(--danger); background: #FFF5F5; }
+  .verdict.mixed { border-left-color: var(--purple, #7048E8); background: #F3F0FF; }
+  .verdict.multi { border-left-color: var(--warn); background: #FFF9DB; }
+
+  /* ---- Repeated PD · opponent selector -------------------------------- */
+  .opponent-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .opp-btn {
+    padding: 10px 14px;
+    border-radius: 999px;
+    border: 2px solid var(--line);
+    background: white;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    transition: all 0.15s ease;
+  }
+  .opp-btn:hover {
+    transform: translateY(-1px);
+    border-color: var(--primary);
+    box-shadow: 0 3px 10px rgba(28,34,56,0.08);
+  }
+  .opp-btn.active {
+    border-color: var(--primary);
+    background: #E7F5FF;
+    color: var(--primary);
+  }
+  .opp-desc {
+    background: #E7F5FF;
+    border-left: 4px solid var(--primary);
+    padding: 12px 16px;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 24px;
+    color: var(--ink);
+  }
+
+  /* ---- Scoreboard ----------------------------------------------------- */
+  .scoreboard {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 20px;
+    align-items: stretch;
+    margin-bottom: 20px;
+  }
+  .score-card {
+    text-align: center;
+    padding: 14px 18px;
+    border-radius: var(--radius);
+    background: var(--bg-soft);
+  }
+  .score-card.you { background: var(--amber-lite); }
+  .score-card.opp { background: var(--cyan-lite); }
+  .score-card .score-label {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .score-card.you .score-label { color: var(--amber); }
+  .score-card.opp .score-label { color: var(--cyan); }
+  .score-card .score-value {
+    font-size: 44px;
+    font-weight: 800;
+    line-height: 1.1;
+    margin-top: 4px;
+    font-variant-numeric: tabular-nums;
+  }
+  .score-card .score-sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .score-vs {
+    align-self: center;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--muted);
+  }
+
+  /* ---- Move history --------------------------------------------------- */
+  .history {
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 20px;
+  }
+  .history-row {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 0;
+  }
+  .history-row .h-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+  .history-row.you .h-label { color: var(--amber); }
+  .history-row.opp .h-label { color: var(--cyan); }
+  .moves {
+    display: flex;
+    gap: 3px;
+    flex-wrap: wrap;
+  }
+  .move {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: white;
+  }
+  .move.C { background: #37B24D; }
+  .move.D { background: #E03131; }
+  .move.pending {
+    background: white;
+    border: 1.5px dashed var(--line);
+    color: var(--muted);
+  }
+  .move.last {
+    box-shadow: 0 0 0 2px white, 0 0 0 4px var(--ink);
+  }
+
+  /* ---- Action buttons ------------------------------------------------- */
+  .actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .action-btn {
+    padding: 20px;
+    border-radius: 14px;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 18px;
+    font-weight: 700;
+    color: white;
+    transition: all 0.1s ease;
+  }
+  .action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+  }
+  .action-btn:active { transform: translateY(0); }
+  .action-btn.coop   { background: #37B24D; }
+  .action-btn.defect { background: #E03131; }
+  .action-btn:disabled {
+    background: var(--muted);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+    opacity: 0.6;
+  }
+
+  .round-indicator {
+    text-align: center;
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+
+  .summary {
+    margin-top: 16px;
+    padding: 16px;
+    border-radius: var(--radius);
+    background: var(--bg-soft);
+    text-align: center;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .summary strong { font-size: 15px; color: var(--ink); }
+
+  .pd-payoff-ref {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    font-size: 12px;
+    color: var(--muted);
+    padding: 10px;
+    background: var(--bg-soft);
+    border-radius: var(--radius-sm);
+    margin-top: 14px;
+    flex-wrap: wrap;
+  }
+  .pd-payoff-ref span strong { color: var(--ink); }
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <nav class="top-nav">
+    <a href="../">← All playable stories</a>
+    <span class="spacer"></span>
+    <span class="crumb">ModelThinker · web</span>
+  </nav>
+
+  <p class="byline">Ch. 21 · Game theory</p>
+  <h1>Pick a cell. Nudge a number. Watch the game flip.</h1>
+  <p class="subtitle">
+    The whole point of game theory is this: outcomes don't come from
+    what you want — they come from <em>what both of you want, aware of each
+    other</em>. One well-chosen number flips the entire story.
+  </p>
+
+  <p>
+    A payoff matrix is embarrassingly small — four cells for a 2×2 game — and
+    yet it covers price wars, driving conventions, standards fights,
+    brinkmanship and penalty kicks. Below is the live version. Click a preset,
+    then <strong>edit any number</strong> and watch the Nash equilibria
+    rearrange themselves in real time.
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- PART 1 · The Live Payoff Matrix -->
+  <!-- ============================================================ -->
+  <h2>Part 1 · Pick a game, edit a number</h2>
+  <p>
+    Two players: <strong style="color:#E8590C;">🧡 Alice</strong> (amber — she
+    picks a row) and <strong style="color:#0C8599;">🩵 Bob</strong> (cyan — he
+    picks a column). The matrix below shows what each cell pays each of them.
+    Amber bars mark cells Alice prefers; cyan bars mark cells Bob prefers.
+    Where amber and cyan meet you get a <strong style="color:var(--success);">green
+    Nash equilibrium</strong> — a cell neither would deviate from unilaterally.
+    The analysis panel below updates every time you touch a number.
+  </p>
+
+  <div class="sim">
+    <p class="sim-title">The payoff matrix · everything editable, everything live</p>
+
+    <div class="game-row">
+      <button class="game-btn active" data-game="pd">
+        🔒 Prisoner's Dilemma
+        <span class="g-hint">betrayal dominates, both lose</span>
+      </button>
+      <button class="game-btn" data-game="stag">
+        🦌 Stag Hunt
+        <span class="g-hint">two equilibria, one risky</span>
+      </button>
+      <button class="game-btn" data-game="battle">
+        🎭 Battle of the Sexes
+        <span class="g-hint">agree, but on whose terms?</span>
+      </button>
+      <button class="game-btn" data-game="chicken">
+        🐔 Chicken
+        <span class="g-hint">whoever swerves first loses</span>
+      </button>
+      <button class="game-btn" data-game="pennies">
+        🪙 Matching Pennies
+        <span class="g-hint">must randomize — no pure NE</span>
+      </button>
+    </div>
+
+    <div class="matrix-layout">
+      <div class="matrix-wrap">
+        <span class="player-tag col" style="margin-bottom: -2px;">🩵 Bob picks a column ▼</span>
+        <table class="matrix-table">
+          <tr>
+            <td class="corner-note"></td>
+            <td class="col-head"><span id="col-A-name" class="strat">Cooperate</span></td>
+            <td class="col-head"><span id="col-B-name" class="strat">Defect</span></td>
+          </tr>
+          <tr>
+            <td class="row-head"><span id="row-A-name" class="strat">Cooperate</span></td>
+            <td>
+              <div class="cell" id="cell-0-0">
+                <div class="payoffs">
+                  <input type="number" class="payoff row" data-r="0" data-c="0" data-p="r" value="3">
+                  <span class="divider">/</span>
+                  <input type="number" class="payoff col" data-r="0" data-c="0" data-p="c" value="3">
+                </div>
+                <div class="cell-labels"><span class="r">Alice</span><span class="c">Bob</span></div>
+              </div>
+            </td>
+            <td>
+              <div class="cell" id="cell-0-1">
+                <div class="payoffs">
+                  <input type="number" class="payoff row" data-r="0" data-c="1" data-p="r" value="0">
+                  <span class="divider">/</span>
+                  <input type="number" class="payoff col" data-r="0" data-c="1" data-p="c" value="5">
+                </div>
+                <div class="cell-labels"><span class="r">Alice</span><span class="c">Bob</span></div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="row-head"><span id="row-B-name" class="strat">Defect</span></td>
+            <td>
+              <div class="cell" id="cell-1-0">
+                <div class="payoffs">
+                  <input type="number" class="payoff row" data-r="1" data-c="0" data-p="r" value="5">
+                  <span class="divider">/</span>
+                  <input type="number" class="payoff col" data-r="1" data-c="0" data-p="c" value="0">
+                </div>
+                <div class="cell-labels"><span class="r">Alice</span><span class="c">Bob</span></div>
+              </div>
+            </td>
+            <td>
+              <div class="cell" id="cell-1-1">
+                <div class="payoffs">
+                  <input type="number" class="payoff row" data-r="1" data-c="1" data-p="r" value="1">
+                  <span class="divider">/</span>
+                  <input type="number" class="payoff col" data-r="1" data-c="1" data-p="c" value="1">
+                </div>
+                <div class="cell-labels"><span class="r">Alice</span><span class="c">Bob</span></div>
+              </div>
+            </td>
+          </tr>
+        </table>
+        <span class="player-tag row" style="margin-top: 2px;">🧡 Alice picks a row ▲</span>
+      </div>
+
+      <div class="analysis-panel" id="analysis">
+        <h3>Live analysis</h3>
+        <div id="analysis-items"></div>
+        <div id="verdict" class="verdict"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout aha">
+    <strong>Try this.</strong> Pick <em>Prisoner's Dilemma</em>. Both players
+    "defect" is the Nash — but it pays only 1 each when "both cooperate" pays 3
+    each. Now click the <strong>1</strong> in the bottom-right (Alice's payoff
+    for mutual defection) and change it to <strong>5</strong>. The dilemma
+    dissolves. The game became Stag Hunt — two equilibria, (coop, coop) is
+    now one of them. One number did all the work.
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- PART 2 · Repeated Prisoner's Dilemma -->
+  <!-- ============================================================ -->
+  <h2>Part 2 · Now play 20 rounds against five minds</h2>
+  <p>
+    The Prisoner's Dilemma matrix never changes — betraying is always the
+    one-shot best move. But what if you play 20 rounds against the same opponent,
+    and <em>they remember</em>? Pick an opponent, hit Cooperate or Defect, and
+    watch the two score cards diverge. The right strategy depends entirely on
+    the mind sitting across from you.
+  </p>
+
+  <div class="sim">
+    <p class="sim-title">Repeated Prisoner's Dilemma · 20 rounds, 5 opponents</p>
+
+    <div class="opponent-row" id="opponent-row">
+      <button class="opp-btn active" data-opp="tft">🪞 Tit-for-Tat</button>
+      <button class="opp-btn" data-opp="allD">👹 Always Defect</button>
+      <button class="opp-btn" data-opp="allC">😇 Always Cooperate</button>
+      <button class="opp-btn" data-opp="grudger">💢 Grudger</button>
+      <button class="opp-btn" data-opp="random">🎲 Random</button>
+    </div>
+
+    <div class="opp-desc" id="opp-description"></div>
+
+    <div class="scoreboard">
+      <div class="score-card you">
+        <div class="score-label">🥇 You</div>
+        <div class="score-value" id="score-you">0</div>
+        <div class="score-sub">the human</div>
+      </div>
+      <div class="score-vs">vs</div>
+      <div class="score-card opp">
+        <div class="score-label">🥈 Opponent</div>
+        <div class="score-value" id="score-opp">0</div>
+        <div class="score-sub" id="score-opp-name">Tit-for-Tat</div>
+      </div>
+    </div>
+
+    <div class="history">
+      <div class="history-row you">
+        <span class="h-label">You</span>
+        <div class="moves" id="moves-you"></div>
+      </div>
+      <div class="history-row opp">
+        <span class="h-label">Opponent</span>
+        <div class="moves" id="moves-opp"></div>
+      </div>
+    </div>
+
+    <div class="round-indicator" id="round-indicator">Round 1 of 20 — your move</div>
+
+    <div class="actions">
+      <button class="action-btn coop"   id="btn-coop">🤝 Cooperate</button>
+      <button class="action-btn defect" id="btn-defect">🗡️ Defect</button>
+    </div>
+
+    <div class="summary" id="summary" style="display:none;"></div>
+
+    <div class="pd-payoff-ref">
+      <span>🤝 both cooperate → <strong>3 / 3</strong></span>
+      <span>🗡️ you defect, they cooperate → <strong>5 / 0</strong></span>
+      <span>🤝 you cooperate, they defect → <strong>0 / 5</strong></span>
+      <span>🗡️ both defect → <strong>1 / 1</strong></span>
+    </div>
+
+    <div class="sim-controls" style="margin-top:16px;">
+      <button class="btn btn-ghost" id="btn-reset">↺ New match</button>
+    </div>
+  </div>
+
+  <div class="callout aha">
+    <strong>Try all five.</strong> Against <em>Always Defect</em>, defecting
+    every round is clearly optimal (you'd lose 100 - 20 if you cooperated).
+    Against <em>Tit-for-Tat</em>, defecting feels right once — but then every
+    future round is mutual betrayal. The highest total you can reach is
+    <strong>60</strong>, and only by cooperating every round against someone
+    who cooperates back. <strong>Betrayal is dominant in one shot, but
+    disastrous when repeated.</strong>
+  </div>
+
+  <h2>What game theory is really for</h2>
+  <p>
+    Not prediction. The theory asks three questions, each worth more than any
+    specific equilibrium: <strong>who moves when</strong> (changing this is
+    usually the biggest available lever), <strong>what makes a threat
+    credible</strong> (commitment is the deliberate destruction of your own
+    options), and <strong>can you change the game instead of playing it
+    better</strong>. That last one is Ch. 24 — mechanism design — and it's
+    usually where the real returns are.
+  </p>
+  <p>
+    Three honest limits worth keeping in your pocket: payoffs are usually
+    guessed, equilibrium ≠ good (the Prisoner's Dilemma proves that), and
+    equilibrium ≠ what people do (centipede-game players don't backward-induct).
+    The theory excels at <em>reasoning</em> — it shows you which threats are
+    hollow, where commitment pays, and when randomising is mandatory.
+  </p>
+
+  <div class="next-nav">
+    <a href="../network/">← Networks</a>
+    <a href="../entropy/">Entropy →</a>
+  </div>
+</main>
+<script type="module" src="game_theory.js?v=2"></script>
+</body>
+</html>
