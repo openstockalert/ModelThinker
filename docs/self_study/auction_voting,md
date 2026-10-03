@@ -1,0 +1,261 @@
+Here's the deep dive. All numbers are from simulations I just ran.
+
+## The reversal that defines the chapter
+
+Chapter 21 asks: **given these rules, what will people do?** Chapter 24 asks the inverse: **given what I want to happen, what rules should I write?** Hence the nickname *reverse game theory*. It earned Hurwicz, Maskin and Myerson the 2007 Nobel, Roth and Shapley the 2012, Milgrom and Wilson the 2020 — three prizes in thirteen years, which tells you how much of modern applied economics this is.
+
+The designer faces one of two handicaps:
+
+- **Hidden information:** you don't know what people value. They'll tell you whatever serves them.
+- **Hidden action:** you can't see what people do. They'll do whatever you pay for.
+
+And one beautiful result organizes the whole field. The **revelation principle**: anything you can achieve with *any* mechanism, however baroque, you can achieve with a simple one where everybody just tells the truth. So the only question worth asking is: **can I make honesty the best policy?** If no truthful mechanism does what you want, nothing does.
+
+---
+
+# Part 1. Hidden action: you get exactly what you pay for
+
+Start here because it's the most intuitive and the most immediately useful.
+
+**The convict ships.** Britain shipped convicts to Australia from 1787, paying captains **per convict loaded** in England. Mortality was appalling. Then the payment was changed to **per convict landed alive**, and it collapsed. The figures get repeated with varying precision — commonly as a fall from double-digit percentages to around one percent — so treat the exact numbers with care, but the structure is unambiguous and the mechanism cost nothing. Nobody inspected a ship. Nobody appealed to captains' consciences. The payment clause did all the work.
+
+The general principle has an unpleasant edge: **you cannot reward what you cannot measure, and you will get precisely what you measure, including the parts you didn't mean.**
+
+| Mechanism | What it bought | What it also bought |
+|---|---|---|
+| Insurance deductibles | Fewer frivolous claims | Underuse of genuinely needed care |
+| Sales commissions | More selling | Wells Fargo's millions of fake accounts |
+| Test-score accountability | Attention to tested skills | Teaching to the test; cheating scandals |
+| Soviet nail quotas **by weight** | Heavy nails | Giant useless nails |
+| Soviet nail quotas **by count** | Many nails | Tiny useless nails |
+| Equity vesting over four years | Retention | Four-year thinking |
+| Paying researchers per publication | Publications | Salami-sliced papers |
+
+Holmström and Milgrom's **multitasking** result is the formal version: when a job has several dimensions and you can only measure some, strong incentives on the measurable ones actively damage the rest. The practical implication is counterintuitive — **when the job is complex and only partly observable, weak incentives are better than strong ones.** That's a serious argument for flat salaries in jobs where quality is hard to see, and it's why the sharpest incentive schemes show up where output is simple and countable (fruit picking, call volume) and perform badly in research, teaching and management.
+
+---
+
+# Part 2. Auctions
+
+## The four formats and the two surprises
+
+| Format | How it works | Strategically equivalent to |
+|---|---|---|
+| **English** (ascending) | Price rises, last bidder standing wins | Second-price sealed bid |
+| **Dutch** (descending) | Price falls, first to accept wins | First-price sealed bid |
+| **First-price sealed** | Highest bid wins, pays their bid | Dutch |
+| **Second-price sealed (Vickrey)** | Highest bid wins, pays the **second** highest bid | English |
+
+**Vickrey's insight (1961):** in a second-price auction, **bidding your true value is a dominant strategy** — optimal no matter what anyone else does. The intuition is clean. Raising your bid above your value only changes anything in cases where you win at a price above your value, which you didn't want. Lowering it only changes anything in cases where you lose an auction you'd have been happy to win. You never pay your own bid, so your bid's only job is deciding *whether* you win, and you want to win exactly when the price is below your value.
+
+Verified — your value is 70, three rivals with values uniform on 0–100:
+
+| Your bid | Expected profit, second-price | Expected profit, first-price |
+|---|---|---|
+| 50 | 4.03 | 2.48 |
+| 55 | 4.75 | **2.48 ← best** |
+| 65 | 5.80 | 1.37 |
+| **70** | **5.97 ← best** | 0.00 |
+| 75 | 5.77 | −2.11 |
+| 90 | 1.79 | −14.58 |
+
+Two practical readings beyond "truth is optimal":
+
+- **The second-price curve is flat near the top.** Bidding 65 or 75 instead of 70 costs you almost nothing. The mechanism is *forgiving*. This is the real-world argument for proxy bidding on eBay and for sealed second-price in any setting with amateur participants: you don't need sophistication to do nearly as well as an expert.
+- **First-price punishes error brutally and requires you to know how many rivals you face.** Shade too little and you win worthless victories; shade too much and you lose good ones. It transfers money from the unsophisticated to the sophisticated, which is a *distributional* property of the rules, not of the participants.
+
+## Revenue equivalence, and what breaks it
+
+With values drawn independently, all four formats raise the same expected revenue:
+
+| Bidders | Second-price revenue | First-price revenue | Theory: (n−1)/(n+1)×100 |
+|---|---|---|---|
+| 2 | 33.36 | 33.37 | 33.33 |
+| 3 | 49.99 | 50.03 | 50.00 |
+| 5 | 66.65 | 66.64 | 66.67 |
+| 10 | 81.80 | 81.81 | 81.82 |
+
+The formats differ completely in how they *look* and not at all in what they *raise*. The second-price auction charges less per winner but induces honest, higher bids; the first-price auction charges the winner's full bid but induces shading. These exactly cancel.
+
+This is the single most useful auction result and also the one to be most suspicious of, because it fails whenever its assumptions do:
+
+- **Risk-averse bidders** → first-price raises *more* (bidders shade less to avoid losing).
+- **Common values** (everyone's bidding on the same underlying thing) → the winner's curse appears; see below.
+- **Collusion** → the English auction is the most vulnerable, because bidders can watch each other and signal.
+- **Budget constraints, asymmetric bidders, resale** → all break it.
+- **Entry** → which brings us to the best practical finding in the chapter.
+
+## One more bidder beats the cleverest reserve price
+
+A reserve price (minimum acceptable bid) raises revenue because it forces bidders to pay more when values happen to be low — at the cost of sometimes not selling at all. I found the optimal reserve by brute force, then compared it to simply attracting one additional bidder:
+
+| Bidders | No reserve | Best reserve | Revenue with best reserve | Revenue with **one more bidder**, no reserve |
+|---|---|---|---|---|
+| 2 | 33.33 | 50 | 41.68 | **50.00** |
+| 3 | 49.99 | 50 | 53.16 | **60.07** |
+| 5 | 66.72 | 50 | 67.24 | **71.43** |
+
+This is the **Bulow–Klemperer theorem**, and it's the most actionable thing here: *a plain English auction with n+1 bidders beats the theoretically optimal mechanism with n bidders.* Note also that the optimal reserve is 50 regardless of the number of bidders, and that its value shrinks fast as the field grows.
+
+Translation for anyone selling anything: **stop optimizing the squeeze and go find another buyer.** Effort spent on marketing the sale, lowering entry barriers, and making the process easy to join dominates effort spent on clever pricing rules. Klemperer's broader point from advising real auction designs is the same — the failures were almost always about insufficient entry and collusion, never about choosing the wrong format from the textbook.
+
+## The winner's curse
+
+Now change one assumption: everyone is bidding on the *same* value (an oil tract holds a definite amount of oil; a company has a definite worth), and each bidder has an unbiased but noisy estimate. True value 100, estimates with standard deviation 20:
+
+| Bidders | Average winning estimate | Winner's profit, second-price | Winner's profit, first-price |
+|---|---|---|---|
+| 2 | 111.3 | **+11.30** | −11.24 |
+| 5 | 123.2 | −9.89 | −23.25 |
+| 10 | 130.7 | −20.00 | −30.80 |
+| 20 | 137.3 | **−28.16** | −37.35 |
+
+Everyone's estimate is unbiased. Nobody is irrational. And bidding your honest estimate loses money, worse as the field grows, because **winning is itself bad news**: the winner is, by construction, whoever was most over-optimistic. "Congratulations, you've paid more than anybody else in the world thought it was worth."
+
+The comparative static is the part that breaks intuition: **in a common-value auction, more competitors should make you bid *less*.** Exactly backwards from the private-value case, where more rivals mean bid closer to your value.
+
+This was discovered in practice, not theory — Capen, Clapp and Campbell's 1971 paper came out of ARCO noticing that oil companies were systematically overpaying for offshore leases. It is the standard account of acquisition premiums that destroy shareholder value, of free-agent contracts that look insane in year three, and of book advances that never earn out.
+
+## Three stories from the real world
+
+**New Zealand, 1990.** The government sold broadcasting licences by sealed-bid second-price, properly following the theory. Then the results were published. In widely reported cases the winning bid was NZ$100,000 and the price paid NZ$6; another bid in the millions paid a few thousand. The mechanism performed exactly as designed, and it was a political catastrophe. **Lesson: a mechanism has to survive publication.** The gap between the bid and the price is invisible in an English auction and glaring in a sealed second-price one, which is a reason real-world designers favour ascending formats even where theory says they're equivalent.
+
+**FCC spectrum auctions, 1990s.** The simultaneous multiple-round ascending design (Milgrom, Wilson, McAfee) worked well, but bidders found a channel the designers hadn't closed: they encoded messages in the **trailing digits of their bids** — using the last three digits to point at a market number — to signal "stay out of my city and I'll stay out of yours." A mechanism with full bid transparency had accidentally built a chat room. The fix was click-box bidding, which eliminated the usable digits. **Lesson: every piece of information your mechanism reveals is a coordination device for the people you're bidding against each other.**
+
+**Google's ad auction.** Google runs a generalized second-price auction, which — unlike true Vickrey — is *not* truthful. They kept it anyway: it's simpler to explain, bidders understand it, and it's robust in ways VCG isn't. Facebook did adopt VCG. That two of the most sophisticated auction operators on earth made opposite choices tells you the theory underdetermines the practice.
+
+---
+
+# Part 3. Voting rules: the rule picks the winner
+
+This is the demonstration that should change how you read election results. I searched for a ballot profile where four standard rules give four different winners. Here it is — 122 voters, nobody lying, nobody changing their mind:
+
+| Voters | Ranking |
+|---|---|
+| 38 | C > A > D > B |
+| 28 | B > D > A > C |
+| 27 | D > B > A > C |
+| 26 | A > D > B > C |
+| 3 | C > D > A > B |
+
+| Rule | Winner | Why |
+|---|---|---|
+| **Plurality** | **C** | Most first-place votes (41) |
+| **Runoff / IRV** | **B** | Top two are C and B; B wins 81–41 |
+| **Borda count** | **D** | Highest average rank (233 points) |
+| **Condorcet** | **A** | Beats B 67–55, C 81–41, D 64–58 head-to-head |
+
+Four rules, four winners, one set of ballots. And each has a legitimate claim: C has the largest base, B wins a head-to-head against the leader, D is everyone's acceptable choice, A beats every single rival one-on-one.
+
+**The outcome was determined by the rule, not by the voters.** Which means that whoever sets the rules has already done much of the choosing, and that "the people's will" is not a well-defined object once there are more than two options.
+
+## And majority rule can produce no winner at all
+
+Three voters, three candidates:
+
+> A > B > C | B > C > A | C > A > B
+
+A beats B 2–1, B beats C 2–1, **and C beats A 2–1.** The **Condorcet paradox**: collective preferences cycle even though every individual's are perfectly consistent.
+
+The consequence is **agenda power**. In a cycle, whoever controls the order of pairwise votes controls the winner — vote A against B first and C wins the final; vote B against C first and A wins. This is not academic; it's the mechanics of legislative procedure, and the reason committee chairs and the ordering of amendments matter so much. The "killer amendment" is this theorem deployed deliberately.
+
+## Each rule's characteristic pathology
+
+| Rule | Fails at | Real-world instance |
+|---|---|---|
+| **Plurality** | Spoilers, vote-splitting, winners opposed by a majority | Any three-way race with two similar candidates |
+| **Runoff / IRV** | **Non-monotonicity** — ranking a candidate *higher* can make them lose | The 2009 Burlington, Vermont mayoral race is the standard documented case |
+| **Borda** | Manipulation by **burying** — rank the real threat last | Borda himself reportedly said his scheme was "only for honest men" |
+| **Condorcet methods** | May have no winner (the cycle above) | — |
+| **Approval / score** | Strategic thresholds; how approving to be | — |
+
+And the two impossibility theorems that explain why this list has no bottom:
+
+- **Arrow (1951):** with three or more options, no ranked voting rule can simultaneously satisfy unanimity, independence of irrelevant alternatives, and non-dictatorship.
+- **Gibbard–Satterthwaite:** every non-dictatorial, deterministic rule over three or more outcomes is **manipulable**. Strategic voting isn't a defect of a particular system; it's unavoidable.
+
+The constructive flip side is **May's theorem**: with exactly *two* options, simple majority rule is uniquely characterized by a set of entirely reasonable properties. **All the trouble starts at three.** Which is a genuinely useful piece of institutional advice: if you can decompose a decision into binary choices, voting theory is on your side; if you can't, pick your rule deliberately and in advance, before anyone knows which option it will favour.
+
+---
+
+# Part 4. Pivot mechanisms: pay the externality you cause
+
+Back to hidden information, but now for a *public* decision where there's no price to pay. A bridge costs 90, three neighbours share the cost equally (30 each), and only they know what it's worth to them. Ask them and they'll exaggerate — up if they want it, down if they don't.
+
+**The Clarke / Vivrey–Clarke–Groves pivot mechanism:** build it if reported net values sum to positive, and charge each person **only if they changed the decision** — in which case they pay the amount by which they overrode everyone else.
+
+| Reported values | Build? | Pivot taxes | Extra money collected |
+|---|---|---|---|
+| 50, 40, 10 | yes | 10, 0, 0 | 10 |
+| 20, 20, 20 | no | 0, 0, 0 | 0 |
+| 80, 10, 10 | yes | 40, 0, 0 | 40 |
+| 40, 35, 30 | yes | 0, 0, 0 | 0 |
+
+**Why honesty is optimal:** exaggerating only matters when it flips the decision, and if it flips the decision, you pay the full amount of harm you imposed on everyone else — which is more than you gained, exactly when you lied. Understating only risks losing something you wanted at a price you'd have been happy to pay. In the third row the enthusiast with value 80 gets the bridge but pays 40 extra, because the other two together didn't want it.
+
+**And here's the catch.** Across 5,000 random neighbourhoods, somebody was pivotal 49% of the time, and the mechanism collected an average of **5.38 in pivot taxes beyond the cost shares**. That money cannot be refunded. The instant you rebate it, the rebate becomes part of everyone's calculation and honesty breaks. **It must be burned.** This is the **Green–Laffont impossibility**: no mechanism is simultaneously efficient, truthful, and budget-balanced.
+
+## The same wall, in the simplest possible market
+
+One buyer, one seller, each knowing only their own number, both uniform on 0–100. Trade should happen whenever the buyer values the item more.
+
+- Efficient trade is possible **49.9%** of the time, with an average gain of **33.30**
+- Pivot prices that keep *both* honest: the buyer pays the seller's cost, the seller receives the buyer's value
+- So every trade needs an **outside subsidy** averaging **16.62** per attempted trade
+
+This is **Myerson–Satterthwaite** (1983): for bilateral trade with two-sided private information, no mechanism is efficient, truthful, voluntary and budget-balanced. One of them has to go.
+
+This is a deep and slightly deflating result: **some gains from trade are unreachable, no matter how clever the institution.** Real markets give up efficiency — haggling, posted prices and take-it-or-leave-it offers all leave some mutually beneficial trades undone, and that isn't a failure anyone can design away. It also explains why so much real deal-making involves brokers, standardized contracts and reputations: all of those are ways of reducing the private information that causes the problem in the first place.
+
+## Why VCG is rarer than its elegance suggests
+
+It's truthful, efficient, and beautiful, and it's mostly not used. Reasons, each of which is a design lesson:
+
+- **Budget problems** — surpluses that must be wasted, or deficits needing subsidy
+- **Fragile to collusion and shill bidding** — a small ring can extract a lot
+- **Breaks under budget constraints** — truthful bidding presumes you can pay what you bid
+- **Computationally brutal** in combinatorial settings — you must solve the allocation problem once per participant
+- **Looks indefensible when published** — the New Zealand problem
+- **Hard to explain**, and a mechanism nobody understands gets no honest reports anyway
+
+---
+
+# Part 5. Where mechanism design has actually changed the world
+
+The field's best work isn't in auctions; it's in matching, where money is unavailable or forbidden.
+
+**Medical residencies.** The National Resident Matching Program uses deferred acceptance (Gale–Shapley): applicants propose, programs tentatively hold the best offers so far, rejected applicants propose again. The result is **stable** — no doctor and hospital both prefer each other to their assignment — and it's **strategy-proof for the proposing side**, so applicants should simply rank honestly. Roth's analysis of why the pre-1950s unravelling market failed, and his later redesign to handle married couples matching together, is the model case of the theory earning its keep.
+
+**School choice, and the mechanism that punished honesty.** The old Boston system assigned as many students as possible to their first choice, then second choices, and so on. The trap: if you listed a popular school first and missed, you'd arrive at your second choice *after* everyone who ranked it first — so naming your true favourite could cost you your second favourite too. Parents had to strategize, and the parents who strategized well were the ones with time, information and English fluency. **The mechanism was a tax on honesty, levied on the least sophisticated families.** Boston replaced it with deferred acceptance in 2005; New York's high school match followed similar logic. Honest ranking is now safe, which is the entire point.
+
+**Kidney exchange.** Buying organs is illegal nearly everywhere, so price can't clear this market. Instead: find cycles (my donor is compatible with you, yours with me) and chains starting from an altruistic donor. This is pure mechanism design — the algorithm is the market — and it has produced thousands of transplants that otherwise would not have happened.
+
+Roth's term for the constraint that makes kidney exchange necessary is **repugnance**: some trades are socially forbidden regardless of efficiency. A designer who ignores that constraint produces an elegant mechanism nobody will adopt. It belongs on the list with budget balance and participation as a real design constraint, not a confusion to be corrected.
+
+---
+
+# Part 6. A designer's checklist, and the honest limits
+
+**Before writing any set of rules, answer these:**
+
+1. **What's private** — values, costs, effort, types? That's what you have to elicit.
+2. **What's observable and verifiable?** You can only condition payments on this, and you *will* get what you measure.
+3. **Will they participate?** (Individual rationality.) A mechanism that's optimal for people who won't show up is worth nothing — see Bulow–Klemperer.
+4. **Does the money balance?** If you need efficiency and truth, it won't.
+5. **Can a small group collude** or enter twice under different names?
+6. **Can a normal person understand it?** Comprehensibility is an incentive property, not a nicety.
+7. **Does it survive publication?** Both the outcomes and the rules will be scrutinized.
+8. **Is it fair, and does it look fair?** Legitimacy is a constraint on adoption.
+9. **Does it still work if my assumptions about the distribution of values are wrong?** This is **Wilson's doctrine**: prefer "detail-free" mechanisms that don't depend on knowing the priors. It is the most under-appreciated item on this list and the one that separates designs that work in the field from designs that work in papers.
+
+**Where the theory overreaches:**
+
+- It usually assumes the designer knows the *distribution* of private values — often as unrealistic as knowing the values.
+- It assumes participants understand the mechanism well enough to play its equilibrium. Lab and field evidence says they frequently don't, which is why second-price's forgiving flat top and deferred acceptance's "just rank honestly" matter so much in practice.
+- Optimal mechanisms are often fragile; robust mechanisms are often simple. The practical answer is usually a slightly suboptimal, very robust design.
+- **Goodhart's law** sits over the whole enterprise: any measure used as a target degrades as a measure.
+
+**And the many-model framing:** Chapter 21 tells you what people do under given rules; Chapter 24 lets you choose the rules. But a mechanism lives inside a world with feedback loops (Ch. 18), thresholds and cascades (Ch. 19), and collective action pressures (Ch. 23). The best illustration in the whole book of models combining is deposit insurance: a **mechanism-design fix** to a **threshold problem** — change the payoffs so the bank run's threshold is never reached, and the insurance mostly never pays out.
+
+**If you implement it:** the second-price truthfulness demonstration is fifteen lines and worth doing yourself because the flat-topped profit curve is more convincing than the proof. Then the voting-rule comparator (feed it ballots, get four winners) is the one you'll actually reuse — and a profile search like the one above makes a very effective argument in any real discussion about changing a voting rule.
+
