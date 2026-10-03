@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-Hans">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Game theory · a playable model about who moves and when</title>
+<title>博弈论 · 一个关于“谁先动、何时动”的可玩模型</title>
 <link rel="stylesheet" href="../shared/style.css">
 <style>
   /* ======================================================================
@@ -459,79 +459,78 @@
 <main class="wrap">
 
   <nav class="top-nav">
-    <a href="../">← All playable models</a>
+    <a href="../zh.html">← 所有可玩模型</a>
     <span class="spacer"></span>
-    <a href="zh.html" class="lang-switch">中文</a>
+    <a href="index.html" class="lang-switch">EN</a>
     <span class="crumb">ModelThinker · web</span>
   </nav>
 
-  <p class="byline">Ch. 21 · Game theory</p>
-  <h1>Pick a cell. Nudge a number. Watch the game flip.</h1>
+  <p class="byline">第 21 章 · 博弈论</p>
+  <h1>挑一个格子。调一个数字。看整场游戏翻转。</h1>
   <p class="subtitle">
-    The whole point of game theory is this: outcomes don't come from
-    what you want — they come from <em>what both of you want, aware of each
-    other</em>. One well-chosen number flips the entire story.
+    博弈论的全部要点是:结果不是来自<em>你</em>想要什么 ——
+    而是来自<em>你们俩彼此知道对方在想什么的情况下共同想要什么</em>。
+    一个选得巧妙的数字,就能把整个故事翻过来。
   </p>
 
   <p>
-    A payoff matrix is embarrassingly small — four cells for a 2×2 game — and
-    yet it covers price wars, driving conventions, standards fights,
-    brinkmanship and penalty kicks. Below is the live version. Click a preset,
-    then <strong>edit any number</strong> and watch the Nash equilibria
-    rearrange themselves in real time.
+    支付矩阵小得叫人尴尬 —— 2×2 博弈只有四格 —— 却能覆盖价格战、驾驶惯例、
+    标准之争、边缘政策与罚球博弈。下面是它的实时版本。
+    点一下预设,然后<strong>编辑任何数字</strong>,
+    看纳什均衡实时重新排布。
   </p>
 
   <!-- ============================================================ -->
   <!-- PART 1 · The Live Payoff Matrix -->
   <!-- ============================================================ -->
-  <h2>Part 1 · Pick a game, edit a number</h2>
+  <h2>第 1 部分 · 挑一个游戏,改一个数</h2>
   <p>
-    Two players: <strong style="color:#E8590C;">🧡 Alice</strong> (amber — she
-    picks a row) and <strong style="color:#0C8599;">🩵 Bob</strong> (cyan — he
-    picks a column). The matrix below shows what each cell pays each of them.
-    Amber bars mark cells Alice prefers; cyan bars mark cells Bob prefers.
-    Where amber and cyan meet you get a <strong style="color:var(--success);">green
-    Nash equilibrium</strong> — a cell neither would deviate from unilaterally.
-    The analysis panel below updates every time you touch a number.
+    两位玩家:<strong style="color:#E8590C;">🧡 Alice</strong>(琥珀色 —— 她挑一行)
+    和 <strong style="color:#0C8599;">🩵 Bob</strong>(青色 —— 他挑一列)。
+    下方矩阵显示每个格子分别付给两人多少。
+    琥珀色标记 Alice 偏好的格子;青色标记 Bob 偏好的格子。
+    琥珀和青色相遇的地方,就是<strong style="color:var(--success);">绿色的纳什均衡</strong>
+    —— 任何一方单方面偏离都会亏的那个格子。
+    每次你碰一下数字,下方的分析面板都会更新。
   </p>
 
   <div class="sim">
-    <p class="sim-title">The payoff matrix · everything editable, everything live</p>
+    <p class="sim-title">支付矩阵 · 一切都可编辑,一切都实时</p>
 
     <div class="game-row">
       <button class="game-btn active" data-game="pd">
-        🔒 Prisoner's Dilemma
-        <span class="g-hint">betrayal dominates, both lose</span>
+        🔒 囚徒困境
+        <span class="g-hint">背叛占优,双方皆输</span>
       </button>
       <button class="game-btn" data-game="stag">
-        🦌 Stag Hunt
-        <span class="g-hint">two equilibria, one risky</span>
+        🦌 猎鹿博弈
+        <span class="g-hint">两个均衡,一个有风险</span>
       </button>
       <button class="game-btn" data-game="battle">
-        🎭 Battle of the Sexes
-        <span class="g-hint">agree, but on whose terms?</span>
+        🎭 性别战
+        <span class="g-hint">想一致,但按谁的规矩?</span>
       </button>
       <button class="game-btn" data-game="chicken">
-        🐔 Chicken
-        <span class="g-hint">whoever swerves first loses</span>
+        🐔 懦夫博弈
+        <span class="g-hint">谁先让开谁输</span>
       </button>
       <button class="game-btn" data-game="pennies">
-        🪙 Matching Pennies
-        <span class="g-hint">must randomize — no pure NE</span>
+        🪙 猜硬币
+        <span class="g-hint">必须随机 · 没有纯策略均衡</span>
       </button>
     </div>
 
     <div class="matrix-layout">
       <div class="matrix-wrap">
-        <span class="player-tag col" style="margin-bottom: -2px;">🩵 Bob picks a column ▼</span>
+        <span class="player-tag col" style="margin-bottom: -2px;">🩵 Bob 选一列 ▼</span>
         <table class="matrix-table">
           <tr>
             <td class="corner-note"></td>
-            <td class="col-head"><span id="col-A-name" class="strat">Cooperate</span></td>
-            <td class="col-head"><span id="col-B-name" class="strat">Defect</span></td>
+            <td class="col-head"><span id="col-A-name" class="strat">合作</span></td>
+            <td class="col-head"><span id="col-B-name" class="strat">背叛</span></td>
           </tr>
           <tr>
-            <td class="row-head"><span id="row-A-name" class="strat">Cooperate</span></td>
+            <td class="row-head"><span id="row-A-name" class="strat">合作</span></td>
             <td>
               <div class="cell" id="cell-0-0">
                 <div class="payoffs">
@@ -554,7 +553,7 @@
             </td>
           </tr>
           <tr>
-            <td class="row-head"><span id="row-B-name" class="strat">Defect</span></td>
+            <td class="row-head"><span id="row-B-name" class="strat">背叛</span></td>
             <td>
               <div class="cell" id="cell-1-0">
                 <div class="payoffs">
@@ -577,11 +576,11 @@
             </td>
           </tr>
         </table>
-        <span class="player-tag row" style="margin-top: 2px;">🧡 Alice picks a row ▲</span>
+        <span class="player-tag row" style="margin-top: 2px;">🧡 Alice 选一行 ▲</span>
       </div>
 
       <div class="analysis-panel" id="analysis">
-        <h3>Live analysis</h3>
+        <h3>实时分析</h3>
         <div id="analysis-items"></div>
         <div id="verdict" class="verdict"></div>
       </div>
@@ -589,123 +588,113 @@
   </div>
 
   <div class="callout aha">
-    <strong>Try this.</strong> Pick <em>Prisoner's Dilemma</em>. Both players
-    "defect" is the Nash — but it pays only 1 each when "both cooperate" pays 3
-    each. Now click the <strong>1</strong> in the bottom-right (Alice's payoff
-    for mutual defection) and change it to <strong>5</strong>. The dilemma
-    dissolves. The game became Stag Hunt — two equilibria, (coop, coop) is
-    now one of them. One number did all the work.
+    <strong>试试这个。</strong>选<em>囚徒困境</em>。双方都“背叛”是纳什均衡 —— 但各得 1,
+    而“双方合作”本可以各得 3。现在点右下角的 <strong>1</strong>(Alice 在双方背叛时的收益)
+    把它改成 <strong>5</strong>。困境化解了。游戏变成了猎鹿博弈 —— 两个均衡,
+    (合作, 合作)成了其中一个。一个数字,干完了全部工作。
   </div>
 
   <!-- ============================================================ -->
   <!-- PART 2 · Repeated Prisoner's Dilemma -->
   <!-- ============================================================ -->
-  <h2>Part 2 · Now play 20 rounds against five minds</h2>
+  <h2>第 2 部分 · 对阵五种大脑,玩 20 回合</h2>
   <p>
-    The Prisoner's Dilemma matrix never changes — betraying is always the
-    one-shot best move. But what if you play 20 rounds against the same opponent,
-    and <em>they remember</em>? Pick an opponent, hit Cooperate or Defect, and
-    watch the two score cards diverge. The right strategy depends entirely on
-    the mind sitting across from you.
+    囚徒困境的矩阵永远不变 —— 单次博弈中背叛永远是最优解。可如果你和同一个对手玩 20 回合,
+    而<em>对方会记仇</em>呢?挑一个对手,点合作或背叛,看两人的得分板分道扬镳。
+    正确的策略完全取决于你面前这位大脑是谁。
   </p>
 
   <div class="sim">
-    <p class="sim-title">Repeated Prisoner's Dilemma · 20 rounds, 5 opponents</p>
+    <p class="sim-title">重复囚徒困境 · 20 回合,5 种对手</p>
 
     <div class="opponent-row" id="opponent-row">
-      <button class="opp-btn active" data-opp="tft">🪞 Tit-for-Tat</button>
-      <button class="opp-btn" data-opp="allD">👹 Always Defect</button>
-      <button class="opp-btn" data-opp="allC">😇 Always Cooperate</button>
-      <button class="opp-btn" data-opp="grudger">💢 Grudger</button>
-      <button class="opp-btn" data-opp="random">🎲 Random</button>
+      <button class="opp-btn active" data-opp="tft">🪞 一报还一报</button>
+      <button class="opp-btn" data-opp="allD">👹 永远背叛</button>
+      <button class="opp-btn" data-opp="allC">😇 永远合作</button>
+      <button class="opp-btn" data-opp="grudger">💢 记仇者</button>
+      <button class="opp-btn" data-opp="random">🎲 随机</button>
     </div>
 
     <div class="opp-desc" id="opp-description"></div>
 
     <div class="scoreboard">
       <div class="score-card you">
-        <div class="score-label">🥇 You</div>
+        <div class="score-label">🥇 你</div>
         <div class="score-value" id="score-you">0</div>
-        <div class="score-sub">the human</div>
+        <div class="score-sub">人类</div>
       </div>
       <div class="score-vs">vs</div>
       <div class="score-card opp">
-        <div class="score-label">🥈 Opponent</div>
+        <div class="score-label">🥈 对手</div>
         <div class="score-value" id="score-opp">0</div>
-        <div class="score-sub" id="score-opp-name">Tit-for-Tat</div>
+        <div class="score-sub" id="score-opp-name">一报还一报</div>
       </div>
     </div>
 
     <div class="history">
       <div class="history-row you">
-        <span class="h-label">You</span>
+        <span class="h-label">你</span>
         <div class="moves" id="moves-you"></div>
       </div>
       <div class="history-row opp">
-        <span class="h-label">Opponent</span>
+        <span class="h-label">对手</span>
         <div class="moves" id="moves-opp"></div>
       </div>
     </div>
 
-    <div class="round-indicator" id="round-indicator">Round 1 of 20 — your move</div>
+    <div class="round-indicator" id="round-indicator">第 1 回合 / 共 20 回合 —— 轮到你出招</div>
 
     <div class="actions">
-      <button class="action-btn coop"   id="btn-coop">🤝 Cooperate</button>
-      <button class="action-btn defect" id="btn-defect">🗡️ Defect</button>
+      <button class="action-btn coop"   id="btn-coop">🤝 合作</button>
+      <button class="action-btn defect" id="btn-defect">🗡️ 背叛</button>
     </div>
 
     <div class="summary" id="summary" style="display:none;"></div>
 
     <div class="pd-payoff-ref">
-      <span>🤝 both cooperate → <strong>3 / 3</strong></span>
-      <span>🗡️ you defect, they cooperate → <strong>5 / 0</strong></span>
-      <span>🤝 you cooperate, they defect → <strong>0 / 5</strong></span>
-      <span>🗡️ both defect → <strong>1 / 1</strong></span>
+      <span>🤝 双方合作 → <strong>3 / 3</strong></span>
+      <span>🗡️ 你背叛、对方合作 → <strong>5 / 0</strong></span>
+      <span>🤝 你合作、对方背叛 → <strong>0 / 5</strong></span>
+      <span>🗡️ 双方背叛 → <strong>1 / 1</strong></span>
     </div>
 
     <div class="sim-controls" style="margin-top:16px;">
-      <button class="btn btn-ghost" id="btn-reset">↺ New match</button>
+      <button class="btn btn-ghost" id="btn-reset">↺ 新一局</button>
     </div>
   </div>
 
   <div class="callout aha">
-    <strong>Try all five.</strong> Against <em>Always Defect</em>, defecting
-    every round is clearly optimal (you'd lose 100 - 20 if you cooperated).
-    Against <em>Tit-for-Tat</em>, defecting feels right once — but then every
-    future round is mutual betrayal. The highest total you can reach is
-    <strong>60</strong>, and only by cooperating every round against someone
-    who cooperates back. <strong>Betrayal is dominant in one shot, but
-    disastrous when repeated.</strong>
+    <strong>五种全试一遍。</strong>对<em>永远背叛</em>来说,每一轮都背叛显然最优(合作你会输 100 − 20)。
+    对<em>一报还一报</em>来说,背叛一次看似划算 —— 但从此以后每一回合都变成双方互背叛。
+    你能达到的最高总分是 <strong>60</strong>,只有在对方也每轮合作的前提下,
+    每轮都合作才能拿到。<strong>单次博弈中背叛占优,但在重复中就是灾难。</strong>
   </div>
 
-  <h2>What game theory is really for</h2>
+  <h2>博弈论真正用来做什么</h2>
   <p>
-    Not prediction. The theory asks three questions, each worth more than any
-    specific equilibrium: <strong>who moves when</strong> (changing this is
-    usually the biggest available lever), <strong>what makes a threat
-    credible</strong> (commitment is the deliberate destruction of your own
-    options), and <strong>can you change the game instead of playing it
-    better</strong>. That last one is Ch. 24 — mechanism design — and it's
-    usually where the real returns are.
+    不是预测。博弈论问三个问题,每一个都比任何具体的均衡更值钱:
+    <strong>谁在何时出手</strong>(改变这一点通常是你手上最大的那根杠杆);
+    <strong>什么让威胁可信</strong>(承诺其实是刻意摧毁自己的选项);
+    <strong>你能否改变游戏本身,而不只是把它玩得更好</strong>。
+    最后这一个就是第 24 章 —— 机制设计 —— 而真正的回报通常都在这里。
   </p>
   <p>
-    Three honest limits worth keeping in your pocket: payoffs are usually
-    guessed, equilibrium ≠ good (the Prisoner's Dilemma proves that), and
-    equilibrium ≠ what people do (centipede-game players don't backward-induct).
-    The theory excels at <em>reasoning</em> — it shows you which threats are
-    hollow, where commitment pays, and when randomising is mandatory.
+    还有三个值得随身带着的诚实边界:支付通常靠猜;均衡 ≠ 好(囚徒困境就是证明);
+    均衡 ≠ 人们实际上做的事(蜈蚣博弈的玩家不会做反向归纳)。
+    博弈论最擅长的是<em>推理</em> —— 它告诉你哪些威胁是空的、承诺在哪儿划算、
+    什么时候“必须随机”才是正解。
   </p>
 
-  <h2>Related models</h2>
+  <h2>相关模型</h2>
   <ul>
-    <li><a href="../nk/">🏔 NK rugged landscape</a> — strategy on a landscape of interacting decisions, cousin to this chapter's strategic interactions between players.</li>
-    <li><a href="../network/">🕸️ Networks</a> — strategic games played on networks produce entirely different equilibria than well-mixed games.</li>
-    <li><a href="../markov/">🌐 Markov chains</a> — the state of a repeated game evolves like a Markov chain over strategies.</li>
+    <li><a href="../nk/zh.html">🏔 NK 适应度地形</a> — 决策相互作用的策略空间;与本章玩家间的策略互动是近亲。</li>
+    <li><a href="../network/zh.html">🕸️ 网络</a> — 在网络上玩的博弈,所产生的均衡与“充分混合”的博弈完全不同。</li>
+    <li><a href="../markov/zh.html">🌐 马尔可夫链</a> — 重复博弈的状态就像在策略集上演化的马尔可夫链。</li>
   </ul>
 
   <div class="next-nav">
-    <a href="../nk/">← NK rugged landscape</a>
-    <a href="../">All models →</a>
+    <a href="../nk/zh.html">← NK 适应度地形</a>
+    <a href="../zh.html">所有模型 →</a>
   </div>
 </main>
 <script type="module" src="game_theory.js?v=2"></script>

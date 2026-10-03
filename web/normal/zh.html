@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>正态分布 / 中心极限定理 · 一个关于钟形曲线的可玩模型</title>
+<link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+<main class="wrap">
+
+  <nav class="top-nav">
+    <a href="../zh.html">← 所有可玩模型</a>
+    <span class="spacer"></span>
+    <a href="index.html" class="lang-switch">EN</a>
+    <span class="crumb">ModelThinker · web</span>
+  </nav>
+
+  <p class="byline">第 5 章 · 分布</p>
+  <h1>钟形曲线是从哪儿来的?</h1>
+  <p class="subtitle">
+    现场看着它浮现 —— 起点愚蠢得只是“一颗小球在钉子上弹来弹去”。
+  </p>
+
+  <p>
+    下方是一块 <strong>高尔顿钉板</strong>:一个三角形的钉阵,底部有一排桶。
+    每颗球下落时会做 <strong>n</strong> 次微型的抛币:每行向左或向右。
+    它最终落入的桶号,等于一路上“向右”的次数。扔一百颗,看看堆成什么形状。
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 1 · Galton board -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">高尔顿钉板 · 一条钟形曲线把自己堆出来</p>
+    <canvas id="sim-galton" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <label class="slider-block">
+        <span class="slider-label"><span>钉子行数 · n</span><span class="value">12</span></span>
+        <input type="range" min="4" max="18" value="12" step="1" data-fmt="{v}">
+      </label>
+    </div>
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="galton-play">▶ 自动扔球</button>
+      <button class="btn" id="galton-drop1">💧 扔 1 颗</button>
+      <button class="btn" id="galton-drop100">🌊 扔 100 颗</button>
+      <button class="btn btn-ghost" id="galton-clear">↺ 清空钉板</button>
+    </div>
+    <div class="sim-metrics">
+      <div class="metric" id="galton-count"><div class="label">落下的球数</div><div class="value">0</div></div>
+      <div class="metric" id="galton-middle"><div class="label">落在中间桶的比例</div><div class="value">—</div><div class="delta">钟形的众数</div></div>
+    </div>
+    <p style="margin-top:12px;color:var(--muted);font-size:14px;">
+      🔵 蓝色 = 桶里堆着的球 &nbsp;·&nbsp; 红色曲线 = 中心极限定理预测的正态分布
+      <em>N(n/2, √(n/4))</em>。扔几百颗之后,蓝堆应当贴着红线。
+    </p>
+  </div>
+
+  <div class="callout aha">
+    <strong>试试 n = 4。</strong>每颗球只抛 4 次币 —— 所以只有 5 个可能的桶。堆明显是离散的,
+    但已经隐约有点钟形。把 n 推到 18。每颗球变成一个小型统计过程,堆就变得平滑成一条标准的钟形。
+    这个从“颤巍巍”到“钟形”的过渡,就是中心极限定理。
+  </div>
+
+  <h2>它适用于一切,不只是硬币</h2>
+  <p>
+    魔法不在抛币上。只要你把许多独立的小随机量加起来 —— <em>不管它们各自长什么样</em> ——
+    总和近似正态。下面随便挑一个源分布(甚至是偏斜的),把 n 次抽样取平均。每次都是钟形。
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 2 · CLT emerges from any source -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">任意源头 · 输出钟形</p>
+    <canvas id="sim1" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <label class="slider-block" style="min-width:220px;">
+        <span class="slider-label"><span>源分布</span><span></span></span>
+        <select id="sim1-src" style="padding:8px 12px;border-radius:8px;border:1.5px solid var(--line);font-family:inherit;font-size:14px;background:white;">
+          <option value="uniform">均匀 0–1</option>
+          <option value="exp" selected>指数(偏斜)</option>
+          <option value="bern">抛币(伯努利)</option>
+          <option value="lognormal">对数正态(重尾)</option>
+        </select>
+      </label>
+      <label class="slider-block">
+        <span class="slider-label"><span>n · 每个样本均值的抽样数</span><span class="value">30</span></span>
+        <input type="range" min="1" max="300" value="30" step="1" data-fmt="{v}">
+      </label>
+    </div>
+    <div class="sim-metrics">
+      <div class="metric" id="sim1-mu"><div class="label">实证均值</div><div class="value">—</div></div>
+      <div class="metric" id="sim1-std"><div class="label">实证标准差</div><div class="value">—</div><div class="delta">理论 σ/√n</div></div>
+    </div>
+    <p style="margin-top:12px;color:var(--muted);font-size:14px;">
+      🔵 蓝 = 原始源分布 &nbsp;·&nbsp; 🟠 橙 = 样本均值的分布 &nbsp;·&nbsp; 红 = 中心极限定理预测的正态
+    </p>
+  </div>
+
+  <div class="callout aha">
+    <strong>试试 n = 1。</strong>橙色直方图<em>就是</em>源分布。再把 n 推上去。
+    看看它多快(对对数正态来说多慢)就对称化成一条钟形。
+  </div>
+
+  <h2>√n 规则</h2>
+  <p>
+    钟形不仅会浮现,还会<strong>收紧</strong>。把 <em>n</em> 翻倍,宽度只缩小 √2 倍。
+    这就是为什么<em>把样本量乘以 4</em> 才会把标准误差减半,而不是乘以 2。
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 3 · The √n scan -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">实证标准差 vs 样本量 · 双对数坐标</p>
+    <canvas id="sim2" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="sim2-run">🎲 运行扫描</button>
+    </div>
+    <p style="margin-top:12px;color:var(--muted);font-size:14px;">
+      如果 √n 规则成立,双对数图的斜率应该是 −½。横轴每向右一格 = 样本量 ×4 = 误差 ×½。
+    </p>
+  </div>
+
+  <div class="callout warn">
+    <strong>小规模学校的悖论。</strong>美国一度有一项著名的教育倡议拨款把大校拆成小校,
+    理由是小校常常出现在考试成绩的<em>前列</em>。但小校也常常出现在<em>后列</em> ——
+    出于同一个统计学原因。n 小时 σ/√n 更大。两端都更极端。
+    信号不是学校的质量;信号就是样本量。
+  </div>
+
+  <h2>相关模型</h2>
+  <ul>
+    <li><a href="../power-laws/zh.html">📈 幂律</a> — 另一种尾部形状。薄尾 vs 重尾,钟形曲线 vs 直的双对数线,同样的数据生成器翻一下就互换。</li>
+    <li><a href="../random-walk/zh.html">🚶 随机漫步</a> — 漫步者的位置依中心极限定理成为正态。第 13 章的 √t 规则其实是乔装的中心极限定理。</li>
+    <li><a href="../entropy/zh.html">🎲 熵</a> — 给定均值与方差,正态分布<em>就是</em>最大熵分布,所以它字面上就是“最无知”的答案。</li>
+  </ul>
+
+  <div class="next-nav">
+    <a href="../entropy/zh.html">← 熵</a>
+    <a href="../power-laws/zh.html">幂律 →</a>
+  </div>
+</main>
+<script type="module" src="normal.js?v=2"></script>
+</body>
+</html>

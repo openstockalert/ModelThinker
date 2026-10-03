@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NK 适应度地形 · 一个关于崎岖地貌的可玩模型</title>
+<link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+<main class="wrap">
+
+  <nav class="top-nav">
+    <a href="../zh.html">← 所有可玩模型</a>
+    <span class="spacer"></span>
+    <a href="index.html" class="lang-switch">EN</a>
+    <span class="crumb">ModelThinker · web</span>
+  </nav>
+
+  <p class="byline">第 28 章 · 学习与搜索</p>
+  <h1>地图里有陷阱</h1>
+  <p class="subtitle">
+    你正在设计一个产品,要做 6 个是/否决策。
+    <br>每个决策都会牵动其他决策。找出最好的那个版本。
+  </p>
+
+  <p>
+    下方就是你的搜索空间:<strong>64 种可能的设计</strong>,按 8×8 布局摊开。
+    每一格有一个隐藏的<em>适应度</em> —— 用户有多喜欢这种组合。
+    <span style="color:#ebcf50;font-weight:600;">黄色</span>格子是赢家。
+    <span style="color:#3d3a70;font-weight:600;">深紫色</span>格子是哑炮。
+    <strong>相邻格子之间恰好只翻转一个决策</strong> —— 设计空间里的小步,也就是地图上的小步。
+  </p>
+
+  <p>
+    如果你的 6 个决策能<em>相互独立</em>工作,地图就是一座光滑的山丘:逐一微调,一路爬上山顶。
+    可现实中的决策是<strong>相互影响</strong>的 —— 一个响亮的声音在大而快的产品上很棒,
+    在小而安静的产品上却极烦人。相互影响一多,光滑的山丘就碎成一片布满小山头的雷区。
+    拧一下 K 旋钮,看看:
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 1 · The ruggedness dial -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">拧动崎岖度旋钮 · K = 每个决策受多少其它决策影响</p>
+    <canvas id="sim-terrain" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <label class="slider-block">
+        <span class="slider-label"><span>K · 每个决策的交互数</span><span class="value">0</span></span>
+        <input type="range" min="0" max="5" value="0" step="1" data-fmt="{v}">
+      </label>
+      <button class="btn btn-ghost" id="terrain-new">🎲 新地形</button>
+    </div>
+    <div class="sim-metrics">
+      <div class="metric" id="terrain-peaks"><div class="label">局部峰值数</div><div class="value">1</div><div class="delta">地形里的陷阱</div></div>
+      <div class="metric" id="terrain-max"><div class="label">全局最大值</div><div class="value">—</div><div class="delta">可能的最高适应度</div></div>
+    </div>
+  </div>
+
+  <div class="callout aha">
+    <strong>把 K 从 0 拖到 5。</strong>原来一座金色的山丘,碎成了十几个小山头(白圈)。
+    每一个白圈都是一个合法的<em>“局部最优”</em> —— 周围只翻一个决策都不会更好。
+    光凭邻居,你根本看不出自己不在真正的山顶。这就是整个陷阱。
+  </div>
+
+  <h2>现在换你来爬</h2>
+  <p>
+    你从一个随机设计出发(蓝色小人)。地图下方的卡片就是你的 6 个决策。
+    每张卡片告诉你翻转这个决策会发生什么 ——
+    <span style="color:var(--success);font-weight:600;">绿色 ↑</span>设计变好,
+    <span style="color:var(--danger);font-weight:600;">红色 ↓</span>设计变差。
+    点任一张卡片翻转它,小人会瞬移到地图上的新家。
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 2 · The climber game -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">亲手爬一爬 · 点卡片翻转对应决策</p>
+    <canvas id="sim-climb" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <label class="slider-block">
+        <span class="slider-label"><span>K · 每个决策的交互数</span><span class="value">2</span></span>
+        <input type="range" min="0" max="5" value="2" step="1" data-fmt="{v}">
+      </label>
+    </div>
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="climb-hint">🎯 提示最佳下一步</button>
+      <button class="btn" id="climb-jump">🌪️ 大跳(随机翻 3 个)</button>
+      <button class="btn" id="climb-restart">🎲 随机重启</button>
+      <button class="btn btn-ghost" id="climb-new">🎨 新地形</button>
+    </div>
+    <div class="sim-metrics">
+      <div class="metric" id="climb-fit"><div class="label">你的适应度</div><div class="value">—</div><div class="delta">占全局最大值的 %</div></div>
+      <div class="metric" id="climb-max"><div class="label">全局最大值</div><div class="value">—</div><div class="delta">可能的最佳设计</div></div>
+      <div class="metric" id="climb-moves"><div class="label">步数</div><div class="value">0</div></div>
+      <div class="metric" id="climb-peaks"><div class="label">局部峰值数</div><div class="value">—</div><div class="delta">地图上的陷阱数</div></div>
+    </div>
+  </div>
+
+  <div class="callout aha">
+    <strong>试试这样。</strong>把 K 设成 4。<em>只走绿色卡片</em>的步。最终每张卡要么变红要么变灰 ——
+    你卡住了。再瞄一眼地图:多半不是那枚金色 🏆。按一下 <strong>🌪️ 大跳</strong>,再来一次。
+    你会落到一个完全不同的局部峰。这就是 NK 的故事:贪婪爬坡在光滑地形上胜利,
+    在崎岖地形上就把你困死;不同的起点能够登上不同的山头。
+  </div>
+
+  <h2>三位探险者,同一片地形</h2>
+  <p>
+    同一张地图。同样的步数预算。三种性格:
+  </p>
+  <ul>
+    <li><strong style="color:#4C6EF5;">H · 爬坡者。</strong>永远选当前最优的那一步。最快登顶 —— 然后永远卡住。</li>
+    <li><strong style="color:#37B24D;">R · 重启小队。</strong>先爬坡;一卡住就瞬移到一个随机新起点。多样性保险。</li>
+    <li><strong style="color:#F76707;">L · 大跳者。</strong>多数时候爬坡,偶尔一次性翻好几位。代价不低,但能跳出局部峰。</li>
+  </ul>
+  <p>
+    看他们怎么走。每位探险者会在地图上留下自己颜色的痕迹。下方的进度条比赛的是
+    <em>目前为止最好的适应度</em> —— 这才是真正算数的指标,因为你记得的只会是自己最好的那个设计。
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 3 · Strategy race -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">赛跑 · 三位探险者、一张地图、同一预算</p>
+    <canvas id="sim-race" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <label class="slider-block">
+        <span class="slider-label"><span>K · 地形崎岖度</span><span class="value">3</span></span>
+        <input type="range" min="1" max="5" value="3" step="1" data-fmt="{v}">
+      </label>
+      <button class="btn btn-primary" id="race-run">🏁 开跑</button>
+      <button class="btn btn-ghost" id="race-new">🎨 新地形</button>
+    </div>
+    <div class="sim-metrics">
+      <div class="metric" id="race-hc"><div class="label">🎯 爬坡者</div><div class="value">—</div><div class="delta">贪婪</div></div>
+      <div class="metric" id="race-rr"><div class="label">🎲 重启小队</div><div class="value">—</div><div class="delta">随机重启</div></div>
+      <div class="metric" id="race-lj"><div class="label">🌪️ 大跳者</div><div class="value">—</div><div class="delta">偶发大跳</div></div>
+    </div>
+  </div>
+
+  <div class="callout warn">
+    <strong>管理策略的翻译。</strong>Kauffman 与 Levinthal 的论点,大白话说:
+    在<em>光滑</em>地形上(交互少、K 低),渐进优化胜出 —— 比对手跑得更快就赢了。
+    在<em>崎岖</em>地形上(产品特性相互制约、政策牵一发动全身),纯粹的渐进主义会把你困在半山腰,
+    而一个从截然不同设计出发的对手正在登上一座更高的山。
+    这就是为什么极端的新入场者有时能打败精益求精的在位者 —— 他们爬的根本是另一座山。
+  </div>
+
+  <h2>多样化团队 &gt; 同质专家</h2>
+  <p>
+    Scott Page 的 <em>The Difference</em> 把“重启小队”推而广之。
+    如果一群聪明的搜索者都从同一个起点、用同一套启发式去搜索,他们会被卡在同一个局部峰上。
+    不同的搜索者会被卡在<em>不同</em>的峰上 —— 并且可以彼此交换走法。
+    认知多样性的数学论证,就藏在一张 NK 地形里。
+  </p>
+
+  <h2>相关模型</h2>
+  <ul>
+    <li><a href="../life-and-majority/zh.html">🎮 生命游戏与局部多数</a> — 又一个“规则简单、结果惊人”的故事,复杂性从局部交互中涌现。</li>
+    <li><a href="../game-theory/zh.html">♟️ 博弈论</a> — 决策之间的策略互动,是 NK 中特性相互影响的近亲。</li>
+    <li><a href="../schelling/zh.html">🟦🟧 Schelling 隔离</a> — 基于主体的近亲:局部决策汇总成一张全局的结果地形。</li>
+  </ul>
+
+  <div class="next-nav">
+    <a href="../path-dependence/zh.html">← 路径依赖</a>
+    <a href="../game-theory/zh.html">博弈论 →</a>
+  </div>
+</main>
+<script type="module" src="nk.js?v=3"></script>
+</body>
+</html>

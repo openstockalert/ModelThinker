@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>路径依赖 · 一个关于“历史何时重要”的可玩模型</title>
+<link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+<main class="wrap">
+
+  <nav class="top-nav">
+    <a href="../zh.html">← 所有可玩模型</a>
+    <span class="spacer"></span>
+    <a href="index.html" class="lang-switch">EN</a>
+    <span class="crumb">ModelThinker · web</span>
+  </nav>
+
+  <p class="byline">第 14 章 · 不确定性与动力学</p>
+  <h1>有些世界记性好。有些会忘。有些毫不在意。</h1>
+  <p class="subtitle">
+    QWERTY 键盘。靠左行驶。VHS 打败 Betamax。硅谷之所以在硅谷。
+    <br>没有哪一个是注定的。那么,是什么决定了“历史重要”和“历史不重要”?
+  </p>
+
+  <p>
+    一只坛子。两颗起始球,一红 🔴,一蓝 🔵。每一步你伸手摸一颗,然后<em>某件事</em>发生。
+    那件“某事” —— 更新规则 —— 就是整个故事。下面三条规则各试一遍,看长期走向会被改到多离谱。
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 1 · Interactive urn -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">选一条规则 · 抽球 · 看历史怎样表现</p>
+
+    <div class="sim-controls" style="margin-bottom:12px;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;" id="urn-rule-tabs">
+        <button class="btn" data-rule="bernoulli">🧊 伯努利</button>
+        <button class="btn btn-primary" data-rule="polya">🌊 Pólya</button>
+        <button class="btn" data-rule="balancing">⚖ 平衡</button>
+      </div>
+    </div>
+
+    <div id="urn-rule-hint" style="padding:12px 14px;background:var(--bg-soft);border-radius:var(--radius-sm);margin-bottom:14px;font-size:14px;line-height:1.5;">
+      <!-- populated by JS with the current rule's explanation -->
+    </div>
+
+    <canvas id="urn-canvas" class="sim-canvas"></canvas>
+
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="urn-draw">🎯 抽一颗</button>
+      <button class="btn" id="urn-auto">⚡ 自动抽 ×20</button>
+      <button class="btn btn-ghost" id="urn-reset">↺ 清空坛子</button>
+    </div>
+
+    <div class="sim-metrics">
+      <div class="metric" id="urn-red"><div class="label">🔴 坛中红球</div><div class="value">1</div></div>
+      <div class="metric" id="urn-blue"><div class="label">🔵 坛中蓝球</div><div class="value">1</div></div>
+      <div class="metric" id="urn-frac"><div class="label">红球占比</div><div class="value">50%</div></div>
+      <div class="metric" id="urn-draws"><div class="label">已抽次数</div><div class="value">0</div></div>
+    </div>
+  </div>
+
+  <div class="callout aha">
+    <strong>三下点击,看懂全局。</strong>在 <strong>🧊 伯努利</strong>下,坛子永远不变 ——
+    每次抽都只是从同一只罐子里再采样一次。在 <strong>🌊 Pólya</strong>下,每次抽完都往坛里
+    再加一颗<em>刚抽到那种颜色</em>的球,早期的运气会被复利放大。
+    在 <strong>⚖ 平衡</strong>下,每次抽完都往坛里加一颗<em>相反</em>颜色,悄悄把比例拉回 50/50 ——
+    无论从哪儿起步。
+  </div>
+
+  <h2>现在同时跑三条世界线</h2>
+  <p>
+    同样的起始坛(1 红 1 蓝)。同样的随机数预算。唯一不同的是更新规则。
+    看下方三个面板怎么开始分道扬镳。
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 2 · Three worlds, same start -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">三只坛子赛跑 · 每只 40 条轨迹</p>
+    <canvas id="worlds-canvas" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="worlds-play">▶ 同时跑</button>
+      <button class="btn btn-ghost" id="worlds-reset">↺ 重置</button>
+    </div>
+    <p style="margin-top:12px;color:var(--muted);font-size:14px;">
+      每一条蓝色曲线是一条轨迹的“红球占比随时间”变化。
+      <strong>伯努利</strong>:大家都停留在起始比例附近 —— 一条平直的线,就是“没有记忆”的样子。
+      <strong>Pólya</strong>:轨迹散开,铺满 [0, 1] —— 这种发散就是“历史被锁死”的样子。
+      <strong>平衡</strong>:无论从哪里起步都被拉向 ½ —— 这种收敛就是“历史被抹掉”的样子。
+    </p>
+  </div>
+
+  <div class="callout warn">
+    <strong>Pólya 的“均匀分布”惊喜。</strong>给一只 Pólya 坛子<em>无穷</em>步数,最终的红球占比会是一个随机变量 ——
+    对于经典的 (1, 1) 起始,它<strong>在 [0, 1] 上均匀分布</strong>。
+    这意味着最终停在 12% 红球、停在 87% 红球、停在 50% 红球,概率完全一样。
+    不存在“最可能”的结果。Pólya 的平行宇宙里,每一个可能的世界都被均匀地代表。(Pólya, 1930。)
+  </div>
+
+  <h2>路径依赖的指纹</h2>
+  <p>
+    跑许多条轨迹,记下每条的最终红球占比,画出直方图。<em>形状</em>就能告诉你历史到底有没有留下痕迹。
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 3 · Final-share fingerprint -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">最终占比的分布 · 每只坛 800 步 × 1500 条轨迹</p>
+    <canvas id="fp-canvas" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="fp-run">🎲 三条一起模拟</button>
+      <button class="btn btn-ghost" id="fp-reset">↺ 清空</button>
+    </div>
+    <p style="margin-top:12px;color:var(--muted);font-size:14px;">
+      <strong>伯努利</strong>:在初始占比(50%)处有一座尖峰 —— <em>每一个</em>宇宙都几乎停在同一处。
+      <strong>Pólya</strong>:在 [0, 1] 上接近平的 —— 每种可能结果出现的概率大致相当。
+      <strong>平衡</strong>:在 ½ 处有一座尖峰 —— 历史被抹除。
+    </p>
+  </div>
+
+  <div class="callout aha">
+    <strong>熵是最锐利的诊断工具。</strong>计算每种“最终占比分布”的 Shannon 熵。
+    Pólya 的那条非常接近最大熵(log₂ bin 数);另外两条接近零。
+    一个数,就能告诉你一个过程是否路径依赖。书中,Page 就是用这个方法把路径依赖与临界点区分开:
+    同样的分布跃迁,背后的机制不同。
+  </div>
+
+  <h2>现实中 Pólya 式的瞬间</h2>
+  <ul>
+    <li><strong>技术标准。</strong>QWERTY vs Dvorak、VHS vs Betamax、TCP/IP vs OSI、GSM vs CDMA ——
+      都是早期的微弱领先被复利放大为永久统治的例子,哪怕竞争对手质量相当甚至更好。</li>
+    <li><strong>城市与产业。</strong>硅谷并不是注定要成为硅谷 —— 早期的斯坦福衍生公司催生了一个枢纽,
+      枢纽吸引了更多人才,人才又带来了更多衍生公司。底特律之于汽车。好莱坞之于电影。纳什维尔之于乡村音乐。</li>
+    <li><strong>制度与法律。</strong>早期判例形塑后来的判例。立国时的宪法选择投下长长的阴影。
+      普通法就是一只以案件为球的 Pólya 坛子。</li>
+    <li><strong>文化市场。</strong>Salganik、Dodds 与 Watts(2006)用实验证明:
+      当人们能看到别人下载过什么时,流行度会随机锁定 —— 现实版的 Pólya 坛子。
+      两个世界的那个实验,见我们的<a href="../power-laws/zh.html">幂律</a>故事。</li>
+  </ul>
+
+  <h2>相关模型</h2>
+  <ul>
+    <li><a href="../markov/zh.html">🌐 马尔可夫链</a> — 路径依赖的反面:历史无关紧要,只有当前状态要紧。</li>
+    <li><a href="../power-laws/zh.html">📈 幂律</a> — 优先连接是一种路径依赖过程,产生重尾结果。</li>
+    <li><a href="../random-walk/zh.html">🚶 随机漫步</a> — 密切相关的随机过程;Pólya 坛子是一次乔装的有偏随机漫步。</li>
+  </ul>
+
+  <div class="next-nav">
+    <a href="../markov/zh.html">← 马尔可夫链</a>
+    <a href="../nk/zh.html">NK 适应度地形 →</a>
+  </div>
+</main>
+<script type="module" src="path-dependence.js?v=3"></script>
+</body>
+</html>

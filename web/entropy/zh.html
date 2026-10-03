@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>熵 · 一个关于“惊讶”的可玩模型</title>
+<link rel="stylesheet" href="../shared/style.css">
+<style>
+  /* --- Concept diagram (Sim 2 intro) --- */
+  .concept-strip {
+    background: #0F1420;
+    border-radius: var(--radius);
+    padding: 16px 16px 18px;
+    color: #F1F3F5;
+    margin: 20px 0;
+  }
+  .concept-strip canvas {
+    display: block;
+    width: 100%;
+    background: #060811;
+    border-radius: 8px;
+  }
+  .concept-strip p {
+    margin: 10px 0 0;
+    font-size: 13px;
+    color: rgba(241,243,245,0.75);
+    line-height: 1.4;
+  }
+
+  /* --- Four-fates zoo (Sim 2) --- */
+  .fates-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 12px;
+  }
+  .fate-card {
+    background: #0F1420;
+    border-radius: var(--radius);
+    padding: 12px 12px 14px;
+    color: #F1F3F5;
+  }
+  .fate-card .fate-title {
+    font-size: 14px;
+    font-weight: 700;
+    margin: 0 0 8px;
+  }
+  .fate-card .fate-title-sub {
+    display: block;
+    font-size: 11px;
+    font-weight: 500;
+    color: rgba(241,243,245,0.55);
+    letter-spacing: 0.03em;
+    margin-top: 2px;
+  }
+  .fate-card canvas {
+    display: block;
+    width: 100%;
+    background: #060811;
+    border-radius: 6px;
+  }
+  .fate-card .fate-meter {
+    margin-top: 8px;
+    height: 10px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.08);
+    overflow: hidden;
+  }
+  .fate-card .fate-meter-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4C6EF5, #F76707);
+    transition: width 0.2s ease;
+    border-radius: 999px;
+  }
+  .fate-card .fate-caption {
+    margin: 8px 0 0;
+    font-size: 12px;
+    color: rgba(241,243,245,0.7);
+    line-height: 1.4;
+  }
+
+  /* --- Preset gallery (Sim 3) --- */
+  .rule-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .rule-thumb {
+    display: flex;
+    flex-direction: column;
+    background: white;
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
+    padding: 6px;
+    cursor: pointer;
+    transition: transform 0.1s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    font-family: inherit;
+  }
+  .rule-thumb:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(28,34,56,0.10);
+    border-color: var(--primary);
+  }
+  .rule-thumb.active {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(247,103,7,0.18);
+  }
+  .rule-thumb canvas {
+    display: block;
+    width: 100%;
+    background: #060811;
+    border-radius: 4px;
+  }
+  .rule-thumb-label {
+    margin-top: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink);
+    text-align: center;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .rule-thumb-class {
+    font-size: 10px;
+    padding: 1px 5px;
+    border-radius: 4px;
+    color: white;
+    font-weight: 600;
+  }
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <nav class="top-nav">
+    <a href="../zh.html">← 所有可玩模型</a>
+    <span class="spacer"></span>
+    <a href="index.html" class="lang-switch">EN</a>
+    <span class="crumb">ModelThinker · web</span>
+  </nav>
+
+  <p class="byline">第 12 章 · 不确定性</p>
+  <h1>用一个数字衡量惊讶</h1>
+  <p class="subtitle">
+    一枚硬币、一个市场,或者一片雨林,到底该让你多惊讶?
+    <br>Shannon(1948)给了我们一个数,一次回答三个问题。单位是<em>比特</em>。
+  </p>
+
+  <p>
+    下面是一台小机器。四根彩色柱子是四种结果的概率。
+    <strong>抓住任一根柱子上下拖</strong> —— 你就在改写几率。样本会立刻开始喷出。
+    每颗弹出的彩色小球上方会显示一个“<strong>+1.42 比特</strong>”的小牌:
+    那就是这个样本<em>该让你惊讶</em>多少。稀有的事件弹出时牌子更大。
+    许多样本之后,平均牌子大小就是 Shannon 所说的
+    <strong>熵</strong> —— 一个用比特计量的数字,回答“这个过程有多不可预测”。
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 1 · The Surprise Machine -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">拖动柱子 · 看每次采样带来的惊讶</p>
+    <canvas id="sim-machine" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="mach-fair">🎲 公平(均匀)</button>
+      <button class="btn" id="mach-certain">🎯 近乎确定</button>
+      <button class="btn" id="mach-skew">📉 幂律</button>
+      <button class="btn" id="mach-bimodal">🎪 双峰</button>
+      <button class="btn btn-ghost" id="mach-pause">⏸ 暂停数据流</button>
+    </div>
+    <div class="sim-metrics">
+      <div class="metric" id="mach-h"><div class="label">熵 H</div><div class="value">—</div><div class="delta">理论值 · 比特/样本</div></div>
+      <div class="metric" id="mach-hmax"><div class="label">上限</div><div class="value">2.00</div><div class="delta">= log₂ 4 · 均匀分布</div></div>
+      <div class="metric" id="mach-empirical"><div class="label">运行均值惊讶</div><div class="value">—</div><div class="delta">样本实际带来的平均惊讶</div></div>
+    </div>
+  </div>
+
+  <div class="callout aha">
+    <strong>试试几种预设。</strong>“公平”把表拨到 <strong>2 比特</strong> ——
+    每一次采样都最大限度地让你惊讶。“近乎确定”把它压回 <strong>0</strong>:
+    你已经知道会出什么。盯着底部的<em>运行均值</em>看它在几十次采样之后收敛到 H。
+    那种收敛<em>就是</em>熵的定义在起作用。
+  </div>
+
+  <h2>同样的数学,第二份工作 —— 多样性</h2>
+  <p>
+    生态学家把它叫做 <strong>Shannon–Wiener 指数</strong>,用来给一片森林的物种多样性打分。
+    经济学家把 $e^H$ 叫做<strong>有效品牌数</strong>,用来衡量市场的多样性。
+    同一个公式,三种术语。一个纯松林的熵接近零;一片雨林的熵接近 $\log_2 K$。
+    一家品牌独大?低。所有生态位均匀被填满?高。
+  </p>
+
+  <h2>同样的数学,第三份工作 —— 一个数把所有模型归入四类</h2>
+  <p>
+    观察<em>任何东西</em>足够久 —— 钟表、市场、流体、生态系统 ——
+    Stephen Wolfram(2002)注意到你一定会看到四种长期行为之一。
+    熵就是把它们区分开的那把尺子。与其在这里给你证明,不如在最简单的游乐场里直接看:
+    一行像素,按一条小规则演化。
+  </p>
+
+  <div class="concept-strip">
+    <canvas id="concept-diagram" style="height:170px;"></canvas>
+    <p>
+      <strong>这个像素世界怎么运转。</strong>顶上一排是黑白格子。每一步,每个格子看
+      <em>自己和它的两个邻居</em> —— 共三格。规则查表:“看到这个 3 格图样时,我该变成什么颜色?”
+      然后所有格子同时套用。像素行像一匹布被织下去:不同的规则 → 不同的布料。
+    </p>
+  </div>
+
+  <p>
+    下面是四个这样的像素世界,并排运行。它们都用你刚读到的设定 —— 三格进,一格出 ——
+    只是查表的规则<em>不同</em>。看每条规则生出什么样子,别只盯着数字。
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 2 · Meet the Four Fates (auto-playing zoo) -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">四条规则 · 四种命运 · 实时播放</p>
+    <div class="fates-grid" id="fates-grid"></div>
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="fates-toggle">⏸ 暂停</button>
+      <button class="btn" id="fates-random">🎲 随机起点</button>
+      <button class="btn btn-ghost" id="fates-reset">↺ 重置 · 单像素</button>
+    </div>
+  </div>
+
+  <div class="callout aha">
+    <strong>同一本规则书,四种完全不同的命运。</strong>钟表滴答(<em>周期</em>);
+    轮盘赌是混乱(<em>随机</em>);生态系统制造出不重复的结构(<em>复杂</em>);
+    暖房间里的冰块融化成空(<em>平衡</em>)。
+    一旦注意到这四种格局,它们在哪里都看得到。
+  </div>
+
+  <h2>现在,设计你自己的规则</h2>
+  <p>
+    那么“规则”到底是什么?一张查找表。恰好有 <strong>8 种可能的三格输入图样</strong> ——
+    从 <span style="font-family:monospace;">░░░</span>(全灭)到
+    <span style="font-family:monospace;">▓▓▓</span>(全亮)。
+    对每种图样,规则说“输出亮”还是“输出灭”。所以一条规则就是
+    <strong>8 个是/否选择</strong> —— 总共 2⁸ = <strong>256 条规则</strong>。
+    大多数制造混乱。少数制造静止。极少数会制造出没人见过第二次的结构。
+  </p>
+  <p>
+    下面就是你的查找表。<strong>点击 8 个输出格子中的任意一个翻转它</strong>。
+    实时看着你的自定义规则跑出来。或按一下预设 —— 它们<em>就是</em>上面那四种命运背后的规则。
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 3 · The Rule Builder -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">设计一条 3 格规则 · 点任一输出翻转它</p>
+    <canvas id="sim-builder" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <button class="btn" data-preset="0" title="规则 0 —— 所有输入都 → 灭">🏁 寂静</button>
+      <button class="btn" data-preset="184" title="规则 184 —— “交通”规则">🔁 节拍</button>
+      <button class="btn" data-preset="30" title="规则 30 —— Wolfram 的伪随机数生成器">🎲 狂野</button>
+      <button class="btn" data-preset="110" title="规则 110 —— 图灵完备">🧠 诡异</button>
+      <button class="btn btn-ghost" id="rule-dice">🎲 来点意外 · 随机规则</button>
+    </div>
+    <div class="sim-controls">
+      <label class="slider-block" style="flex:1 1 260px;">
+        <span class="slider-label"><span>或直接拨 0–255 任意规则</span><span class="value">30</span></span>
+        <input type="range" min="0" max="255" value="30" step="1" data-fmt="{v}">
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted);white-space:nowrap;">
+        <input type="checkbox" id="rule-random"> 随机起点(否则只亮 1 个像素)
+      </label>
+    </div>
+    <div class="sim-metrics">
+      <div class="metric" id="rule-detected"><div class="label">检测到的命运</div><div class="value">—</div><div class="delta">来自末段熵</div></div>
+      <div class="metric" id="rule-known"><div class="label">已知归类(Wolfram)</div><div class="value">—</div><div class="delta">手动分类</div></div>
+      <div class="metric" id="rule-h"><div class="label">平均行熵</div><div class="value">—</div><div class="delta">比特 · 1.0 = 50/50 的上限</div></div>
+    </div>
+    <p style="margin:16px 0 4px;font-size:13px;font-weight:700;color:var(--ink);">或浏览画廊 —— 点任意一格</p>
+    <div class="rule-gallery" id="rule-gallery"></div>
+  </div>
+
+  <div class="callout warn">
+    <strong>“随机”与“复杂”的边界并不清晰。</strong>当自动检测器与 Wolfram 的手工分类有分歧时,
+    这个不一致正是重点 —— “狂野”这种命运和“诡异”这种命运,从远处看在统计上可能一模一样。
+    真实的市场和生态系统面临完全同样的问题:大尺度下的统计随机性,
+    每放大一层又隐藏着结构。一个数,未必总能把它们区分开。
+  </div>
+
+  <h2>熵出现在哪里</h2>
+  <p>
+    文件压缩(低熵语言每符号用更少比特)、密码学(不可预测性 = 安全性)、
+    机器学习(交叉熵几乎是每个分类器的损失函数)、物理学(Boltzmann 的版本和 Shannon 的只差单位)、
+    生态与反垄断中的多样性度量。一个数。无处不在。
+  </p>
+
+  <h2>相关模型</h2>
+  <ul>
+    <li><a href="../life-and-majority/zh.html">🎮 生命游戏与局部多数</a> — 把四类故事用 2D 元胞自动机讲一遍,而不是用 1D 规则。</li>
+    <li><a href="../normal/zh.html">🔔 正态分布 / 中心极限定理</a> — 给定均值和方差,正态分布是最大熵。三个经典最大熵答案之一。</li>
+    <li><a href="../random-walk/zh.html">🚶 随机漫步</a> — 漫步者位置的熵正好以 √t 增长,这正是第 13 章的主要结果。</li>
+  </ul>
+
+  <div class="next-nav">
+    <a href="../life-and-majority/zh.html">← 生命游戏与局部多数</a>
+    <a href="../normal/zh.html">正态分布 / 中心极限定理 →</a>
+  </div>
+</main>
+<script type="module" src="entropy.js?v=3"></script>
+</body>
+</html>

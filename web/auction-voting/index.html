@@ -1,0 +1,653 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Auctions &amp; voting · a playable model about writing the rules</title>
+<link rel="stylesheet" href="../shared/style.css">
+<style>
+  /* ======================================================================
+     Auction & voting story — bespoke styles
+     ====================================================================== */
+  :root {
+    --candA: #4C6EF5;
+    --candB: #F76707;
+    --candC: #37B24D;
+    --candD: #BE4BDB;
+  }
+
+  /* ---- Candidate chips --------------------------------------------- */
+  .cand {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 14px;
+    color: white;
+  }
+  .cand.a { background: var(--candA); }
+  .cand.b { background: var(--candB); }
+  .cand.c { background: var(--candC); }
+  .cand.d { background: var(--candD); }
+  .cand.big { font-size: 18px; padding: 4px 14px; }
+
+  /* ---- Ballot profile table (Sim 1) -------------------------------- */
+  .ballot-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 0 0 14px;
+    font-size: 14px;
+  }
+  .ballot-table th,
+  .ballot-table td {
+    padding: 8px 12px;
+    text-align: left;
+  }
+  .ballot-table thead th {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    font-weight: 700;
+    border-bottom: 1.5px solid var(--line);
+  }
+  .ballot-table tbody tr {
+    background: var(--bg-soft);
+  }
+  .ballot-table tbody tr + tr td { border-top: 2px solid white; }
+  .ballot-table td:first-child {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+  }
+  .ballot-table td:last-child {
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+  }
+  .ballot-table td .ranking {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .ballot-table td .ranking .gt {
+    color: var(--muted);
+    font-weight: 400;
+    padding: 0 2px;
+  }
+
+  /* ---- Rule button row --------------------------------------------- */
+  .rule-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .rule-btn {
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 2px solid var(--line);
+    background: white;
+    cursor: pointer;
+    font-family: inherit;
+    text-align: left;
+    color: var(--ink);
+    transition: all 0.15s ease;
+  }
+  .rule-btn:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent);
+    box-shadow: 0 4px 14px rgba(28,34,56,0.08);
+  }
+  .rule-btn.active {
+    border-color: var(--accent);
+    background: rgba(247,103,7,0.08);
+  }
+  .rule-btn .r-title { font-weight: 700; font-size: 14px; margin-bottom: 4px; }
+  .rule-btn .r-hint  { font-size: 12px; color: var(--muted); line-height: 1.35; }
+
+  /* ---- Winner reveal card ----------------------------------------- */
+  .winner-card {
+    background: #FFF5EF;
+    border: 2px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    margin-top: 12px;
+  }
+  .winner-card .wc-rule {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .winner-card .wc-winner {
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--ink);
+    margin: 6px 0 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .winner-card .wc-why {
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .winner-card .wc-why ul {
+    margin: 6px 0 0;
+    padding-left: 20px;
+  }
+  .winner-card .wc-why li { margin: 2px 0; }
+
+  /* ---- Agenda sim (Sim 2) ----------------------------------------- */
+  .agenda-voters {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin: 12px 0;
+  }
+  .voter-card {
+    padding: 12px;
+    background: var(--bg-soft);
+    border-radius: 10px;
+    text-align: center;
+    font-size: 13px;
+  }
+  .voter-card .v-name {
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 11px;
+    margin-bottom: 6px;
+  }
+  .voter-card .v-rank {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    align-items: center;
+    font-weight: 700;
+    font-size: 18px;
+  }
+  .voter-card .v-rank .gt { color: var(--muted); font-weight: 400; }
+
+  .agenda-steps {
+    display: grid;
+    gap: 12px;
+    margin: 16px 0;
+  }
+  .agenda-step {
+    background: var(--bg-soft);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 14px;
+    opacity: 0.4;
+    transition: opacity 0.3s ease, background 0.3s ease;
+  }
+  .agenda-step.on {
+    opacity: 1;
+    background: #E7F5FF;
+  }
+  .agenda-step.winner {
+    background: #FFF5EF;
+    border-left: 4px solid var(--accent);
+  }
+  .agenda-step .step-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .agenda-step .step-body {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .agenda-step .step-body .vs { color: var(--muted); font-weight: 500; margin: 0 4px; }
+  .agenda-step .step-body .arrow { color: var(--muted); margin: 0 6px; }
+
+  /* ---- Vickrey slider block (Sim 3) ------------------------------- */
+  .vickrey-head {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .v-card {
+    padding: 12px 14px;
+    border-radius: var(--radius);
+    background: var(--bg-soft);
+    text-align: center;
+  }
+  .v-card .vc-label { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  .v-card .vc-value { font-size: 28px; font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums; margin-top: 2px; }
+  .v-card .vc-sub   { font-size: 11px; color: var(--muted); }
+
+  .v-card.second { background: #E7F5FF; }
+  .v-card.second .vc-value { color: var(--primary); }
+  .v-card.first  { background: #FFF4E6; }
+  .v-card.first  .vc-value { color: var(--accent); }
+
+  .nudge-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+    justify-content: center;
+  }
+  .nudge-btn {
+    padding: 7px 14px;
+    border-radius: 999px;
+    border: 1.5px solid var(--line);
+    background: white;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    cursor: pointer;
+    transition: all 0.12s ease;
+  }
+  .nudge-btn:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .nudge-btn.hero { border-color: var(--accent); background: #FFF4E6; color: var(--accent); }
+
+  /* ---- Winner's curse (Sim 4) ------------------------------------ */
+  .curse-head {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin: 12px 0;
+  }
+
+  /* ---- Mechanism cheat sheet ------------------------------------- */
+  .cheat {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0;
+    font-size: 14px;
+  }
+  .cheat th, .cheat td { padding: 10px 12px; text-align: left; vertical-align: top; }
+  .cheat thead th { font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); border-bottom: 1.5px solid var(--line); }
+  .cheat tbody tr:nth-child(odd) td { background: var(--bg-soft); }
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <nav class="top-nav">
+    <a href="../">← All playable models</a>
+    <span class="spacer"></span>
+    <a href="zh.html" class="lang-switch">中文</a>
+    <span class="crumb">ModelThinker · web</span>
+  </nav>
+
+  <p class="byline">Ch. 24 · Mechanism design (reverse game theory)</p>
+  <h1>The rules are the game</h1>
+  <p class="subtitle">
+    Chapter 21 asks: given the rules, what will people do?
+    <br>Chapter 24 asks the reverse: given what I want to happen, <em>what rules should I write?</em>
+  </p>
+
+  <p>
+    Three Nobel Prizes in thirteen years (Hurwicz/Maskin/Myerson in 2007, Roth/Shapley in 2012,
+    Milgrom/Wilson in 2020) sit on this one idea: outcomes are shaped more by the rules than by
+    the players. Below we're going to prove that twice. First with voting — four reasonable rules
+    pick four different winners from the <em>same</em> 122 ballots. Then with auctions — a tiny
+    twist in the rules makes "tell the truth" the best strategy for every bidder on earth.
+  </p>
+
+  <!-- ================================================================
+       SIM 1 · Four rules, four winners
+       ================================================================ -->
+  <h2>Fact 1: Four rules. Four winners. Same ballots.</h2>
+  <p>
+    Below are 122 voters' preferences over four candidates
+    <span class="cand a">A</span> <span class="cand b">B</span>
+    <span class="cand c">C</span> <span class="cand d">D</span>.
+    Nobody is lying. Nobody is changing their mind. Click a voting rule and watch the counting
+    play out — then watch who wins.
+  </p>
+
+  <div class="sim">
+    <p class="sim-title">The 122-voter ballot profile · pick a rule</p>
+
+    <table class="ballot-table">
+      <thead>
+        <tr><th>Voters</th><th>Their ranking (favourite → least)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>38</td><td><span class="ranking"><span class="cand c">C</span><span class="gt">▸</span><span class="cand a">A</span><span class="gt">▸</span><span class="cand d">D</span><span class="gt">▸</span><span class="cand b">B</span></span></td></tr>
+        <tr><td>28</td><td><span class="ranking"><span class="cand b">B</span><span class="gt">▸</span><span class="cand d">D</span><span class="gt">▸</span><span class="cand a">A</span><span class="gt">▸</span><span class="cand c">C</span></span></td></tr>
+        <tr><td>27</td><td><span class="ranking"><span class="cand d">D</span><span class="gt">▸</span><span class="cand b">B</span><span class="gt">▸</span><span class="cand a">A</span><span class="gt">▸</span><span class="cand c">C</span></span></td></tr>
+        <tr><td>26</td><td><span class="ranking"><span class="cand a">A</span><span class="gt">▸</span><span class="cand d">D</span><span class="gt">▸</span><span class="cand b">B</span><span class="gt">▸</span><span class="cand c">C</span></span></td></tr>
+        <tr><td>3</td><td><span class="ranking"><span class="cand c">C</span><span class="gt">▸</span><span class="cand d">D</span><span class="gt">▸</span><span class="cand a">A</span><span class="gt">▸</span><span class="cand b">B</span></span></td></tr>
+      </tbody>
+    </table>
+
+    <div class="rule-row">
+      <button class="rule-btn active" data-rule="plurality">
+        <div class="r-title">🥇 Plurality</div>
+        <div class="r-hint">Most first-place votes wins (US presidential primaries, UK FPTP)</div>
+      </button>
+      <button class="rule-btn" data-rule="runoff">
+        <div class="r-title">🔁 Top-two runoff</div>
+        <div class="r-hint">Keep top 2, then majority between them (France; US Senate runoffs)</div>
+      </button>
+      <button class="rule-btn" data-rule="borda">
+        <div class="r-title">📊 Borda count</div>
+        <div class="r-hint">Rank k gets (n−k) points, sum them (used in Slovenia, Nauru, Eurovision)</div>
+      </button>
+      <button class="rule-btn" data-rule="condorcet">
+        <div class="r-title">🥊 Condorcet</div>
+        <div class="r-hint">Beats every rival one-on-one (what "fairest" usually means)</div>
+      </button>
+    </div>
+
+    <div class="winner-card" id="winner-card">
+      <!-- populated by JS -->
+    </div>
+  </div>
+
+  <div class="callout aha">
+    <strong>The outcome was determined by the rule, not by the voters.</strong>
+    C has the largest first-place base. B wins the runoff. D is everyone's acceptable
+    second choice. A beats every single rival one-on-one. Each has a legitimate claim to be
+    "the winner." The ballots don't choose — the rule does. Which means <em>whoever writes the
+    rule has already done much of the choosing</em>, and "the people's will" isn't a well-defined
+    object once there are more than two options.
+  </div>
+
+  <!-- ================================================================
+       SIM 2 · Condorcet cycle / agenda power
+       ================================================================ -->
+  <h2>Fact 2: Even majority rule can produce no winner</h2>
+  <p>
+    Three voters, three candidates
+    <span class="cand a">A</span> <span class="cand b">B</span>
+    <span class="cand c">C</span>. Each voter is perfectly consistent. But look what happens
+    when you ask the group to decide pairwise:
+  </p>
+
+  <div class="agenda-voters">
+    <div class="voter-card">
+      <div class="v-name">👤 Voter 1</div>
+      <div class="v-rank"><span class="cand a">A</span><span class="gt">▸</span><span class="cand b">B</span><span class="gt">▸</span><span class="cand c">C</span></div>
+    </div>
+    <div class="voter-card">
+      <div class="v-name">👤 Voter 2</div>
+      <div class="v-rank"><span class="cand b">B</span><span class="gt">▸</span><span class="cand c">C</span><span class="gt">▸</span><span class="cand a">A</span></div>
+    </div>
+    <div class="voter-card">
+      <div class="v-name">👤 Voter 3</div>
+      <div class="v-rank"><span class="cand c">C</span><span class="gt">▸</span><span class="cand a">A</span><span class="gt">▸</span><span class="cand b">B</span></div>
+    </div>
+  </div>
+
+  <p>
+    Who wins depends entirely on <strong>what order you hold the votes in</strong>. Pick an
+    agenda — the "chair" of the meeting gets to set it — and watch the winner change.
+  </p>
+
+  <div class="sim">
+    <p class="sim-title">Pick an agenda · same voters · different winner</p>
+
+    <div class="rule-row" id="agenda-row">
+      <button class="rule-btn active" data-agenda="ab-c">
+        <div class="r-title">🅰️ vs 🅱️ first</div>
+        <div class="r-hint">Then winner vs C</div>
+      </button>
+      <button class="rule-btn" data-agenda="bc-a">
+        <div class="r-title">🅱️ vs 🅲 first</div>
+        <div class="r-hint">Then winner vs A</div>
+      </button>
+      <button class="rule-btn" data-agenda="ac-b">
+        <div class="r-title">🅰️ vs 🅲 first</div>
+        <div class="r-hint">Then winner vs B</div>
+      </button>
+    </div>
+
+    <div class="agenda-steps" id="agenda-steps"></div>
+  </div>
+
+  <div class="callout warn">
+    <strong>The Condorcet paradox,</strong> and it's not academic. In a cyclic majority,
+    whoever controls the agenda controls the winner. The "killer amendment" in Congress and the
+    ordering of amendments in committees are this theorem deployed deliberately. The lesson:
+    <em>procedural power is as decisive as voting power</em>. Both Arrow's theorem (1951) and
+    Gibbard–Satterthwaite tell you this isn't a quirk of specific rules — with three or more
+    options, no "nice" ranked voting rule can be strategy-proof. All the trouble starts at three.
+  </div>
+
+  <!-- ================================================================
+       SIM 3 · Vickrey second-price auction
+       ================================================================ -->
+  <h2>Fact 3: In the right auction, "tell the truth" is the best strategy</h2>
+  <p>
+    Flip over to auctions — the other arena of mechanism design. You want to buy something.
+    Your <em>true value</em> is <strong>70</strong> (what it's actually worth to you). Three
+    rivals are also bidding; their values are drawn uniformly from 0–100 and <strong>you don't
+    know what they are</strong>. The question: how much should you bid?
+  </p>
+  <p>
+    The answer depends entirely on the auction format. Drag the <strong>bid slider</strong> and
+    watch two profit curves — one for a <em>first-price</em> auction (highest bid pays their bid),
+    one for a <em>second-price</em> (Vickrey) auction (highest bid pays the second-highest bid).
+    Each curve is a live Monte Carlo of 2,000 auctions against random rivals.
+  </p>
+
+  <div class="sim">
+    <p class="sim-title">Your true value is 70 · how much should you actually bid?</p>
+
+    <div class="vickrey-head">
+      <div class="v-card">
+        <div class="vc-label">Your true value</div>
+        <div class="vc-value" style="color:var(--ink);">70</div>
+        <div class="vc-sub">what it's worth to you</div>
+      </div>
+      <div class="v-card second">
+        <div class="vc-label">💎 Second-price profit</div>
+        <div class="vc-value" id="v-second">—</div>
+        <div class="vc-sub">pays 2nd-highest bid</div>
+      </div>
+      <div class="v-card first">
+        <div class="vc-label">💸 First-price profit</div>
+        <div class="vc-value" id="v-first">—</div>
+        <div class="vc-sub">pays your bid</div>
+      </div>
+    </div>
+
+    <canvas id="vickrey-canvas" class="sim-canvas"></canvas>
+
+    <div class="sim-controls">
+      <label class="slider-block" style="flex:1 1 100%;">
+        <span class="slider-label"><span>🎯 Your bid</span><span class="value">70</span></span>
+        <input type="range" min="0" max="100" value="70" step="1" data-fmt="{v}" id="vickrey-slider">
+      </label>
+    </div>
+
+    <div class="nudge-row">
+      <button class="nudge-btn" data-bid="40">🙈 Bid 40 (big shade)</button>
+      <button class="nudge-btn" data-bid="55">🙂 Bid 55 (small shade)</button>
+      <button class="nudge-btn" data-bid="70">💎 Bid 70 (honest)</button>
+      <button class="nudge-btn" data-bid="85">😳 Bid 85 (overbid)</button>
+    </div>
+  </div>
+
+  <div class="callout aha">
+    <strong>Two things you just discovered.</strong> First, the blue second-price curve <em>peaks
+    exactly at your true value of 70</em>, and it's almost flat on top — bidding 65 or 75 instead
+    of 70 costs you almost nothing. In Vickrey, truth is a <strong>dominant strategy</strong> and
+    the mechanism is forgiving. Second, the orange first-price curve peaks around 50–55: you have
+    to <em>shade</em> your bid below your value, and shade right. Shade too little → you win
+    worthless victories. Shade too much → you lose good ones. First-price is a tax on
+    unsophistication.
+  </div>
+
+  <!-- ================================================================
+       SIM 4 · The winner's curse
+       ================================================================ -->
+  <h2>Fact 4: Change one assumption — and winning becomes bad news</h2>
+  <p>
+    Now change the setup. You're not bidding on something only worth 70 <em>to you</em> —
+    you're bidding on an <strong>oil tract</strong> that has the same true value for everyone.
+    Call it <strong>100</strong>. Nobody knows that number exactly; each of you gets a noisy,
+    unbiased estimate. (This is how oil leases, company acquisitions, and sports free-agent
+    contracts actually look.)
+  </p>
+  <p>
+    Everyone bids their honest estimate. Watch what happens to the winner — the person who
+    estimated highest — as the field grows.
+  </p>
+
+  <div class="sim">
+    <p class="sim-title">Common-value auction · true value is 100, estimates are noisy</p>
+    <canvas id="curse-canvas" class="sim-canvas"></canvas>
+
+    <div class="sim-controls">
+      <label class="slider-block">
+        <span class="slider-label"><span>👥 Number of bidders</span><span class="value">5</span></span>
+        <input type="range" min="2" max="30" value="5" step="1" data-fmt="{v}" id="curse-n">
+      </label>
+      <label class="slider-block">
+        <span class="slider-label"><span>🎲 Estimate noise σ</span><span class="value">20</span></span>
+        <input type="range" min="5" max="40" value="20" step="1" data-fmt="{v}" id="curse-sigma">
+      </label>
+    </div>
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="curse-run">🎲 Simulate 1000 auctions</button>
+      <button class="btn btn-ghost" id="curse-reset">↺ New draw</button>
+    </div>
+
+    <div class="curse-head">
+      <div class="v-card">
+        <div class="vc-label">True value</div>
+        <div class="vc-value" style="color:var(--ink);">100</div>
+        <div class="vc-sub">what the tract is really worth</div>
+      </div>
+      <div class="v-card second">
+        <div class="vc-label">🏆 Winner's bid</div>
+        <div class="vc-value" id="curse-winbid">—</div>
+        <div class="vc-sub">how high they estimated</div>
+      </div>
+      <div class="v-card first">
+        <div class="vc-label">💰 Winner's profit</div>
+        <div class="vc-value" id="curse-profit">—</div>
+        <div class="vc-sub">bid − true value (first-price)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout warn">
+    <strong>The counter-intuitive comparative static.</strong> Everyone's estimate is unbiased.
+    Nobody is irrational. And yet bidding your honest estimate <em>loses money</em>, and loses
+    more as the field grows. Why? Because <strong>winning is itself bad news</strong>: the
+    winner is, by construction, whoever happened to be most over-optimistic. "Congratulations,
+    you've paid more than anybody else in the world thought it was worth." In common-value
+    settings, more rivals should make you bid <em>less</em>, not more — exactly backwards from
+    the Vickrey slider above.
+  </div>
+
+  <p>
+    Capen, Clapp &amp; Campbell (1971) discovered this at ARCO when they noticed oil companies
+    were systematically overpaying for offshore leases. It's the standard account of acquisition
+    premiums that destroy shareholder value, free-agent contracts that look insane in year three,
+    and book advances that never earn out.
+  </p>
+
+  <!-- ================================================================
+       Mechanism design cheat sheet
+       ================================================================ -->
+  <h2>The four forces every rule-writer wrestles with</h2>
+  <p>
+    When you design any mechanism — an auction, a voting rule, a pay scheme, a matching market —
+    four tensions keep showing up. The <strong>revelation principle</strong> says: if you can get
+    good outcomes with any mechanism, you can get them with one where everyone just tells the
+    truth. So the whole art is <strong>making honesty the best policy</strong>.
+  </p>
+
+  <table class="cheat">
+    <thead>
+      <tr><th>Design force</th><th>What it means</th><th>Shows up as</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Truthfulness</strong></td>
+        <td>Agents should want to report their actual values</td>
+        <td>Vickrey, deferred acceptance (medical match), honest tax returns</td>
+      </tr>
+      <tr>
+        <td><strong>Efficiency</strong></td>
+        <td>The highest-value user ends up with the thing</td>
+        <td>Pivot (VCG) mechanisms, kidney exchange cycles</td>
+      </tr>
+      <tr>
+        <td><strong>Budget balance</strong></td>
+        <td>Money in = money out, no outside subsidy needed</td>
+        <td>Market-clearing prices (and Myerson–Satterthwaite says you can't have this + truth + efficiency at once)</td>
+      </tr>
+      <tr>
+        <td><strong>Robustness</strong></td>
+        <td>Still works when people miscount, collude, or play dumb</td>
+        <td>Why Google uses GSP instead of VCG; why "one more bidder" beats a clever reserve</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout aha">
+    <strong>Bulow &amp; Klemperer's blunt advice.</strong> A plain English auction with
+    <em>n + 1</em> bidders raises more revenue than the theoretically optimal mechanism with
+    <em>n</em>. In plain English: <strong>stop optimizing the squeeze and go find another
+    buyer.</strong> Effort spent on marketing the sale, lowering entry barriers, and making the
+    process easy to join dominates effort spent on clever pricing rules. Klemperer's experience
+    advising on real auctions is that failures were almost always about insufficient entry and
+    collusion, never about choosing the wrong format from the textbook.
+  </div>
+
+  <h2>Where mechanism design has actually changed the world</h2>
+  <ul>
+    <li><strong>Medical residencies.</strong> The National Resident Matching Program uses
+      deferred acceptance (Gale–Shapley): applicants rank hospitals, hospitals rank applicants,
+      and nobody has to strategize — honest ranking is a dominant strategy on the applicant
+      side.</li>
+    <li><strong>School choice.</strong> The pre-2005 Boston system punished honesty: naming your
+      true favourite could cost you your second favourite. Al Roth's redesign (now used in
+      Boston, NYC and most of the US) swapped it for deferred acceptance. <em>The reform was
+      a mechanism-design fix.</em></li>
+    <li><strong>Kidney exchange.</strong> You can't buy or sell kidneys, so price can't clear the
+      market. Instead: find cycles (my donor matches you, yours matches me) and chains starting
+      from altruistic donors. Thousands of transplants that would never otherwise happen.</li>
+    <li><strong>FCC spectrum auctions.</strong> Simultaneous ascending auctions designed by
+      Milgrom, Wilson &amp; McAfee raised billions — then bidders discovered they could
+      coordinate by encoding market numbers in the trailing digits of their bids ("stay out of
+      Dallas and I'll stay out of Phoenix"). The fix: click-box bidding, removing the usable
+      digits. <em>Every piece of info your mechanism reveals is a coordination device for
+      bidders.</em></li>
+    <li><strong>Deposit insurance.</strong> A mechanism-design fix to the <a
+      href="../threshold-feedback/">bank-run threshold problem</a>: change the payoffs so the
+      run's threshold is never reached. The best cross-chapter illustration in the whole book.</li>
+  </ul>
+
+  <h2>Related models</h2>
+  <ul>
+    <li><a href="../game-theory/">♟️ Game theory</a> — Chapter 21 is the forward direction: given rules, predict outcomes. Chapter 24 is the reverse: given desired outcomes, write the rules.</li>
+    <li><a href="../threshold-feedback/">🔥 Thresholds &amp; feedback</a> — bank runs, standing ovations and riots are threshold problems; deposit insurance is the mechanism-design patch.</li>
+    <li><a href="../nk/">🏔 NK rugged landscape</a> — matching markets like kidney exchange are combinatorial searches on a landscape; mechanism design is choosing which landscape to climb.</li>
+  </ul>
+
+  <div class="next-nav">
+    <a href="../game-theory/">← Game theory</a>
+    <a href="../">All models →</a>
+  </div>
+</main>
+<script type="module" src="auction_voting.js?v=2"></script>
+</body>
+</html>

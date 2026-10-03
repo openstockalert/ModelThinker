@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>生命游戏与局部多数 · 一个关于涌现的可玩模型</title>
+<link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+<main class="wrap">
+
+  <nav class="top-nav">
+    <a href="../zh.html">← 所有可玩模型</a>
+    <span class="spacer"></span>
+    <a href="index.html" class="lang-switch">EN</a>
+    <span class="crumb">ModelThinker · web</span>
+  </nav>
+
+  <p class="byline">第 15 章 · 局部交互</p>
+  <h1>三条规则。无尽的宇宙。</h1>
+  <p class="subtitle">
+    1970 年,John Conway 为网格上的细胞定下了三条规则。五十年后,
+    人们还在这几条规则里挖出新的惊喜。
+  </p>
+
+  <p>
+    一个细胞要么<strong>活着</strong>,要么<strong>死着</strong>。每一步,每个细胞数一下它的
+    8 个 Moore 邻居,按<em>三行规则</em>更新自己:
+  </p>
+  <ul>
+    <li>活细胞有 <strong>2 或 3</strong> 个活邻居 → <em>存活</em>。</li>
+    <li>死细胞恰好有 <strong>3</strong> 个活邻居 → <em>诞生</em>。</li>
+    <li>其他情况 → <em>死亡</em>。</li>
+  </ul>
+  <p>
+    就这样。整个游戏就这样。可是从这三条规则里涌现出来的东西让人目瞪口呆:
+    静物、振荡器、在网格上行走的飞船、能永远产生新图样的图样,
+    以及 —— 2000 年被证明的 —— 一台完整的通用图灵机。这就是<strong>涌现</strong> ——
+    任意复杂性可以藏在任意简单的局部规则之中的经典演示。
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 1 · Life sandbox -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">挑一个图样 · 按播放 · 看三条规则造出一个宇宙</p>
+
+    <div id="life-patterns" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+      <!-- Populated by JS from PATTERNS -->
+    </div>
+
+    <div id="life-info" style="padding:10px 14px;background:var(--bg-soft);border-radius:var(--radius-sm);margin-bottom:12px;font-size:14px;line-height:1.5;min-height:24px;"></div>
+
+    <canvas id="life-canvas" class="sim-canvas" style="cursor:crosshair;"></canvas>
+
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="life-play">▶ 播放</button>
+      <button class="btn" id="life-step">⏭ 单步</button>
+      <button class="btn" id="life-clear">✖ 清空</button>
+      <button class="btn btn-ghost" id="life-random">🎲 随机填充</button>
+      <label class="slider-block" style="min-width:180px;flex:0 1 220px;">
+        <span class="slider-label"><span>速度</span><span class="value">10 /秒</span></span>
+        <input type="range" min="1" max="30" value="10" step="1" data-fmt="{v} /秒">
+      </label>
+    </div>
+
+    <div class="sim-metrics">
+      <div class="metric" id="life-gen"><div class="label">代数</div><div class="value">0</div></div>
+      <div class="metric" id="life-pop"><div class="label">活细胞</div><div class="value">0</div></div>
+      <div class="metric" id="life-peak"><div class="label">峰值人口</div><div class="value">0</div><div class="delta">曾经最大的活细胞数</div></div>
+      <div class="metric" id="life-mode"><div class="label">状态</div><div class="value">🎨 绘图模式</div></div>
+    </div>
+
+    <p style="margin-top:12px;color:var(--muted);font-size:14px;">
+      🖱 <strong>点击任何格子</strong>切换它的状态 —— 或拖动来画。新生细胞会发出
+      <span style="color:#F76707;font-weight:600;">橙色</span>光;存活一段时间的细胞会沉淀成
+      <span style="color:#4C6EF5;font-weight:600;">蓝色</span>。
+      边界是环面(上下相接、左右相接),所以滑翔机会永远绕圈。
+    </p>
+  </div>
+
+  <div class="callout aha">
+    <strong>试试 🌰 Acorn。</strong>7 个细胞。把速度设成 30/秒,按下播放。
+    这颗小种子会制造超过一千代的混乱,直到<strong>第 5206 代</strong>才安静下来 ——
+    最终留下 41 个稳定物体,并把 13 架滑翔机抛向太空。
+    或者试 🔫 Gosper 滑翔机枪:第一个被<em>证明</em>会永远生长的图样 ——
+    也是 Bill Gosper 在 1970 年赢下 Conway 原创 50 美元悬赏的那张答卷。
+  </div>
+
+  <h2>一个安静得多的元胞自动机</h2>
+  <p>
+    同一个网格。同一个 8 邻居 Moore 邻域。只改一条小规则:不走 Conway 的 2/3 存活规则,
+    而是<strong>每个细胞直接复制其邻居中占多数的那种值</strong>。就这样。局部多数胜出。
+    来看它怎么演化。
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 2 · Local Majority -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">看共识凝结成稳定的区块</p>
+    <canvas id="maj-canvas" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="maj-play">▶ 播放</button>
+      <button class="btn btn-ghost" id="maj-reset">🎲 新的随机起点</button>
+      <label class="slider-block" style="min-width:220px;">
+        <span class="slider-label"><span>初始 1 的密度</span><span class="value">50%</span></span>
+        <input type="range" min="15" max="85" value="50" step="5" data-fmt="{v}%">
+      </label>
+    </div>
+    <div class="sim-metrics">
+      <div class="metric" id="maj-step"><div class="label">步数</div><div class="value">0</div></div>
+      <div class="metric" id="maj-share"><div class="label">蓝色占比</div><div class="value">50%</div></div>
+      <div class="metric" id="maj-clusters"><div class="label">蓝色区块数</div><div class="value">—</div><div class="delta">越少 = 共识越强</div></div>
+      <div class="metric" id="maj-flips"><div class="label">翻转的细胞数</div><div class="value">0</div><div class="delta">降为 0 时停止变化</div></div>
+    </div>
+    <p style="margin-top:12px;color:var(--muted);font-size:14px;">
+      用低密度(比如 25%)作为起点 —— 少数派几乎会被完全吸收。
+      用 50% —— 网格结晶成少数几块大区域。
+      用 75% —— 低密度结果的镜像。共识<em>永远</em>是局部的,从不是全局的。
+    </p>
+  </div>
+
+  <div class="callout warn">
+    <strong>两个自动机,一个邻域,两个世界。</strong>上面两个模拟器都用完全相同的
+    8 邻居 Moore 邻域更新;唯一不同的是更新规则。Conway 的生命游戏在 Wolfram 元胞自动机尺度上
+    属于<em>第 4 类</em> —— 复杂、不可预测、图灵完备。局部多数属于<em>第 2 类</em> ——
+    总是稳定到有限的区块固定点。“永远令人惊奇”和“乏味可预测”之间的差别,
+    字面上就是三行代码。
+  </div>
+
+  <h2>它们出现在哪里</h2>
+  <ul>
+    <li><strong>Conway 的生命游戏。</strong>直接研究很小众,但那个<em>想法</em>
+      —— 巨大的状态空间可以从微小的规则中涌现 ——
+      深刻改变了物理学家、生物学家和复杂性科学家思考模式形成的方式。
+      Stephen Wolfram 的《A New Kind of Science》把这个论点推到极限。</li>
+    <li><strong>局部多数。</strong>投票者模型、意见动力学、方言、网络协同。
+      每当你发现邻里、同事或朋友圈对那些你本来并没有强烈看法的事达成了一致,
+      某种“局部多数”动力学就在工作。</li>
+    <li><strong>同网格的兄弟姐妹。</strong>Schelling 隔离(第 15.3 节)就坐在它们旁边 ——
+      带偏好的细胞在网格上移动。直接对比见我们的
+      <a href="../schelling/zh.html">Schelling 故事</a>。</li>
+  </ul>
+
+  <h2>相关模型</h2>
+  <ul>
+    <li><a href="../schelling/zh.html">🟦🟧 Schelling 隔离</a> — 同样的局部规则家族,不同的更新:主体会移动而不是翻转。</li>
+    <li><a href="../entropy/zh.html">🎲 熵</a> — Wolfram 元胞自动机的四种行为类别(平衡、周期、随机、复杂)在那里是主角。</li>
+    <li><a href="../nk/zh.html">🏔 NK 适应度地形</a> — 又一个“简单规则 → 惊人丰富结果”的模型。</li>
+  </ul>
+
+  <div class="next-nav">
+    <a href="../schelling/zh.html">← Schelling 隔离</a>
+    <a href="../entropy/zh.html">熵 →</a>
+  </div>
+</main>
+<script type="module" src="life-and-majority.js?v=1"></script>
+</body>
+</html>

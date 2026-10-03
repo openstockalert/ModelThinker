@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SIR 流行病 · 一个关于疫情与 R₀ 的可玩模型</title>
+<link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+<main class="wrap">
+
+  <nav class="top-nav">
+    <a href="../zh.html">← 所有可玩模型</a>
+    <span class="spacer"></span>
+    <a href="index.html" class="lang-switch">EN</a>
+    <span class="crumb">ModelThinker · web</span>
+  </nav>
+
+  <p class="byline">第 11 章 · 广播、扩散与传染</p>
+  <h1>一个数,决定一场疫情</h1>
+  <p class="subtitle">
+    三个分舱 —— 易感者、感染者、康复者 —— 加两个速率、再加一点算术。
+    <br>整场疫情的形状,只由一个数字决定:<strong>R₀</strong>。
+  </p>
+
+  <p>
+    来认识你的人口。每张脸代表一个人。每个人起初都是
+    <span style="background:#DBE4FF;padding:2px 8px;border-radius:6px;">🙂 易感者</span>。
+    有一位勇士是<span style="background:#FFE0E0;padding:2px 8px;border-radius:6px;">🤢 感染者</span> ——
+    零号病人。康复后,他就变成
+    <span style="background:#D3F9D8;padding:2px 8px;border-radius:6px;">😎 免疫者</span>,
+    不会再次感染。只扭动一个旋钮,看会发生什么。
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 1 · The R₀ dial -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">R₀ 旋钮 · 它有多传染?</p>
+    <canvas id="sim1" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <label class="slider-block">
+        <span class="slider-label"><span>R₀(传染性)</span><span class="value">2.5</span></span>
+        <input type="range" min="0.5" max="6" value="2.5" step="0.1">
+      </label>
+    </div>
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="sim1-play">▶ 放出零号病人</button>
+      <button class="btn btn-ghost" id="sim1-reset">↺ 新人口</button>
+    </div>
+    <div class="sim-metrics">
+      <div class="metric" id="sim1-day"><div class="label">天数</div><div class="value">0</div></div>
+      <div class="metric" id="sim1-inf"><div class="label">当前感染</div><div class="value">0.0%</div></div>
+      <div class="metric" id="sim1-rec"><div class="label">曾经感染</div><div class="value">0.0%</div><div class="delta">S → I → R</div></div>
+      <div class="metric" id="sim1-peak"><div class="label">峰值日</div><div class="value">—</div><div class="delta">医院最大压力</div></div>
+    </div>
+  </div>
+
+  <div class="callout aha">
+    <strong>试试 R₀ = 0.9。</strong>疫情熄火 —— 它根本<em>起不来</em>。
+    现在试<strong>R₀ = 1.1</strong>。完全不同的世界。这是流行病学中最重要的那一个阈值。
+  </div>
+
+  <h2>群体免疫,一张图说清</h2>
+  <p>
+    当人群中足够多的人获得免疫(康复或接种),每位感染者平均接触到的易感者就少于一个。
+    传播链断裂。神奇阈值是 <strong>1 − 1/R₀</strong>:
+  </p>
+  <ul>
+    <li>流感(R₀ ≈ 1.3):约需 23% 具免疫力</li>
+    <li>新冠原始毒株(R₀ ≈ 2.5):约 60%</li>
+    <li>天花(R₀ ≈ 5):约 80%</li>
+    <li>麻疹(R₀ ≈ 15):约 <strong>93%</strong> —— 这就是 WHO 要求 95% 覆盖率的原因</li>
+  </ul>
+
+  <!-- ============================================================ -->
+  <!-- SIM 2 · Vaccinate first, then release -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">先接种一部分 · 再放出零号病人</p>
+    <canvas id="sim2" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <label class="slider-block">
+        <span class="slider-label"><span>R₀</span><span class="value">3.0</span></span>
+        <input type="range" min="1" max="6" value="3" step="0.1">
+      </label>
+      <label class="slider-block">
+        <span class="slider-label"><span>接种比例</span><span class="value">50%</span></span>
+        <input type="range" min="0" max="95" value="50" step="5" data-fmt="{v}%">
+      </label>
+    </div>
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="sim2-play">▶ 启动疫情</button>
+      <button class="btn btn-ghost" id="sim2-reset">↺ 重置</button>
+    </div>
+    <div class="sim-metrics">
+      <div class="metric" id="sim2-thresh"><div class="label">群体免疫阈值</div><div class="value">67%</div><div class="delta">1 − 1/R₀</div></div>
+      <div class="metric" id="sim2-final"><div class="label">最终感染率</div><div class="value">—</div><div class="delta">最终 % 感染</div></div>
+    </div>
+  </div>
+
+  <div class="callout warn">
+    <strong>超调(Overshoot)。</strong>即便我们<em>越过了</em>群体免疫阈值,感染还会继续一阵子 ——
+    疫情是有惯性的。这就是为什么“干脆让它烧到群体免疫”高估了大自然实际会给我们的保护,
+    却低估了沿途的死亡。
+  </div>
+
+  <h2>时间序列与峰值</h2>
+  <p>
+    教科书式的经典图:S 下降,I 升到峰值,R 爬到最终感染率。各种干预能
+    <strong>压平曲线</strong> —— 降低峰值、为医院争取时间 —— 但不一定会减少
+    <em>总</em>感染人数。
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 3 · Full ODE + curves -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">S / I / R 随时间变化</p>
+    <canvas id="sim3" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <label class="slider-block">
+        <span class="slider-label"><span>β(每日传播率)</span><span class="value">0.30</span></span>
+        <input type="range" min="0.05" max="1.5" value="0.30" step="0.01">
+      </label>
+      <label class="slider-block">
+        <span class="slider-label"><span>γ(康复率)</span><span class="value">0.10</span></span>
+        <input type="range" min="0.02" max="0.5" value="0.10" step="0.01">
+      </label>
+    </div>
+    <div class="sim-metrics">
+      <div class="metric" id="sim3-r0"><div class="label">R₀</div><div class="value">3.0</div><div class="delta">β / γ</div></div>
+      <div class="metric" id="sim3-peak"><div class="label">感染峰值</div><div class="value">—</div></div>
+      <div class="metric" id="sim3-final"><div class="label">最终感染率</div><div class="value">—</div></div>
+    </div>
+  </div>
+
+  <h2>相关模型</h2>
+  <ul>
+    <li><a href="../network/zh.html">🕸️ 网络</a> — 传染不发生在真空里;谁和谁相连会重塑 R₀ 和最终感染率。</li>
+    <li><a href="../random-walk/zh.html">🚶 随机漫步</a> — 平滑的 S/I/R 曲线之下,是离散的个体动力学。</li>
+    <li><a href="../markov/zh.html">🌐 马尔可夫链</a> — 把每个人看作状态机(S → I → R),整个系统就变成一个分舱式马尔可夫模型。</li>
+  </ul>
+
+  <div class="next-nav">
+    <a href="../network/zh.html">← 网络</a>
+    <a href="../random-walk/zh.html">随机漫步 →</a>
+  </div>
+</main>
+<script type="module" src="sir.js?v=4"></script>
+</body>
+</html>

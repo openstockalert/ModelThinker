@@ -16,7 +16,11 @@
       "Bash(curl -s -o /dev/null -w \"power-laws/ -> HTTP %{http_code}\\\\n\" http://localhost:8905/power-laws/)",
       "Bash(node --check /c/Users/opens/source/repos/ModelThinker/web/nk/nk.js)",
       "Bash(curl -s -o /dev/null -w '%{http_code}' http://localhost:8905/__TRACKED_VAR__)",
-      "Bash(node --check /c/Users/opens/source/repos/ModelThinker/web/schelling/schelling.js)"
+      "Bash(node --check /c/Users/opens/source/repos/ModelThinker/web/schelling/schelling.js)",
+      "Bash(.venv/Scripts/ruff check *)",
+      "Bash(.venv/Scripts/python -m jupyter nbconvert --to notebook --execute notebooks/ch12_entropy.ipynb --output _ch12_verify.ipynb)",
+      "Bash(curl -s -o /dev/null -w \"status=%{http_code}\\\\n\" http://localhost:8000/auction-voting/)",
+      "Bash(netstat -ano)"
     ]
   }
 }

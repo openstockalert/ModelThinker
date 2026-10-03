@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>马尔可夫链 · 一个关于“历史何时重要(何时不重要)”的可玩模型</title>
+<link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+<main class="wrap">
+
+  <nav class="top-nav">
+    <a href="../zh.html">← 所有可玩模型</a>
+    <span class="spacer"></span>
+    <a href="index.html" class="lang-switch">EN</a>
+    <span class="crumb">ModelThinker · web</span>
+  </nav>
+
+  <p class="byline">第 17 章 · 不确定性与动力学</p>
+  <h1>这个世界会健忘</h1>
+  <p class="subtitle">
+    天气模式。注意力。政治自由。品牌忠诚。成瘾。
+    <br>全是马尔可夫链。全被同一个惊人的定理所约束。
+  </p>
+
+  <p>
+    一个<strong>马尔可夫链</strong>有若干状态和转移概率 —— 它没有记忆。你下一步去哪里只取决于你当前在哪里,
+    不取决于你是怎么来的。就这么简单。整个模型就是这样。然而从这些简单的规则,
+    涌现出一个惊人的定理:任何马尔可夫链(满足四个温和条件)都会收敛到
+    <strong>一个独特的长期分布,记作 π</strong>。无论从哪里出发,终点都是同一个。
+    下面,咱们看它发生。
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 1 · State graph with walker -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">选一个场景 · 看漫步者游走 · 看停留时间比例收敛到 π</p>
+
+    <div class="sim-controls" style="margin-bottom:12px;">
+      <div id="mkv-preset-tabs" style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-primary" data-preset="students">🧑‍🎓 注意力</button>
+        <button class="btn" data-preset="weather">🌤 天气</button>
+        <button class="btn" data-preset="democracy">🌍 民主</button>
+        <button class="btn" data-preset="drug">👤 成瘾循环</button>
+        <button class="btn" data-preset="brands">🛒 品牌忠诚</button>
+      </div>
+    </div>
+
+    <div id="mkv-hook" style="padding:12px 14px;background:var(--bg-soft);border-radius:var(--radius-sm);margin-bottom:14px;font-size:14px;line-height:1.5;">
+      <!-- populated by JS -->
+    </div>
+
+    <canvas id="mkv-graph" class="sim-canvas"></canvas>
+
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="mkv-play">▶ 自动漫步</button>
+      <button class="btn" id="mkv-step">⏭ 单步</button>
+      <button class="btn btn-ghost" id="mkv-reset">↺ 重置漫步者</button>
+    </div>
+
+    <div class="sim-metrics">
+      <div class="metric" id="mkv-time"><div class="label">时间步</div><div class="value">0</div></div>
+      <div class="metric" id="mkv-here"><div class="label">当前位于</div><div class="value">—</div></div>
+      <div class="metric" id="mkv-mix"><div class="label">实证占比</div><div class="value">—</div><div class="delta">→ 趋近 π</div></div>
+    </div>
+
+    <p style="margin-top:12px;color:var(--muted);font-size:14px;">
+      <strong>右侧的条形图</strong>展示漫步者到目前为止在各状态的停留时间比例。
+      <strong>红色菱形</strong>标出理论上的稳态分布 π。
+      给它几百步,条形就会对齐菱形 —— <em>无论你从哪里出发</em>。这就是定理。
+    </p>
+  </div>
+
+  <div class="callout aha">
+    <strong>机制。</strong>每个状态都有一组“如果我现在在这里,下一步可能去哪里”的概率。
+    看漫步者身边的箭头:越粗越可能被选中。时间一长,漫步者自然在
+    <em>最联通</em>的状态上花最多时间。这就是 π 所刻画的 —— 不是“你现在在哪里”,
+    而是“等得够久,你会落到哪里”。
+  </div>
+
+  <h2>三种不同的起点,一个共同的终点</h2>
+  <p>
+    一个漫步者会收敛到 π。但一整<em>群</em>漫步者也会,哪怕他们各自从不同状态出发。
+    看看三个世界并行运行。
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 2 · Convergence race -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">三个世界 · 同样的规则 · 完全不同的起点</p>
+    <canvas id="mkv-race" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="mkv-race-play">▶ 一起跑</button>
+      <button class="btn btn-ghost" id="mkv-race-reset">↺ 重置</button>
+    </div>
+    <p style="margin-top:12px;color:var(--muted);font-size:14px;">
+      每个面板一开始放 <strong>1000 个漫步者</strong>在不同的状态(全部在第一个状态、
+      全部在最后一个状态,或均匀铺开)。每个面板都用<em>同一组</em>转移规则 P。
+      看彩色堆叠区域移动、稳定下来 —— 并注意到三个面板最终收敛到同样的形状。
+      <strong>历史会死去。</strong>
+    </p>
+  </div>
+
+  <div class="callout warn">
+    <strong>一句话的马尔可夫收敛定理。</strong>只要每个状态都能到达其他每个状态,
+    且链不是在完美整齐地循环,那么无论从何处出发,状态分布都会收敛到同一个 π。
+    上面三个世界都走到了同一个终点。这<em>就是</em>那个定理 —— 大约 1906 年由 A.A. 马尔可夫证明,
+    从 PageRank 到政治经济学的核心都离不开它。
+  </div>
+
+  <h2>一次性干预 vs 改变规则</h2>
+  <p>
+    马尔可夫链真正改变决策思路的地方,就在这里。假设你是市长,面对毒品危机。
+    预算可以花在<em>一次性干预</em>上 —— 今天就把所有成瘾者送去戒毒;
+    也可以花在<em>改变规则</em>上 —— 更好的教育、治疗体系、减害措施。
+    哪一个真正把均衡挪动了?
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 3 · Intervention vs rule change -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">两种政策 · 都在“成瘾循环”这条链上永续运行</p>
+    <canvas id="mkv-int" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="mkv-int-intervene">🚨 一次性干预</button>
+      <button class="btn btn-accent" id="mkv-int-change">🔧 改变规则</button>
+      <button class="btn btn-ghost" id="mkv-int-reset">↺ 重置</button>
+    </div>
+    <p style="margin-top:12px;color:var(--muted);font-size:14px;">
+      图表显示每个状态在人口中的占比随时间变化。点击
+      <strong>🚨 一次性干预</strong>把所有人瞬间推到“✅ 戒断”状态 —— 然后看它衰减回原本的 π。
+      点击 <strong>🔧 改变规则</strong>永久降低从“戒断 → 使用”的转移概率 ——
+      然后看一个<em>新的</em>、更低的稳态浮现。
+    </p>
+  </div>
+
+  <div class="callout aha">
+    <strong>每位决策者都该纹在身上的教训。</strong>一次性干预<em>总</em>会衰减 ——
+    转移概率会把系统拉回原来的 π。只有<strong>改变转移概率本身</strong>才能带来持久的改变。
+    这不是悲观;这就是算术。而且它适用于组织、团队、个人习惯、退休政策、戒毒治疗 ——
+    还有你曾经问过的每一个“为什么这个修复维持不住?”的问题。
+  </div>
+
+  <h2>马尔可夫链无处不在</h2>
+  <ul>
+    <li><strong>Google 最初的 PageRank</strong> 就是一个随机冲浪者在网页上点链接的稳态分布。
+      π 高的页面排名就高。</li>
+    <li><strong>天气预报</strong>用(远比它复杂的)马尔可夫模型从今天推明天。</li>
+    <li><strong>民主研究</strong>(Freedom House 的数据)显示,各国在“自由/部分自由/不自由”之间漂移
+      的速率近乎稳态 —— 更令人警醒的应用之一。</li>
+    <li><strong>洗牌</strong>:一副牌要洗多少次才算“随机”?马尔可夫分析给出
+      <em>七次</em>(Bayer 与 Diaconis,1992)。</li>
+    <li><strong>语音识别、机器翻译、强化学习</strong> 核心都依赖马尔可夫结构。</li>
+    <li><strong>桌游</strong>:《滑梯与梯子》就是一条马尔可夫链 —— 可以写出闭式解。</li>
+  </ul>
+
+  <h2>相关模型</h2>
+  <ul>
+    <li><a href="../random-walk/zh.html">🚶 随机漫步</a> — 世界上最简单的马尔可夫链:下一步只看你现在在哪里。</li>
+    <li><a href="../path-dependence/zh.html">🏺 路径依赖</a> — 正好相反:马尔可夫会忘,Pólya 坛子永远记得。</li>
+    <li><a href="../sir/zh.html">🦠 SIR 流行病</a> — 个体层面的 SIR 就是在 {S, I, R} 上的马尔可夫链;对人群取平均,就得到那条 ODE。</li>
+  </ul>
+
+  <div class="next-nav">
+    <a href="../random-walk/zh.html">← 随机漫步</a>
+    <a href="../path-dependence/zh.html">路径依赖 →</a>
+  </div>
+</main>
+<script type="module" src="markov.js?v=5"></script>
+</body>
+</html>

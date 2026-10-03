@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>幂律 · 一个关于“富者愈富”的可玩模型</title>
+<link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+<main class="wrap">
+
+  <nav class="top-nav">
+    <a href="../zh.html">← 所有可玩模型</a>
+    <span class="spacer"></span>
+    <a href="index.html" class="lang-switch">EN</a>
+    <span class="crumb">ModelThinker · web</span>
+  </nav>
+
+  <p class="byline">第 6 章 · 分布</p>
+  <h1>富者愈富</h1>
+  <p class="subtitle">
+    两个世界。同样的歌。同样的听众。只差一个旋钮。
+    <br>结果:一个世界是公平的,另一个世界里出现了一首失控的爆款。
+  </p>
+
+  <p>
+    2006 年,Salganik、Dodds 与 Watts 做过一个叫 <strong>MusicLab</strong> 的真实实验。
+    上千名实验者被随机分配到平行“世界”里,听同一批无名歌曲。
+    一个世界里,听众看不到别人下载过什么。另一个世界里,他们看得到。
+    同样的音乐、同样的吸引力,只在“听众知道什么”上差一点点。
+    但下载量的分布<em>截然不同</em>,而且无法预测。咱们在下面重跑一遍。
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 1 · The two-worlds MusicLab experiment -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">两个世界的实验 · 社会影响 vs 独立判断</p>
+    <canvas id="sim-lab" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="lab-play">▶ 开始听歌</button>
+      <button class="btn" id="lab-fast">⏩ 快进到 500 位听众</button>
+      <button class="btn btn-ghost" id="lab-reset">🎲 新一批歌 · 重置</button>
+    </div>
+    <p style="margin-top:12px;color:var(--muted);font-size:14px;">
+      <strong>左侧世界 · 独立判断。</strong>每位新听众只根据歌曲固有的吸引力挑选(吸引力隐藏 ——
+      所有歌曲品质相当)。
+      &nbsp;·&nbsp;
+      <strong>右侧世界 · 社会影响。</strong>每位听众还会参考前面多少人选过它。
+      越流行 = 越可能被选。富者愈富。
+    </p>
+  </div>
+
+  <div class="callout aha">
+    <strong>多按几次重置。</strong>左侧每一次重跑都保持相对均匀。右侧每一次都会产生<em>一首</em>失控爆款
+    —— 但<strong>每次赢的是哪一首</strong>都不一样。这就是 Salganik 与 Watts 的最大发现:
+    有了社会影响,流行不仅不均等,还<em>不可预测</em>。在一个平行宇宙中扑街的歌,
+    在另一个宇宙里是第一名。质量本身决定不了。
+  </div>
+
+  <h2>特征签名:双对数坐标里的直线</h2>
+  <p>
+    右侧世界的直方图 —— 大多数歌只有少数听众,极少数歌有几百位 —— 是一个
+    <strong>幂律</strong>。它的指纹就是在“有多少歌达到了多少听众?”的双对数图上出现一条直线。
+    城市规模、词频、财富、地震震级、维基百科编辑次数,都是这条线。
+    机制不同,形状相同。
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 2 · Log-log degree distribution -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">度分布的双对数图 · 幂律的指纹</p>
+    <canvas id="sim2" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <label class="slider-block">
+        <span class="slider-label"><span>网络规模</span><span class="value">2000</span></span>
+        <input type="range" min="200" max="5000" value="2000" step="100" data-fmt="{v}">
+      </label>
+      <label class="slider-block">
+        <span class="slider-label"><span>每个新节点引出的边数(m)</span><span class="value">2</span></span>
+        <input type="range" min="1" max="6" value="2" step="1" data-fmt="{v}">
+      </label>
+    </div>
+    <div class="sim-metrics">
+      <div class="metric" id="sim2-slope"><div class="label">拟合指数 γ̂</div><div class="value">—</div><div class="delta">理论 ≈ 3</div></div>
+    </div>
+  </div>
+
+  <h2>到底有多不均等?</h2>
+  <p>
+    一张 <strong>洛伦兹曲线</strong> 就能回答。横轴:节点按连接数从少到多排名;
+    纵轴:累积连接数占总连接数的比例。完全平等的世界会画出一条对角直线。
+    而现实 —— 任何“优先连接”机制产生的分布 —— 都会向下凸起。
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 3 · Lorenz curve -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">洛伦兹曲线 · 度的集中度</p>
+    <canvas id="sim3" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="sim3-run">🎲 生成并绘制</button>
+    </div>
+    <div class="sim-metrics">
+      <div class="metric" id="sim3-gini"><div class="label">基尼系数</div><div class="value">—</div><div class="delta">0 = 平等 · 1 = 只有一个枢纽</div></div>
+      <div class="metric" id="sim3-8020"><div class="label">前 20% 占有</div><div class="value">—</div><div class="delta">≥ 80% 则符合“80/20 法则”</div></div>
+    </div>
+  </div>
+
+  <div class="callout warn">
+    <strong>幂律出现在哪里。</strong>城市规模、地震震级、战争伤亡、书籍与音乐销量、
+    网站入链、词频(Zipf 定律)、财富、公司规模、森林火灾面积。
+    不同的生成机制,相同的形状 —— 这意味着在双对数图上拟出一条直线
+    并不能帮你识别背后的成因。
+  </div>
+
+
+  <h2>相关模型</h2>
+  <ul>
+    <li><a href="../normal/zh.html">🔔 正态分布 / 中心极限定理</a> — 钟形曲线那个世界。同样的数据生成原料(相加 vs 相乘),把尾巴从薄尾翻成重尾。</li>
+    <li><a href="../network/zh.html">🕸️ 网络</a> — 优先连接会产生无标度网络:同一个机制,从分布的视角换到图的视角。</li>
+    <li><a href="../path-dependence/zh.html">🏺 路径依赖</a> — Pólya 坛子和优先连接共享“早期的小随机动作锁死后期的大结果”这个骨架。</li>
+  </ul>
+
+  <div class="next-nav">
+    <a href="../normal/zh.html">← 正态分布 / 中心极限定理</a>
+    <a href="../network/zh.html">网络 →</a>
+  </div>
+</main>
+<script type="module" src="power-laws.js?v=2"></script>
+</body>
+</html>

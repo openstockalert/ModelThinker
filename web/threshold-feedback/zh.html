@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>阈值与反馈 · 骚乱、酒吧和临界点</title>
+<link rel="stylesheet" href="../shared/style.css">
+<style>
+  /* --- Preset buttons for the head-to-head sim --- */
+  .preset-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+    margin-top: 8px;
+  }
+  .preset-btn {
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 2px solid var(--line);
+    background: white;
+    cursor: pointer;
+    font-family: inherit;
+    text-align: left;
+    color: var(--ink);
+    transition: transform 0.1s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .preset-btn:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent);
+    box-shadow: 0 4px 14px rgba(28,34,56,0.08);
+  }
+  .preset-btn.active {
+    border-color: var(--accent);
+    background: rgba(247,103,7,0.08);
+  }
+  .preset-btn .p-title { font-weight: 700; font-size: 14px; margin-bottom: 4px; }
+  .preset-btn .p-hint  { font-size: 12px; color: var(--muted); line-height: 1.35; }
+
+  /* --- El Farol toggle switch --- */
+  .ef-toggle {
+    display: inline-flex;
+    background: var(--bg-soft);
+    border-radius: 999px;
+    padding: 4px;
+    gap: 4px;
+  }
+  .ef-toggle button {
+    padding: 8px 16px;
+    border-radius: 999px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    transition: all 0.15s ease;
+  }
+  .ef-toggle button.active {
+    background: white;
+    color: var(--ink);
+    box-shadow: 0 1px 4px rgba(28,34,56,0.10);
+  }
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <nav class="top-nav">
+    <a href="../zh.html">← 所有可玩模型</a>
+    <span class="spacer"></span>
+    <a href="index.html" class="lang-switch">EN</a>
+    <span class="crumb">ModelThinker · web</span>
+  </nav>
+
+  <p class="byline">第 19 章 · 阈值反馈</p>
+  <h1>骚乱、酒吧与临界点</h1>
+  <p class="subtitle">
+    同样的规则骨架 —— “我看看别人在做什么,再决定自己做什么”。
+    <br>把反馈的符号翻过来,就得到相反的两个世界。
+  </p>
+
+  <p>
+    两种决策结构,几乎能生出社会动力学里的所有有趣现象。
+    <strong>正反馈</strong> —— “只要够多人上了我就加入” —— 走向极端:
+    骚乱、起立鼓掌、时尚潮流、挤兑。
+    <strong>负反馈</strong> —— “人少的时候我才去” —— 稳定下来:
+    酒吧客流、交通、健身房出勤。
+    两者有相同的骨架,都离不开<em>阈值</em>,也都藏着一个你马上会看到的真正惊喜。
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 1 · Head-to-head cascade comparison -->
+  <!-- ============================================================ -->
+  <h2>事实 1:微小的差异。相反的结局。</h2>
+  <p>
+    每个人都有自己私有的<em>阈值</em>:要看到多少别人在行动,他才会跟进。
+    冲动派:阈值 0。观望派:阈值 99。级联像爬梯子一样往上走 ——
+    <strong>每一级都要在</strong>。缺一级,就当场断掉。
+  </p>
+  <p>
+    下面我们<em>同时</em>跑两群人,方便你直接对比。每张脸是一个人;
+    被卷入骚乱的人,脸会变成<span style="color:var(--danger);font-weight:600;">红色且愤怒</span>。
+    每群 100 人按阈值排序(冲动派在左上,观望派在右下),所以浪潮按阅读顺序扫过去,
+    直到撞上一个缺口。挑一个预设,看两群人分别走到哪里 ——
+    你会看到微小的结构差异产生截然不同的结果。
+  </p>
+
+  <div class="preset-row" id="pair-presets">
+    <button class="preset-btn active" data-pair="canonical">
+      <div class="p-title">🪜 vs 🕳️ · 缺一级的梯子</div>
+      <div class="p-hint">梯子 (0,1,2,…,99) vs 把阈值 1 改成 2 的同一群人。均值只差 0.01。结果:100 vs 1。</div>
+    </button>
+    <button class="preset-btn" data-pair="luck">
+      <div class="p-title">🎲 同一道配方,相反的命运</div>
+      <div class="p-hint">从<em>同一</em>分布(均值 25,标准差 15)里独立抽两群人。一群暴发,一群熄火。不是 bug —— 这就是全书想告诉你的那个点。</div>
+    </button>
+    <button class="preset-btn" data-pair="sparks">
+      <div class="p-title">⚡ 发起者的杠杆</div>
+      <div class="p-hint">同样的 100 人(均值 25,标准差 10)。一个版本只有 1 个火花;另一个有 10 个。把“什么都没发生”变成“所有人都加入”。</div>
+    </button>
+  </div>
+
+  <div class="sim">
+    <canvas id="sim-cascade" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="cascade-spark">🔥 同时点火</button>
+      <button class="btn" id="cascade-reroll">🎲 重新抽样</button>
+    </div>
+  </div>
+
+  <div class="callout aha">
+    <strong>你刚看到的。</strong>这三个预设每一个都从不同的角度讲同一个教训:
+    <em>平均阈值并不决定结果</em>。级联是否点着,取决于梯子的形状、
+    取决于抽样时的运气、取决于愿意第一个站出来的人有多少。平均值没用。结构就是一切。
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SIM 2 · El Farol Bar -->
+  <!-- ============================================================ -->
+  <h2>事实 2:翻一下反馈的符号 —— 同样的规则反而让事情稳定下来</h2>
+  <p>
+    同样的骨架 —— “我看看别人在做什么,再决定自己做什么” —— 但把反馈的方向倒过来。
+    Brian Arthur 的 <strong>El Farol 酒吧</strong>:100 个人,一家酒吧,容量 60。
+    去了,如果来的人少于 60,就很爽;多了,就痛苦。
+    每周,每个人都试图从历史里预测下周的客流。如果预测低于容量,他就去。
+  </p>
+  <p>
+    关键在于:<strong>任何人人共享的预测都会自我摧毁</strong>。
+    如果大家都预测“冷清”,大家都去 —— 爆满。如果大家都预测“爆满”,没人去 —— 空荡。
+    没有一条规则是所有人都能用的。
+    下面:在“所有人用同一条预测规则”和“每个人都有自己五花八门的组合”之间切换,
+    看客流表现出两极反向的样子。
+  </p>
+
+  <div class="sim">
+    <p class="sim-title">El Farol · 客流随时间变化</p>
+    <canvas id="sim-bar" class="sim-canvas"></canvas>
+
+    <div class="sim-controls" style="align-items:center;">
+      <div class="ef-toggle" id="ef-mode-toggle">
+        <button class="active" data-mode="diverse">🧠 多样化的预测者</button>
+        <button data-mode="homogeneous">🤖 所有人想法一致</button>
+      </div>
+      <button class="btn btn-primary" id="bar-play">▶ 播放</button>
+      <button class="btn btn-ghost" id="bar-reset">↺ 重置</button>
+    </div>
+
+    <div class="sim-metrics">
+      <div class="metric" id="b-attend"><div class="label">本周出勤人数</div><div class="value">—</div><div class="delta">容量为 60</div></div>
+      <div class="metric" id="b-mean"><div class="label">长期平均</div><div class="value">—</div><div class="delta">所有周次的平均值</div></div>
+      <div class="metric" id="b-std"><div class="label">周与周之间的标准差</div><div class="value">—</div><div class="delta">摆动有多剧烈</div></div>
+    </div>
+  </div>
+
+  <div class="callout aha">
+    <strong>两条教训。</strong>规则多样时,客流稳定在容量线稍下方 ——
+    没人刻意去追求,也没人能预测下周 —— 但整体却是“对的”。
+    规则同质时,同样的 100 个人产生灾难性的二周期:爆满、空荡、爆满、空荡。
+    <strong>信念上的多样性</strong>才是让事情稳定下来的那个因素。
+    这和多样性预测定理(第 3 章)以及“所有人用同一套交易模型”引发闪崩的担忧,是同一个教训。
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SIM 3 · The Chaos Field -->
+  <!-- ============================================================ -->
+  <h2>事实 3:一群人的故事,一百群人才能讲清</h2>
+  <p>
+    <em>这群人</em>会不会骚乱?没人能回答。但如果你从同一个分布里抽 100 群人,
+    看它们各自发生了什么,规律就清楚了。下面就是这样 —— 100 群新抽的人口,
+    来自 Normal(均值 = 25,标准差 = 由你选)。
+    每张脸显示这群人的最终命运:<strong style="color:#F03E3E;">😠 愤怒</strong> = 全面骚乱,
+    <strong style="color:#F5A623;">😐 紧张</strong> = 部分级联,
+    <strong style="color:#F5A623;">🙂 平静</strong> = 熄火。
+  </p>
+  <p>
+    拖动标准差滑块,看顶部的大徽章在变:<strong>安全</strong> →
+    <strong>临界点</strong> → <strong>燃烧</strong> → <strong>卡死</strong>。
+    “临界点”就是你无法预测的那一段 —— 同样的配方,同样的棋盘,结果从全面骚乱到完全平静都有。
+  </p>
+
+  <div class="sim">
+    <canvas id="sim-tip" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <label class="slider-block" style="flex:1 1 100%;">
+        <span class="slider-label"><span>阈值的标准差(均值固定为 25)</span><span class="value">15</span></span>
+        <input type="range" min="1" max="60" value="15" step="1" data-fmt="{v}">
+      </label>
+    </div>
+    <div class="sim-controls">
+      <button class="btn" data-sd-jump="3"  style="flex:1 1 0;">🎯 SD 3(安全)</button>
+      <button class="btn" data-sd-jump="15" style="flex:1 1 0;">🌊 SD 15(双峰)</button>
+      <button class="btn" data-sd-jump="25" style="flex:1 1 0;">🔥 SD 25(燃烧)</button>
+      <button class="btn" data-sd-jump="60" style="flex:1 1 0;">🌪 SD 60(卡死)</button>
+    </div>
+    <div class="sim-metrics">
+      <div class="metric" id="t-full"><div class="label">😠 全面骚乱</div><div class="value">—</div><div class="delta">≥ 90 人加入的群数</div></div>
+      <div class="metric" id="t-fizzle"><div class="label">🙂 熄火</div><div class="value">—</div><div class="delta">≤ 10 人加入的群数</div></div>
+      <div class="metric" id="t-entropy"><div class="label">可预测性</div><div class="value">—</div><div class="delta">“押多数结果,我多少次会对”</div></div>
+    </div>
+  </div>
+
+  <div class="callout warn">
+    <strong>设计上的教训。</strong>追熵的峰,不要追平均值那条平滑的线。
+    接近临界点的系统,看平均值像可预测,但<em>方差</em>会爆炸。
+    有效的杠杆:改变收益,让阈值永远达不到(银行存款保险对付挤兑);
+    在梯子薄弱处把阈值抬高;移除或震慑发起者;
+    在负反馈系统里保护信念的多样性。
+    无效的杠杆:去追上一次级联的那个“火花”。
+    结构做了全部的功,火花却拿走了全部的功劳。
+  </div>
+
+  <h2>阈值出现在哪里</h2>
+  <p>
+    骚乱、起立鼓掌、挤兑、抗议运动、时尚采纳、病毒视频、引用级联、快闪、
+    那种“沉默”的研究圈嗡嗡声突然沸腾成科学共识。再看负反馈这一边:
+    交通改道、一月份的健身房、炎热的海滩、节水呼吁。一旦注意到规则的骨架以及反馈的正负号,
+    它们到处都是。
+  </p>
+
+  <h2>相关模型</h2>
+  <ul>
+    <li><a href="../sir/zh.html">🦠 SIR 流行病</a> — 级联就是另一种意义上的传染;阈值版是离散、个体层面的近亲。</li>
+    <li><a href="../network/zh.html">🕸️ 网络</a> — Watts 的分数阈值级联就活在网络上;连接结构决定一次级联是跳过去还是死掉。</li>
+    <li><a href="../game-theory/zh.html">♟️ 博弈论</a> — El Farol 字面上就是一个博弈;反馈下的协调本质上是策略性的。</li>
+  </ul>
+
+  <div class="next-nav">
+    <a href="../network/zh.html">← 网络</a>
+    <a href="../sir/zh.html">SIR 流行病 →</a>
+  </div>
+</main>
+<script type="module" src="threshold_feedback.js?v=7"></script>
+</body>
+</html>

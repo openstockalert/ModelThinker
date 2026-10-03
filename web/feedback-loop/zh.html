@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>反馈回路 · 一个关于“系统为什么会怪异行动”的可玩模型</title>
+<link rel="stylesheet" href="../shared/style.css">
+<style>
+  /* Preset buttons */
+  .preset-row {
+    display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px;
+  }
+  .preset-btn {
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 2px solid var(--line);
+    background: white;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    transition: all 0.15s ease;
+    flex: 1 1 140px;
+    text-align: left;
+  }
+  .preset-btn:hover {
+    transform: translateY(-1px);
+    border-color: var(--primary);
+    box-shadow: 0 3px 10px rgba(28,34,56,0.08);
+  }
+  .preset-btn.active {
+    border-color: var(--accent);
+    background: rgba(247,103,7,0.08);
+    color: var(--accent);
+  }
+  .preset-btn .p-hint {
+    display: block;
+    font-weight: 400;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .preset-btn.active .p-hint { color: #D9480F; }
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <nav class="top-nav">
+    <a href="../zh.html">← 所有可玩模型</a>
+    <span class="spacer"></span>
+    <a href="index.html" class="lang-switch">EN</a>
+    <span class="crumb">ModelThinker · web</span>
+  </nav>
+
+  <p class="byline">第 18 章 · 系统动力学</p>
+  <h1>回路、时滞,以及反而把事情搞糟的政策</h1>
+  <p class="subtitle">
+    三个简单的概念 —— <strong>存量</strong>、<strong>流量</strong>、
+    <strong>反馈回路</strong> —— 再加一个修饰:<strong>时滞</strong>。
+    <br>它们合在一起,能解释为什么世界的许多部分就是不按你的直觉办事。
+  </p>
+
+  <p>
+    1950 年代末,Jay Forrester 在 MIT 发明了这套工具,用它来解释城市为什么衰落、
+    供应链为什么爆炸、小火被扑灭之后森林大火反而更凶猛。下面是这套工具一眼就能看穿、
+    而大多数人第一眼都会想错的三件事。
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 1 · The Bathtub -->
+  <!-- ============================================================ -->
+  <h2>事实 1:浴缸在你拧小水龙头的时候仍然在装满</h2>
+  <p>
+    <em>存量</em>是任何可积累的东西 —— 浴缸里的水、大气中的 CO₂、城市里的人、
+    银行里的现金、债务。<em>流量</em>则是一个速率 —— 每分钟多少升、每年多少吨、每月多少雇佣。
+    规则简单得发笑:<strong>只要入流大于出流,存量就会增长 —— 就这么简单</strong>。
+    然而 John Sterman 发现,即便是 MIT 工程系的学生,给他们看同一个浴缸,
+    把标签换成“大气 CO₂”和“排放”,他们也会自信地得出“排放下降 = 浓度下降”这个错误结论。
+  </p>
+  <p>
+    不是这样。下面:一个浴缸里有 1000 升水,出水 40/年。水龙头从 100/年开始,
+    随你拧把手逐步调小。选一种“力度”,看存量到底会怎么走。
+  </p>
+
+  <div class="sim">
+    <p class="sim-title">浴缸 · 入流在降,但存量还在涨</p>
+    <canvas id="sim-bathtub" class="sim-canvas"></canvas>
+    <div class="preset-row">
+      <button class="preset-btn active" data-tub="hold">
+        🚰 保持不变
+        <span class="p-hint">每年削减 0 · 排放不变</span>
+      </button>
+      <button class="preset-btn" data-tub="gentle">
+        🐌 温和削减
+        <span class="p-hint">每年削减 2 · “我们在行动”</span>
+      </button>
+      <button class="preset-btn" data-tub="aggressive">
+        🏃 激进削减
+        <span class="p-hint">每年削减 8 · 英雄式努力</span>
+      </button>
+      <button class="preset-btn" data-tub="match">
+        ⚡ 匹配出流
+        <span class="p-hint">直接降到 40/年</span>
+      </button>
+    </div>
+    <div class="sim-metrics">
+      <div class="metric" id="b-peak"><div class="label">峰值存量</div><div class="value">—</div><div class="delta">浴缸最高装到多少</div></div>
+      <div class="metric" id="b-peakyear"><div class="label">峰值年份</div><div class="value">—</div><div class="delta">何时停止上升</div></div>
+      <div class="metric" id="b-final"><div class="label">50 年后存量</div><div class="value">—</div><div class="delta">起始为 1000</div></div>
+    </div>
+  </div>
+
+  <div class="callout aha">
+    <strong>试试“温和削减”。</strong>每年削减 2 个单位的排放 —— 稳定、可见的努力。
+    存量仍然会上升大约 30 年才最终掉头。连“激进”也要 7 年才见顶。
+    只有“匹配出流”(把入流立刻拉到和出流相等)才能让存量马上稳定下来。
+    对于气候、债务、城市人口、库存都是同样的教训:
+    <strong>稳定存量意味着把流量一路降到出流的速率,而不是只降低它。</strong>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SIM 2 · The Shower -->
+  <!-- ============================================================ -->
+  <h2>事实 2:时滞会把温和的纠正变成剧烈的震荡</h2>
+  <p>
+    每个人都亲身经历过。淋浴水冷,你把旋钮往热的方向拧。没动静,再往那边拧。
+    滚烫的水突然来了。你慌了,猛地往回拧,冰水又来。来回几次,最后要么放弃,
+    要么半裹着衣服洗完澡。<strong>反馈的符号完全正确,时机完全错误。</strong>
+  </p>
+  <p>
+    下面是一个试图把水温维持在 70°F 的自动驾驶。管道有长度 —— 温度的变化需要几秒才能到达莲蓬头。
+    拖动时滞滑块,看一个本来守规矩的控制器变成一台混乱机器。
+  </p>
+
+  <div class="sim">
+    <p class="sim-title">淋浴 · 当管道变长,一条合理的规则就变成了振荡器</p>
+    <canvas id="sim-shower" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <label class="slider-block" style="flex:1 1 100%;">
+        <span class="slider-label"><span>管道长度 —— 拧水龙头多久才传到莲蓬头</span><span class="value">8</span></span>
+        <input type="range" min="0" max="30" value="8" step="1" data-fmt="{v} 秒">
+      </label>
+    </div>
+    <div class="sim-controls">
+      <button class="btn" data-shower-delay="0"  style="flex:1 1 0;">⚡ 瞬时(0 秒)</button>
+      <button class="btn" data-shower-delay="5"  style="flex:1 1 0;">🚿 短管(5 秒)</button>
+      <button class="btn" data-shower-delay="15" style="flex:1 1 0;">🛁 长管(15 秒)</button>
+      <button class="btn" data-shower-delay="28" style="flex:1 1 0;">🏚 西伯利亚管(28 秒)</button>
+    </div>
+    <div class="sim-metrics">
+      <div class="metric" id="s-swing"><div class="label">温度摆幅</div><div class="value">—</div><div class="delta">60 秒内 最高 − 最低</div></div>
+      <div class="metric" id="s-comfort"><div class="label">在舒适带中的时间</div><div class="value">—</div><div class="delta">处于 ±3 °F 内的秒数占比</div></div>
+      <div class="metric" id="s-vibe"><div class="label">体验</div><div class="value">—</div><div class="delta">这个澡感觉如何</div></div>
+    </div>
+  </div>
+
+  <div class="callout aha">
+    <strong>按顺序点一遍四个预设。</strong>瞬时反馈 → 顺滑。短管 → 轻微超调。
+    长管 → 永久振荡。西伯利亚 → 烫与冰的极端往复。
+    <strong>同样的方程。同样的自动驾驶。只是时滞变了。</strong>
+    这正是为什么当利率变化和实际效果之间的时滞很长时,中央银行很难治通胀;
+    为什么房地产的周期总是繁荣—萧条;以及为什么往一个已经迟到的软件项目里加人,
+    会让它更迟到。
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SIM 3 · The Pest Spray (Volterra) -->
+  <!-- ============================================================ -->
+  <h2>事实 3:喷药灭虫,反而害虫更多</h2>
+  <p>
+    这一事实让整章读得值。兔子(🐰)是庄稼的害虫。狐狸(🦊)是它们的天敌。
+    两种数量相互振荡 —— 经典的捕食者/猎物。农夫决定喷一种广谱毒药,
+    对兔子和狐狸都同等致命。<strong>平均害虫数量上升。</strong>不是短期,
+    而是跨越许多个周期的平均。
+  </p>
+  <p>
+    这是 Vito Volterra(1926)的结果,也是 DDT 时代反而出现创纪录螨虫暴发、
+    最终被“综合虫害管理”取代广谱喷药的结构性原因。
+    下面:拨动喷洒刻度,看长期的平均兔子数<em>上升</em>。
+  </p>
+
+  <div class="sim">
+    <p class="sim-title">Volterra 的喷药 · 同时杀害虫和天敌,反而帮了害虫</p>
+    <canvas id="sim-spray" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <label class="slider-block" style="flex:1 1 100%;">
+        <span class="slider-label"><span>喷洒强度 —— 对兔子和狐狸以同样的速率杀灭</span><span class="value">0.00</span></span>
+        <input type="range" min="0" max="40" value="0" step="1" data-fmt="{v}">
+      </label>
+    </div>
+    <div class="sim-controls">
+      <button class="btn" data-spray="0"  style="flex:1 1 0;">🌿 不喷</button>
+      <button class="btn" data-spray="10" style="flex:1 1 0;">💧 轻度</button>
+      <button class="btn" data-spray="20" style="flex:1 1 0;">💦 中度</button>
+      <button class="btn" data-spray="35" style="flex:1 1 0;">☠️ 重度</button>
+    </div>
+    <div class="sim-metrics">
+      <div class="metric" id="v-rabbit"><div class="label">🐰 平均兔子数</div><div class="value">—</div><div class="delta">长期均衡</div></div>
+      <div class="metric" id="v-fox"><div class="label">🦊 平均狐狸数</div><div class="value">—</div><div class="delta">长期均衡</div></div>
+      <div class="metric" id="v-change"><div class="label">相对不喷的兔子数变化</div><div class="value">—</div><div class="delta">平均值的变化</div></div>
+    </div>
+  </div>
+
+  <div class="callout warn">
+    <strong>一句话教训:</strong>如果你的干预以同样的力度同时击中“问题”和“问题的天然制衡者”,
+    你可能是在加强那个问题。害虫繁殖快,天敌繁殖慢 —— 调节者恢复的速度比它所调节的东西还慢。
+    同样的结构也适用于广谱抗生素(清除了竞争菌群,使<em>艰难梭菌</em>趁势而起)、
+    扑灭每一场小山火(可燃物累积,下一场灾难性爆发)、以及一刀切地削减预算
+    (把浪费连同监督一起砍掉)。
+  </div>
+
+  <h2>真正的力量:模式识别</h2>
+  <p>
+    系统动力学最安静的馈赠,是一张经常复现的回路模式清单。看过一次,下次秒认:
+  </p>
+  <ul>
+    <li><strong>增长的极限</strong> —— 自强回路遇到自平衡回路。每一家初创公司迟早会撞上它。</li>
+    <li><strong>失败的修补</strong> —— 一个修补缓解了症状,却在时滞后加重了病因。借债填亏空。</li>
+    <li><strong>转移负担</strong> —— 外部修补侵蚀内部能力。咨询公司取代内部专长。
+      止痛药掩盖痛感,延误诊断。</li>
+    <li><strong>目标漂移</strong> —— 标准朝你实际做得到的方向调整。这就是安全文化如何衰落的。</li>
+    <li><strong>升级螺旋</strong> —— 双方都对彼此的差距作出反应。军备竞赛、价格战。</li>
+  </ul>
+  <p>
+    Donella Meadows 把政策杠杆从弱到强排了一个序:
+    参数(税率)→ 缓冲 → <strong>时滞</strong> → 回路强度 →
+    新的回路 → <strong>规则</strong> → <strong>目标</strong> → 范式。
+    注意“缩短时滞”高于一切参数微调 —— 这正是事实 2 刚刚让你看到的。
+  </p>
+
+  <h2>相关模型</h2>
+  <ul>
+    <li><a href="../sir/zh.html">🦠 SIR 流行病</a> — 第 11 章就是一个由三个存量(S、I、R)及其间的反馈构成的系统动力学。工具相同,具体实例。</li>
+    <li><a href="../markov/zh.html">🌐 马尔可夫链</a> — 马尔可夫链是流畅的“存量—流量”图景在离散、个体层面上的版本。</li>
+    <li><a href="../nk/zh.html">🏔 NK 适应度地形</a> — 第 18 章关于“回路主导”的语言,也给出 NK “哪种搜索策略赢”问题的另一种镜头。</li>
+  </ul>
+
+  <div class="next-nav">
+    <a href="../sir/zh.html">← SIR 流行病</a>
+    <a href="../markov/zh.html">马尔可夫链 →</a>
+  </div>
+</main>
+<script type="module" src="feedback_loop.js?v=2"></script>
+</body>
+</html>

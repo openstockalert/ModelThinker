@@ -1,0 +1,648 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>拍卖与投票 · 一个关于“写规则就是设计游戏”的可玩模型</title>
+<link rel="stylesheet" href="../shared/style.css">
+<style>
+  /* ======================================================================
+     Auction & voting story — bespoke styles
+     ====================================================================== */
+  :root {
+    --candA: #4C6EF5;
+    --candB: #F76707;
+    --candC: #37B24D;
+    --candD: #BE4BDB;
+  }
+
+  /* ---- Candidate chips --------------------------------------------- */
+  .cand {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 14px;
+    color: white;
+  }
+  .cand.a { background: var(--candA); }
+  .cand.b { background: var(--candB); }
+  .cand.c { background: var(--candC); }
+  .cand.d { background: var(--candD); }
+  .cand.big { font-size: 18px; padding: 4px 14px; }
+
+  /* ---- Ballot profile table (Sim 1) -------------------------------- */
+  .ballot-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 0 0 14px;
+    font-size: 14px;
+  }
+  .ballot-table th,
+  .ballot-table td {
+    padding: 8px 12px;
+    text-align: left;
+  }
+  .ballot-table thead th {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    font-weight: 700;
+    border-bottom: 1.5px solid var(--line);
+  }
+  .ballot-table tbody tr {
+    background: var(--bg-soft);
+  }
+  .ballot-table tbody tr + tr td { border-top: 2px solid white; }
+  .ballot-table td:first-child {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+  }
+  .ballot-table td:last-child {
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+  }
+  .ballot-table td .ranking {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .ballot-table td .ranking .gt {
+    color: var(--muted);
+    font-weight: 400;
+    padding: 0 2px;
+  }
+
+  /* ---- Rule button row --------------------------------------------- */
+  .rule-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .rule-btn {
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 2px solid var(--line);
+    background: white;
+    cursor: pointer;
+    font-family: inherit;
+    text-align: left;
+    color: var(--ink);
+    transition: all 0.15s ease;
+  }
+  .rule-btn:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent);
+    box-shadow: 0 4px 14px rgba(28,34,56,0.08);
+  }
+  .rule-btn.active {
+    border-color: var(--accent);
+    background: rgba(247,103,7,0.08);
+  }
+  .rule-btn .r-title { font-weight: 700; font-size: 14px; margin-bottom: 4px; }
+  .rule-btn .r-hint  { font-size: 12px; color: var(--muted); line-height: 1.35; }
+
+  /* ---- Winner reveal card ----------------------------------------- */
+  .winner-card {
+    background: #FFF5EF;
+    border: 2px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    margin-top: 12px;
+  }
+  .winner-card .wc-rule {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .winner-card .wc-winner {
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--ink);
+    margin: 6px 0 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .winner-card .wc-why {
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .winner-card .wc-why ul {
+    margin: 6px 0 0;
+    padding-left: 20px;
+  }
+  .winner-card .wc-why li { margin: 2px 0; }
+
+  /* ---- Agenda sim (Sim 2) ----------------------------------------- */
+  .agenda-voters {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin: 12px 0;
+  }
+  .voter-card {
+    padding: 12px;
+    background: var(--bg-soft);
+    border-radius: 10px;
+    text-align: center;
+    font-size: 13px;
+  }
+  .voter-card .v-name {
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 11px;
+    margin-bottom: 6px;
+  }
+  .voter-card .v-rank {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    align-items: center;
+    font-weight: 700;
+    font-size: 18px;
+  }
+  .voter-card .v-rank .gt { color: var(--muted); font-weight: 400; }
+
+  .agenda-steps {
+    display: grid;
+    gap: 12px;
+    margin: 16px 0;
+  }
+  .agenda-step {
+    background: var(--bg-soft);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 14px;
+    opacity: 0.4;
+    transition: opacity 0.3s ease, background 0.3s ease;
+  }
+  .agenda-step.on {
+    opacity: 1;
+    background: #E7F5FF;
+  }
+  .agenda-step.winner {
+    background: #FFF5EF;
+    border-left: 4px solid var(--accent);
+  }
+  .agenda-step .step-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .agenda-step .step-body {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .agenda-step .step-body .vs { color: var(--muted); font-weight: 500; margin: 0 4px; }
+  .agenda-step .step-body .arrow { color: var(--muted); margin: 0 6px; }
+
+  /* ---- Vickrey slider block (Sim 3) ------------------------------- */
+  .vickrey-head {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .v-card {
+    padding: 12px 14px;
+    border-radius: var(--radius);
+    background: var(--bg-soft);
+    text-align: center;
+  }
+  .v-card .vc-label { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  .v-card .vc-value { font-size: 28px; font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums; margin-top: 2px; }
+  .v-card .vc-sub   { font-size: 11px; color: var(--muted); }
+
+  .v-card.second { background: #E7F5FF; }
+  .v-card.second .vc-value { color: var(--primary); }
+  .v-card.first  { background: #FFF4E6; }
+  .v-card.first  .vc-value { color: var(--accent); }
+
+  .nudge-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+    justify-content: center;
+  }
+  .nudge-btn {
+    padding: 7px 14px;
+    border-radius: 999px;
+    border: 1.5px solid var(--line);
+    background: white;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    cursor: pointer;
+    transition: all 0.12s ease;
+  }
+  .nudge-btn:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .nudge-btn.hero { border-color: var(--accent); background: #FFF4E6; color: var(--accent); }
+
+  /* ---- Winner's curse (Sim 4) ------------------------------------ */
+  .curse-head {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin: 12px 0;
+  }
+
+  /* ---- Mechanism cheat sheet ------------------------------------- */
+  .cheat {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0;
+    font-size: 14px;
+  }
+  .cheat th, .cheat td { padding: 10px 12px; text-align: left; vertical-align: top; }
+  .cheat thead th { font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); border-bottom: 1.5px solid var(--line); }
+  .cheat tbody tr:nth-child(odd) td { background: var(--bg-soft); }
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <nav class="top-nav">
+    <a href="../zh.html">← 所有可玩模型</a>
+    <span class="spacer"></span>
+    <a href="index.html" class="lang-switch">EN</a>
+    <span class="crumb">ModelThinker · web</span>
+  </nav>
+
+  <p class="byline">第 24 章 · 机制设计(反向博弈论)</p>
+  <h1>规则,就是这场游戏</h1>
+  <p class="subtitle">
+    第 21 章问:给定规则,人们会怎么做?
+    <br>第 24 章问相反的那一面:给定我想要的结果,<em>我该写什么规则?</em>
+  </p>
+
+  <p>
+    13 年里拿了三个诺贝尔经济学奖(2007 年 Hurwicz / Maskin / Myerson,
+    2012 年 Roth / Shapley,2020 年 Milgrom / Wilson)—— 全部压在同一个想法上:
+    结果更多取决于规则,而非玩家。下面我们要用两种方式证明它。
+    先用投票:四种合情合理的规则,面对<em>同一</em>份 122 张选票,竟然选出四位不同的赢家。
+    再用拍卖:规则上一个微小的扭转,就能让“讲真话”成为地球上每个竞拍者的最佳策略。
+  </p>
+
+  <!-- ================================================================
+       SIM 1 · Four rules, four winners
+       ================================================================ -->
+  <h2>事实 1:四种规则。四位赢家。同一份选票。</h2>
+  <p>
+    下面是 122 位选民对 4 位候选人
+    <span class="cand a">A</span> <span class="cand b">B</span>
+    <span class="cand c">C</span> <span class="cand d">D</span> 的偏好。
+    没人说谎。没人改主意。点击一种投票规则,看着它一步步数票 —— 再看谁赢。
+  </p>
+
+  <div class="sim">
+    <p class="sim-title">122 位选民的偏好 · 选一种规则</p>
+
+    <table class="ballot-table">
+      <thead>
+        <tr><th>人数</th><th>他们的偏好排序(最爱 → 最不爱)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>38</td><td><span class="ranking"><span class="cand c">C</span><span class="gt">▸</span><span class="cand a">A</span><span class="gt">▸</span><span class="cand d">D</span><span class="gt">▸</span><span class="cand b">B</span></span></td></tr>
+        <tr><td>28</td><td><span class="ranking"><span class="cand b">B</span><span class="gt">▸</span><span class="cand d">D</span><span class="gt">▸</span><span class="cand a">A</span><span class="gt">▸</span><span class="cand c">C</span></span></td></tr>
+        <tr><td>27</td><td><span class="ranking"><span class="cand d">D</span><span class="gt">▸</span><span class="cand b">B</span><span class="gt">▸</span><span class="cand a">A</span><span class="gt">▸</span><span class="cand c">C</span></span></td></tr>
+        <tr><td>26</td><td><span class="ranking"><span class="cand a">A</span><span class="gt">▸</span><span class="cand d">D</span><span class="gt">▸</span><span class="cand b">B</span><span class="gt">▸</span><span class="cand c">C</span></span></td></tr>
+        <tr><td>3</td><td><span class="ranking"><span class="cand c">C</span><span class="gt">▸</span><span class="cand d">D</span><span class="gt">▸</span><span class="cand a">A</span><span class="gt">▸</span><span class="cand b">B</span></span></td></tr>
+      </tbody>
+    </table>
+
+    <div class="rule-row">
+      <button class="rule-btn active" data-rule="plurality">
+        <div class="r-title">🥇 简单多数</div>
+        <div class="r-hint">谁的第一名票最多就赢(美国总统初选、英国 FPTP)</div>
+      </button>
+      <button class="rule-btn" data-rule="runoff">
+        <div class="r-title">🔁 两轮决选</div>
+        <div class="r-hint">保留第一名前两位,再做多数决(法国总统、美国参议院决选)</div>
+      </button>
+      <button class="rule-btn" data-rule="borda">
+        <div class="r-title">📊 Borda 计分</div>
+        <div class="r-hint">第 k 名得 (n−k) 分,全部累加(斯洛文尼亚、瑙鲁、欧洲电视歌唱大赛)</div>
+      </button>
+      <button class="rule-btn" data-rule="condorcet">
+        <div class="r-title">🥊 Condorcet 法</div>
+        <div class="r-hint">和每个对手一对一都能赢(“最公平”通常指这个)</div>
+      </button>
+    </div>
+
+    <div class="winner-card" id="winner-card">
+      <!-- populated by JS -->
+    </div>
+  </div>
+
+  <div class="callout aha">
+    <strong>结果是被规则决定的,不是被选民决定的。</strong>
+    C 的第一名基本盘最大。B 在两轮决选中胜出。D 是几乎所有人都能接受的次选。
+    A 在任何一对一比拼中都不败。每一位都有合理的理由自称“赢家”。
+    选票本身选不出赢家 —— 规则才选得出。换句话说,
+    <em>谁定下规则,谁就已经做完了大半选择</em>;一旦超过两个选项,
+    “人民的意愿”就不再是一个定义清楚的东西。
+  </div>
+
+  <!-- ================================================================
+       SIM 2 · Condorcet cycle / agenda power
+       ================================================================ -->
+  <h2>事实 2:哪怕是多数决,也可能根本没有赢家</h2>
+  <p>
+    三位选民,三位候选人
+    <span class="cand a">A</span> <span class="cand b">B</span>
+    <span class="cand c">C</span>。每个人的偏好都完美一致。
+    但看看当你让这群人逐对表决时会发生什么:
+  </p>
+
+  <div class="agenda-voters">
+    <div class="voter-card">
+      <div class="v-name">👤 选民 1</div>
+      <div class="v-rank"><span class="cand a">A</span><span class="gt">▸</span><span class="cand b">B</span><span class="gt">▸</span><span class="cand c">C</span></div>
+    </div>
+    <div class="voter-card">
+      <div class="v-name">👤 选民 2</div>
+      <div class="v-rank"><span class="cand b">B</span><span class="gt">▸</span><span class="cand c">C</span><span class="gt">▸</span><span class="cand a">A</span></div>
+    </div>
+    <div class="voter-card">
+      <div class="v-name">👤 选民 3</div>
+      <div class="v-rank"><span class="cand c">C</span><span class="gt">▸</span><span class="cand a">A</span><span class="gt">▸</span><span class="cand b">B</span></div>
+    </div>
+  </div>
+
+  <p>
+    谁会赢,完全取决于<strong>你把投票的顺序排成什么样</strong>。
+    谁来定会议议程 —— 通常是“主席” —— 谁就决定了赢家。选一种议程,看赢家怎么跟着变。
+  </p>
+
+  <div class="sim">
+    <p class="sim-title">选一种议程 · 同样的选民 · 不同的赢家</p>
+
+    <div class="rule-row" id="agenda-row">
+      <button class="rule-btn active" data-agenda="ab-c">
+        <div class="r-title">🅰️ 对 🅱️ 先投</div>
+        <div class="r-hint">再让赢家对 C</div>
+      </button>
+      <button class="rule-btn" data-agenda="bc-a">
+        <div class="r-title">🅱️ 对 🅲 先投</div>
+        <div class="r-hint">再让赢家对 A</div>
+      </button>
+      <button class="rule-btn" data-agenda="ac-b">
+        <div class="r-title">🅰️ 对 🅲 先投</div>
+        <div class="r-hint">再让赢家对 B</div>
+      </button>
+    </div>
+
+    <div class="agenda-steps" id="agenda-steps"></div>
+  </div>
+
+  <div class="callout warn">
+    <strong>Condorcet 悖论,</strong>而且这不是学术问题。多数偏好出现循环时,
+    谁掌控了议程,谁就掌控了结果。美国国会里的“致命修正案”和委员会上修正案的排序,
+    就是这条定理被刻意部署的现实版本。教训是:<em>程序权力和投票权力一样有决定性</em>。
+    Arrow 定理(1951)和 Gibbard–Satterthwaite 定理告诉你,这不是某个具体规则的小毛病 ——
+    一旦超过两个选项,没有任何“讲得通”的排序投票规则能免于策略操纵。
+    所有的麻烦都是从“三”开始。
+  </div>
+
+  <!-- ================================================================
+       SIM 3 · Vickrey second-price auction
+       ================================================================ -->
+  <h2>事实 3:在合适的拍卖规则下,“讲真话”就是最佳策略</h2>
+  <p>
+    现在换个场景 —— 拍卖,是机制设计的另一片战场。你要买一样东西。
+    你的<em>真实估值</em>是 <strong>70</strong>(它对你真正值多少)。
+    还有三位对手也在竞拍;他们的估值在 0–100 之间均匀分布,
+    但<strong>你完全不知道他们各自是多少</strong>。问题是:你该出多少?
+  </p>
+  <p>
+    答案完全取决于拍卖的规则。拖动下面的<strong>出价滑块</strong>,看两条利润曲线 ——
+    一条是<em>一价拍卖</em>(最高出价者赢,支付自己的出价),
+    另一条是<em>二价拍卖(Vickrey)</em>(最高出价者赢,支付<em>第二高</em>的那个出价)。
+    每条曲线都是实时的蒙特卡罗 —— 2000 次面对随机对手的模拟拍卖。
+  </p>
+
+  <div class="sim">
+    <p class="sim-title">你的真实估值是 70 · 那你到底应该出多少?</p>
+
+    <div class="vickrey-head">
+      <div class="v-card">
+        <div class="vc-label">你的真实估值</div>
+        <div class="vc-value" style="color:var(--ink);">70</div>
+        <div class="vc-sub">它对你值多少</div>
+      </div>
+      <div class="v-card second">
+        <div class="vc-label">💎 二价拍卖利润</div>
+        <div class="vc-value" id="v-second">—</div>
+        <div class="vc-sub">赢家付第二高价</div>
+      </div>
+      <div class="v-card first">
+        <div class="vc-label">💸 一价拍卖利润</div>
+        <div class="vc-value" id="v-first">—</div>
+        <div class="vc-sub">赢家付自己的出价</div>
+      </div>
+    </div>
+
+    <canvas id="vickrey-canvas" class="sim-canvas"></canvas>
+
+    <div class="sim-controls">
+      <label class="slider-block" style="flex:1 1 100%;">
+        <span class="slider-label"><span>🎯 你的出价</span><span class="value">70</span></span>
+        <input type="range" min="0" max="100" value="70" step="1" data-fmt="{v}" id="vickrey-slider">
+      </label>
+    </div>
+
+    <div class="nudge-row">
+      <button class="nudge-btn" data-bid="40">🙈 出 40(大幅压价)</button>
+      <button class="nudge-btn" data-bid="55">🙂 出 55(小幅压价)</button>
+      <button class="nudge-btn" data-bid="70">💎 出 70(讲真话)</button>
+      <button class="nudge-btn" data-bid="85">😳 出 85(超过估值)</button>
+    </div>
+  </div>
+
+  <div class="callout aha">
+    <strong>你刚刚发现两件事。</strong>第一,蓝色的二价曲线<em>峰值刚好在你的真实估值 70 处</em>,
+    而且顶部几乎是平的 —— 出 65 或 75 代替 70,利润几乎没变化。
+    在 Vickrey 中,讲真话是一个<strong>占优策略</strong>,机制也很“宽容”。
+    第二,橙色的一价曲线的峰值在 50–55 附近:你必须<em>压价</em>,
+    把自己的出价压到估值以下,且压得恰到好处。
+    压得太轻 → 赢下的都是无利可图的胜仗;压得太狠 → 本来能赢的也输掉。
+    一价拍卖对不精明者课重税。
+  </div>
+
+  <!-- ================================================================
+       SIM 4 · The winner's curse
+       ================================================================ -->
+  <h2>事实 4:改一个假设 —— 赢反而成了坏消息</h2>
+  <p>
+    现在把设定改一下。你竞拍的不是“对你估值 70”的东西,
+    而是一块<strong>石油租区</strong>,它对所有人价值都一样。
+    把这个价值记作 <strong>100</strong>。但没有人知道这个数字的精确值;
+    每位竞拍者只拿到一个带噪声的、无偏的估计。
+    (真实的石油租赁、公司并购、体育自由球员合同,全都是这个结构。)
+  </p>
+  <p>
+    每个人都如实出价,金额等于自己的估计。注意看:随着对手变多,
+    那位“估最高”的赢家会发生什么。
+  </p>
+
+  <div class="sim">
+    <p class="sim-title">共同价值拍卖 · 真实价值 100,估计带噪声</p>
+    <canvas id="curse-canvas" class="sim-canvas"></canvas>
+
+    <div class="sim-controls">
+      <label class="slider-block">
+        <span class="slider-label"><span>👥 竞拍者人数</span><span class="value">5</span></span>
+        <input type="range" min="2" max="30" value="5" step="1" data-fmt="{v}" id="curse-n">
+      </label>
+      <label class="slider-block">
+        <span class="slider-label"><span>🎲 估计噪声 σ</span><span class="value">20</span></span>
+        <input type="range" min="5" max="40" value="20" step="1" data-fmt="{v}" id="curse-sigma">
+      </label>
+    </div>
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="curse-run">🎲 模拟 1000 次拍卖</button>
+      <button class="btn btn-ghost" id="curse-reset">↺ 重新抽样</button>
+    </div>
+
+    <div class="curse-head">
+      <div class="v-card">
+        <div class="vc-label">真实价值</div>
+        <div class="vc-value" style="color:var(--ink);">100</div>
+        <div class="vc-sub">这块地真正值多少</div>
+      </div>
+      <div class="v-card second">
+        <div class="vc-label">🏆 赢家出价</div>
+        <div class="vc-value" id="curse-winbid">—</div>
+        <div class="vc-sub">他估得有多高</div>
+      </div>
+      <div class="v-card first">
+        <div class="vc-label">💰 赢家利润</div>
+        <div class="vc-value" id="curse-profit">—</div>
+        <div class="vc-sub">出价 − 真实价值(一价)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout warn">
+    <strong>反直觉的比较静态。</strong>每个人的估计都是无偏的。没有人不理性。
+    然而“如实出价”却<em>一直亏钱</em>,而且对手越多亏得越多。为什么?
+    因为<strong>“赢”本身就是坏消息</strong>:根据定义,赢家就是“碰巧估得最乐观的那个人”。
+    “恭喜你,你出的价比全世界任何其他人认为的都要高。”
+    在共同价值的拍卖里,对手越多,你应该出得<em>越少</em>,而不是越多 ——
+    和上面的 Vickrey 曲线正好相反。
+  </div>
+
+  <p>
+    Capen、Clapp 与 Campbell(1971)在 ARCO 发现这一现象 ——
+    他们注意到石油公司在海上石油租赁上系统性地出价过高。
+    这是众多并购溢价导致股东价值毁灭、自由球员合同在第三年看起来愚不可及、
+    预付版税永远赚不回来的标准解释。
+  </p>
+
+  <!-- ================================================================
+       Mechanism design cheat sheet
+       ================================================================ -->
+  <h2>每位规则设计者都要面对的四种拉扯</h2>
+  <p>
+    当你设计任何机制 —— 拍卖、投票、报酬方案、匹配市场 —— 四种张力总会反复出现。
+    <strong>揭示原理(Revelation Principle)</strong>说:如果你能用任何机制达成一个好结果,
+    那你也能用一个让所有人都讲真话的机制达成同样的结果。
+    于是这门手艺的全部重点就变成:<strong>让“诚实”成为最佳策略</strong>。
+  </p>
+
+  <table class="cheat">
+    <thead>
+      <tr><th>设计张力</th><th>含义</th><th>现实中的表现</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>讲真话</strong></td>
+        <td>参与者应该愿意如实报告自己的估值</td>
+        <td>Vickrey 拍卖、医院匹配中的延迟接受(DA)、如实报税</td>
+      </tr>
+      <tr>
+        <td><strong>效率</strong></td>
+        <td>最终拿到物品的,是估值最高的那个人</td>
+        <td>枢纽机制(VCG)、肾交换环</td>
+      </tr>
+      <tr>
+        <td><strong>预算平衡</strong></td>
+        <td>进来的钱 = 出去的钱,不需要外部补贴</td>
+        <td>市场清算价格(但 Myerson–Satterthwaite 告诉你,“真话 + 效率 + 预算平衡”三样不可兼得)</td>
+      </tr>
+      <tr>
+        <td><strong>鲁棒性</strong></td>
+        <td>参与者算错、串通或装傻时,机制仍然能用</td>
+        <td>为什么 Google 用 GSP 而不用 VCG;为什么“多拉一个竞拍者”比精心设计的保留价更有效</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout aha">
+    <strong>Bulow &amp; Klemperer 的直率建议。</strong>一场普通的英式升价拍卖加上
+    <em>n + 1</em> 名竞拍者,比理论最优机制加上 <em>n</em> 名竞拍者,收入更高。
+    说人话:<strong>别再抠价格了,去再找一位买家。</strong>
+    把精力花在营销、降低参与门槛、让流程好加入,比花在聪明的定价规则上回报更高。
+    Klemperer 在给真实拍卖做顾问的经验是:失败几乎总是因为参与者太少、串通,
+    而不是因为选错了教科书里的拍卖形式。
+  </div>
+
+  <h2>机制设计真正改变世界的地方</h2>
+  <ul>
+    <li><strong>医院住院医师匹配。</strong>美国的 National Resident Matching Program 使用
+      Gale–Shapley 的延迟接受算法:申请人给医院排序,医院给申请人排序,
+      没人需要玩策略 —— 在申请人一侧,如实排序就是占优策略。</li>
+    <li><strong>学区择校。</strong>2005 年之前的波士顿制度惩罚诚实:把你真心喜欢的学校排第一,
+      如果没被录取,就会在第二志愿里排到那些把它排第一的人后面。
+      Al Roth 的重新设计(现在波士顿、纽约市和美国大部分地区都在用)把它换成了延迟接受。
+      <em>这次改革本身就是一次机制设计的胜利。</em></li>
+    <li><strong>肾交换。</strong>由于器官不能买卖,价格无法清算这个市场。
+      替代方案:找出匹配环(我的捐赠者和你匹配、你的捐赠者和我匹配)或从利他捐赠者开始的匹配链。
+      几千例原本不可能发生的移植因此而成。</li>
+    <li><strong>FCC 频谱拍卖。</strong>Milgrom、Wilson 与 McAfee 设计的同时升价多轮拍卖
+      为联邦政府筹到数十亿美元 —— 可竞拍者后来发现,
+      只要把市场编号编码在出价的末几位数字里,就能彼此传信号(“你别进达拉斯,我就不进凤凰城”)。
+      修复方式:click-box 投标,去掉可用的末尾数字位。
+      <em>你的机制每多暴露一点信息,竞拍者就多一个协同的工具。</em></li>
+    <li><strong>存款保险。</strong>一次针对<a href="../threshold-feedback/zh.html">
+      银行挤兑阈值问题</a>的机制设计修补:改变收益,让挤兑的阈值永远不会被触及。
+      这是全书跨章节最漂亮的一个范例。</li>
+  </ul>
+
+  <h2>相关模型</h2>
+  <ul>
+    <li><a href="../game-theory/zh.html">♟️ 博弈论</a> — 第 21 章是正向:给定规则,预测结果;第 24 章是反向:给定想要的结果,写规则。</li>
+    <li><a href="../threshold-feedback/zh.html">🔥 阈值与反馈</a> — 挤兑、起立鼓掌、骚乱都是阈值问题;存款保险正是机制设计的补丁。</li>
+    <li><a href="../nk/zh.html">🏔 NK 适应度地形</a> — 肾交换这类匹配市场本质上是在地形上做组合搜索;机制设计则是选择要在哪一张地形上爬。</li>
+  </ul>
+
+  <div class="next-nav">
+    <a href="../game-theory/zh.html">← 博弈论</a>
+    <a href="../zh.html">所有模型 →</a>
+  </div>
+</main>
+<script type="module" src="auction_voting.js?v=2"></script>
+</body>
+</html>

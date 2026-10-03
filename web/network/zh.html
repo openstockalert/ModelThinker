@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>网络 · 一个关于“认识谁决定了什么会发生”的可玩模型</title>
+<link rel="stylesheet" href="../shared/style.css">
+<style>
+  /* --- Friendship-paradox score bars (Sim 2) --- */
+  .fp-scores {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .fp-score {
+    background: var(--bg-soft);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+  }
+  .fp-score .fp-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .fp-score .fp-num {
+    font-size: 34px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    margin: 6px 0;
+  }
+  .fp-score .fp-hint {
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .fp-score.friend .fp-num { color: var(--accent); }
+  .fp-score.person .fp-num { color: var(--primary); }
+
+  /* --- Attack sim (Sim 3) mini captions --- */
+  .attack-caption {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 8px;
+  }
+  .attack-caption > div {
+    text-align: center;
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-soft);
+    font-size: 13px;
+  }
+  .attack-caption .cap-title {
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+  .attack-caption .cap-hint {
+    font-size: 11px;
+    color: var(--muted);
+  }
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <nav class="top-nav">
+    <a href="../zh.html">← 所有可玩模型</a>
+    <span class="spacer"></span>
+    <a href="index.html" class="lang-switch">EN</a>
+    <span class="crumb">ModelThinker · web</span>
+  </nav>
+
+  <p class="byline">第 10 章 · 网络</p>
+  <h1>你认识谁,决定了什么会发生</h1>
+  <p class="subtitle">
+    同一群人。不同的连线方式。不同的世界。
+    <br>网络的关键从来不是“人”,而是“人与人之间的连接”。
+  </p>
+
+  <p>
+    网络就是一堆点(把它们叫作<em>人</em>)和把它们连起来的线(把它们叫作<em>友谊</em>)。
+    听起来平庸,其实不然。保留所有人,只改线的样式 ——
+    谣言传得更快、点子走得更远、危机级联或熄火,整个系统要么轻松扛住冲击、要么在第一下攻击就倒塌。
+    <strong>连线方式本身就是模型。</strong>
+  </p>
+
+  <p>
+    我们接下来会走到三个令人惊讶的事实。沿途会玩三种经典的网络形状:
+    <strong>环状格</strong>——只认识邻居;
+    <strong>小世界网络</strong>——几根随机的捷径就能彻底改变一切;
+    <strong>无标度网络</strong>——少数几个超级枢纽主宰全局。
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 1 · The rewiring switch — small-world in action -->
+  <!-- ============================================================ -->
+  <h2>事实 1:几根捷径,把村庄变成一个小世界</h2>
+  <p>
+    下面是一个有 40 人的村庄。每个人认识离自己最近的 4 位邻居 —— 就像真正的村子里,
+    你认识门口那几家,但不认识城另一头的那家人。
+    一条消息要跨过村庄,就得从邻居传给邻居再传给邻居……需要很多步。
+  </p>
+  <p>
+    现在拖动<strong>重连滑块</strong>。每多一个刻度,就把一条随机的邻居边换成一条随机的远距离边 ——
+    一条<em>捷径</em>。看看“两个人之间的典型距离”这个数字会怎么变化。
+    然后再看看村庄的<em>聚集度</em>怎么变化。
+  </p>
+
+  <div class="sim">
+    <p class="sim-title">重连开关 · 拖动以添加捷径</p>
+    <canvas id="sim-rewire" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <label class="slider-block" style="flex:1 1 300px;">
+        <span class="slider-label"><span>重连概率 p</span><span class="value">0.00</span></span>
+        <input type="range" min="0" max="100" value="0" step="1" data-fmt="{v}">
+      </label>
+      <button class="btn btn-ghost" id="rewire-preset-0">🏘️ 村庄(p=0)</button>
+      <button class="btn btn-ghost" id="rewire-preset-small">🌐 小世界(p=0.1)</button>
+      <button class="btn btn-ghost" id="rewire-preset-random">🎲 随机(p=1)</button>
+    </div>
+    <div class="sim-metrics">
+      <div class="metric" id="rewire-path"><div class="label">两人之间的典型步数</div><div class="value">—</div><div class="delta">“六度分隔”里的那个数字</div></div>
+      <div class="metric" id="rewire-clust"><div class="label">聚集度</div><div class="value">—</div><div class="delta">你的朋友之间有多少人也是朋友</div></div>
+      <div class="metric" id="rewire-shortcuts"><div class="label">已添加的捷径数</div><div class="value">0</div><div class="delta">重连后的远距离边</div></div>
+    </div>
+  </div>
+
+  <div class="callout aha">
+    <strong>意外之处。</strong>你只需要<em>极少量</em>的重连(试试 p = 0.05),
+    “典型步数”就会断崖式下跌 —— 网络变成了一个小世界。但聚集度几乎没动。
+    这就是 Watts–Strogatz 的结果:真实的社交网络之所以能同时满足“人人认识邻居”和“六度分隔”,
+    是因为它们只需要少数几条远距离连接就能大幅缩短距离。
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SIM 2 · The friendship paradox -->
+  <!-- ============================================================ -->
+  <h2>事实 2:你的朋友比你拥有更多朋友</h2>
+  <p>
+    下面是另一种网络 —— 少数几个人极其受欢迎、是枢纽,大多数人只认识两三个。
+    (真实的 Twitter 粉丝图、学术引用网络、航空航线图,看起来都是这个样子。)
+  </p>
+  <p>
+    来玩个游戏。有两种抽样方法:
+  </p>
+  <ul>
+    <li><strong>🎲 随机一人。</strong>随机挑任何一个人。</li>
+    <li><strong>👥 随机一个朋友。</strong>随机挑一个人,然后再随机挑<em>他</em>的一位朋友。
+      那位朋友就是你的样本。</li>
+  </ul>
+  <p>
+    在每个按钮上多点几次,看两边的平均值怎么较量。常识告诉你它们差不多。常识这次错得离谱。
+  </p>
+
+  <div class="sim">
+    <p class="sim-title">友谊悖论 · 抽一个人,或抽一个朋友</p>
+    <canvas id="sim-paradox" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="fp-random-person">🎲 随机一人</button>
+      <button class="btn btn-accent"  id="fp-random-friend">👥 随机一个朋友</button>
+      <button class="btn btn-ghost" id="fp-reset">↺ 重置统计</button>
+    </div>
+    <div class="fp-scores">
+      <div class="fp-score person">
+        <div class="fp-label">🎲 随机一人的平均朋友数</div>
+        <div class="fp-num" id="fp-person-num">—</div>
+        <div class="fp-hint" id="fp-person-hint">点击“随机一人”进行抽样</div>
+      </div>
+      <div class="fp-score friend">
+        <div class="fp-label">👥 随机一个朋友的平均朋友数</div>
+        <div class="fp-num" id="fp-friend-num">—</div>
+        <div class="fp-hint" id="fp-friend-hint">点击“随机一个朋友”进行抽样</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout aha">
+    <strong>为什么会这样。</strong>受欢迎的人出现在<em>许多</em>人的朋友名单里 ——
+    所以当你抽“随机某人的朋友”时,你更可能命中枢纽,而不是均匀抽样中那样随意落脚。
+    这不是社会学,这就是组合数学,对任何非均匀的网络都成立。
+    实际用法:要想提前两周发现一场疫情,去监测随机抽到的那些人的<em>朋友</em> ——
+    你会不成比例地命中那些中心节点。Christakis 与 Fowler(2010)就用这招提前发现了哈佛的一波流感。
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SIM 3 · Attack the network -->
+  <!-- ============================================================ -->
+  <h2>事实 3:枢纽既是超能力,也是软肋</h2>
+  <p>
+    同一族网络。两种失人员方式。左边,随机失败 —— 电脑死机、手机丢失、机场因暴风雪停摆。
+    右边,针对性攻击 —— 一位了解拓扑的对手,每一步都把度最高的节点干掉。
+  </p>
+  <p>
+    看它们以同样的速度毁灭同一个起始网络。每个面板下方的彩色条跟踪最大存活聚类的大小。
+    最底部的图表叠加这两条曲线。
+  </p>
+
+  <div class="sim">
+    <p class="sim-title">随机失败 vs 针对性攻击 · 同一个起始网络</p>
+    <canvas id="sim-attack" class="sim-canvas"></canvas>
+    <div class="attack-caption">
+      <div>
+        <div class="cap-title" style="color:var(--primary);">🎲 随机失败</div>
+        <div class="cap-hint">均匀地随机挑节点</div>
+      </div>
+      <div>
+        <div class="cap-title" style="color:var(--danger);">🎯 针对性攻击</div>
+        <div class="cap-hint">每次都挑当前度最高的节点</div>
+      </div>
+    </div>
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="attack-play">▶ 同时攻击</button>
+      <button class="btn" id="attack-reset">↺ 新起始网络</button>
+    </div>
+    <div class="sim-metrics">
+      <div class="metric" id="attack-nodes"><div class="label">已移除节点</div><div class="value">0 / 0</div><div class="delta">相对于原始网络</div></div>
+      <div class="metric" id="attack-rand-lcc"><div class="label">🎲 最大聚类(随机)</div><div class="value">—</div><div class="delta">占原始规模的 %</div></div>
+      <div class="metric" id="attack-targ-lcc"><div class="label">🎯 最大聚类(针对性)</div><div class="value">—</div><div class="delta">占原始规模的 %</div></div>
+    </div>
+  </div>
+
+  <div class="callout warn">
+    <strong>设计上的教训。</strong>互联网、航线图和电网都是无标度的 —— 由枢纽主导。
+    这让它们对随机失败<em>免费获得鲁棒性</em>(大多数故障落在不重要的边缘节点),
+    对聪明的对手却<em>格外脆弱</em>(少数几次打击枢纽就能瞬间级联)。
+    同样的连线;两种相反的安全故事。
+  </div>
+
+  <h2>网络在哪里起作用</h2>
+  <p>
+    本书中每一个“<em>这个</em>东西怎么传播?”的问题,底层都是网络问题。
+    传染(第 11 章)、创意扩散、2008 年的金融传染、八卦传播、恐怖与犯罪网络、
+    疫情监测中的友谊悖论、六度分隔背后的小世界魔法。
+    改一下连线,就改一个故事。
+  </p>
+
+  <h2>相关模型</h2>
+  <ul>
+    <li><a href="../sir/zh.html">🦠 SIR 流行病</a> — 传染活在这些网络上。同一个 R₀ 在一个“村庄”和一个“无标度枢纽图”上传播,结果大不相同。</li>
+    <li><a href="../power-laws/zh.html">📈 幂律</a> — Barabási–Albert 图产生重尾度分布;同一机制的两种讲法。</li>
+    <li><a href="../schelling/zh.html">🟦🟧 Schelling 隔离</a> — Schelling 中“谁挨着谁”的问题,底层字面上就是一个网络问题。</li>
+  </ul>
+
+  <div class="next-nav">
+    <a href="../power-laws/zh.html">← 幂律</a>
+    <a href="../sir/zh.html">SIR 流行病 →</a>
+  </div>
+</main>
+<script type="module" src="network.js?v=3"></script>
+</body>
+</html>

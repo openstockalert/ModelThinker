@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>随机漫步 · 一个关于噪声、连胜与醉鸟的可玩模型</title>
+<link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+<main class="wrap">
+
+  <nav class="top-nav">
+    <a href="../zh.html">← 所有可玩模型</a>
+    <span class="spacer"></span>
+    <a href="index.html" class="lang-switch">EN</a>
+    <span class="crumb">ModelThinker · web</span>
+  </nav>
+
+  <p class="byline">第 13 章 · 不确定性与动力学</p>
+  <h1>站在马路中间的醉汉</h1>
+  <p class="subtitle">
+    站在数轴的 0 点上。抛一枚硬币。正面右走一步,反面左走一步。无限重复。
+    <br>关于随机性最深刻的一半教训,都藏在这个游戏里。
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 1 · One walker -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">一个漫步者 · 看着抛币人走</p>
+    <canvas id="sim1" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="sim1-play">▶ 开始抛币</button>
+      <button class="btn btn-ghost" id="sim1-reset">↺ 重新开始</button>
+    </div>
+    <div class="sim-metrics">
+      <div class="metric" id="sim1-t"><div class="label">抛币次数</div><div class="value">0</div></div>
+      <div class="metric" id="sim1-x"><div class="label">当前位置</div><div class="value">0</div></div>
+      <div class="metric" id="sim1-max"><div class="label">到过的最远</div><div class="value">0</div></div>
+    </div>
+  </div>
+
+  <p>
+    看久一点你会注意到:<strong>你会漂走,但漂得很慢。</strong>
+    抛币 100 次之后,你一般离起点约 10。抛 10,000 次之后,一般约 100。
+    距离按时间的<em>平方根</em>增长。不是线性,也不是指数。很慢。
+  </p>
+
+  <h2>现在让一百个漫步者赛跑</h2>
+  <p>
+    下方,一百个漫步者都从中线出发,各自抛各自的硬币。阴影区是
+    <strong>±√t</strong> — 在时刻 <em>t</em> 时一个典型漫步者大致所在的位置。看看这群人如何乖乖落在带内。
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 2 · Swarm + √t envelope -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">100 个漫步者与 √t 包络</p>
+    <canvas id="sim2" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="sim2-play">▶ 开始</button>
+      <button class="btn btn-ghost" id="sim2-reset">↺ 重置</button>
+    </div>
+    <div class="sim-metrics">
+      <div class="metric" id="sim2-t"><div class="label">时间步</div><div class="value">0</div></div>
+      <div class="metric" id="sim2-std"><div class="label">实证标准差</div><div class="value">0</div><div class="delta">理论 √t = 0</div></div>
+    </div>
+  </div>
+
+  <div class="callout aha">
+    <strong>“趋势”的错觉。</strong>其中一些漫步者整段路程都停留在水平线上方 —
+    看起来好像有动能、有连胜、有“手感发烫”。他们没有。他们只是抛币。
+    你能想到的每种“趋势”,这个过程都能偶然制造出来。现在想象有人只给你看其中一条路径,
+    请你解释一下。你一定会编出一个故事。
+  </div>
+
+  <h2>回归时间的悖论</h2>
+  <p>
+    下面这个事实反直觉到让人觉得它一定是错的。一维漫步者会以
+    <strong>概率 1</strong> 回到零点。每一条随机漫步最终都会回家。但<em>平均</em>的回家时间
+    <strong>是无穷大</strong>。两条都是真的。来看。
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 3 · Return time histogram -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">首次回归时间 · 点一下“模拟”</p>
+    <canvas id="sim3" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="sim3-run">🎲 模拟 2000 次</button>
+      <button class="btn btn-ghost" id="sim3-reset">↺ 清空</button>
+    </div>
+    <div class="sim-metrics">
+      <div class="metric" id="sim3-med"><div class="label">回归时间中位数</div><div class="value">—</div><div class="delta">典型路径</div></div>
+      <div class="metric" id="sim3-p99"><div class="label">第 99 百分位</div><div class="value">—</div><div class="delta">缓慢的长尾</div></div>
+      <div class="metric" id="sim3-mean"><div class="label">实证均值</div><div class="value">—</div><div class="delta">理论:∞</div></div>
+    </div>
+  </div>
+
+  <p>
+    注意谁才是主角:一半的路径恰好在<strong>两步</strong>之内回家。但第 99 百分位可以到几千步。
+    两件事其实在描述同一个分布 —— 这个分布你无法用“平均值”概括。均值未定义;
+    只有<em>中位数</em>才是一个公允的数字。
+  </p>
+
+  <div class="callout warn">
+    <strong>赌徒破产问题。</strong>一个在公平赌局中的赌徒<em>保证</em>最终会打平 ——
+    这是一条真的定理。但他只有有限的钱和有限的寿命。在“现在”和“最终”之间,
+    这个漫步会访问每一个负数。面对一个无限富有的赌场,他以概率 1 破产。
+    “总有一天会回来”在数学上为真,在财务上毫无用处。
+  </div>
+
+  <h2>醉汉与醉鸟</h2>
+  <p>
+    现在把同样的抛币游戏搬到<strong>更高维度</strong>:每一步,随机选一个坐标轴,沿它 ±1 走。
+    漫步者还能回家吗?
+  </p>
+  <p>
+    Pólya(1921)证明了:在 1 维和 2 维,<em>是,以概率 1 回家</em>。在 3 维及更高,<em>不</em>。
+    角谷静夫(Kakutani)总结得妙:<em>“醉汉总能找到回家的路,但醉鸟可能永远迷失。”</em>
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 4 · Dimension comparison -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">Pólya 定理的微缩版</p>
+    <canvas id="sim4" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="sim4-run">🎲 模拟</button>
+      <button class="btn btn-ghost" id="sim4-reset">↺ 重置</button>
+    </div>
+    <p style="margin-top:12px;color:var(--muted);font-size:14px;">
+      柱 = 500 次漫步(每条 5,000 步)中回到原点的比例。
+      菱形 = 理论上的最终回归概率。2 维技术上是 100%,但增长极其缓慢(以 1/log t 收敛),
+      所以有限预算下会被低估。
+    </p>
+  </div>
+
+  <h2>彩蛋:反正弦分布的意外</h2>
+  <p>
+    问:在两个玩家之间的公平抛币游戏中,一个玩家“领先”的时间占多少?
+    直觉说 ½。概率论的答案是:<strong>极端比中间要常见得多</strong>。
+    在真正平衡的游戏里,其中一方往往几乎全程领先。
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 5 · Arcsine law -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">公平的漫步看起来却像一边倒</p>
+    <canvas id="sim5" class="sim-canvas"></canvas>
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="sim5-run">🎲 模拟 3000 次</button>
+      <button class="btn btn-ghost" id="sim5-reset">↺ 重置</button>
+    </div>
+    <p style="margin-top:12px;color:var(--muted);font-size:14px;">
+      x 轴:每位漫步者位于零点上方的时间比例。按直觉“领先 50/50”推理,这里应该集中在中间。
+      但并没有。它集中在两端。
+    </p>
+  </div>
+
+  <div class="callout aha">
+    <strong>读新闻的眼镜。</strong>“某队全场碾压”——这正是公平、均衡的较量<em>大多数时候</em>看起来的样子。
+    共同基金的连胜、销售连胜、公司的常胜,道理都一样。随机漫步能凭空产生“统治”式的叙事,
+    底下并没有真正的统治。
+  </div>
+
+  <h2>相关模型</h2>
+  <ul>
+    <li><a href="../markov/zh.html">🌐 马尔可夫链</a> — 随机漫步<em>就是</em>一个马尔可夫链。√t 的扩散与稳态分布的故事,共用同一副骨架。</li>
+    <li><a href="../normal/zh.html">🔔 正态分布 / 中心极限定理</a> — 漫步者的位置依中心极限定理近似服从正态分布。</li>
+    <li><a href="../path-dependence/zh.html">🏺 路径依赖</a> — 漫步的历史会留痕;Pólya 坛子就是“早期运气锁死后期结果”的对应过程。</li>
+  </ul>
+
+  <div class="next-nav">
+    <a href="../sir/zh.html">← SIR 流行病</a>
+    <a href="../markov/zh.html">马尔可夫链 →</a>
+  </div>
+</main>
+<script type="module" src="random-walk.js?v=6"></script>
+</body>
+</html>

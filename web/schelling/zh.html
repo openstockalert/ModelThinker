@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>谢林 · 一个关于居住隔离的可玩模型</title>
+<meta name="description" content="轻微的个人偏好会产生剧烈的集体隔离。一个可滚动、可互动的谢林模型故事。">
+<link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+<main class="wrap">
+
+  <nav class="top-nav">
+    <a href="../zh.html">← 所有可玩模型</a>
+    <span class="spacer"></span>
+    <a href="index.html" class="lang-switch">EN</a>
+    <span class="crumb">ModelThinker · 中文版</span>
+  </nav>
+
+  <p class="byline">第 15 章 · 局部互动</p>
+  <h1>多边形悖论</h1>
+  <p class="subtitle">
+    人们相当宽容。社区却相当隔离。
+    <br>这两件事怎么可能同时为真?
+  </p>
+
+  <p>
+    我们来玩个游戏。下面是一个小社区,里面住着蓝色和橙色的小脸。
+    每张脸都看一眼它最近的 8 个邻居,只有一个小小的偏好:
+    <em>"我希望邻居里至少<strong>有一些</strong>跟我一样。不用是大多数。
+    就是,你懂的,<strong>有一些</strong>就行。"</em>
+  </p>
+
+  <p>
+    开心的脸 🙂 原地不动。不开心的脸 🙁 跳到随机的一个空位置。
+    这就是全部规则。现在看看会发生什么。
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 1 — Meet the neighbourhood -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">认识一下社区 · 点击任意形状来查看它</p>
+    <canvas id="sim1" class="sim-canvas"></canvas>
+
+    <div id="sim1-inspector" style="margin-top:14px;padding:14px 16px;background:var(--bg-soft);border-radius:var(--radius-sm);font-size:15px;line-height:1.5;">
+      <!-- Populated by JS. Shows the clicked shape's neighbour counts and happiness. -->
+    </div>
+
+    <div class="sim-metrics" style="margin-top:12px;">
+      <div class="metric" id="sim1-seg">
+        <div class="label">隔离度</div>
+        <div class="value">—</div>
+        <div class="delta">0 = 完全混合 · 1 = 完全分离</div>
+      </div>
+      <div class="metric" id="sim1-unhappy">
+        <div class="label">不开心的形状</div>
+        <div class="value">—</div>
+        <div class="delta">在容忍阈值 τ = 30% 时</div>
+      </div>
+    </div>
+  </div>
+
+  <h2>轻轻拧一下旋钮……</h2>
+  <p>
+    现在给每个形状一个偏好。移动滑块,相当于说:<em>"只要我的邻居里至少有这个比例跟我同色,我就开心。"</em>
+  </p>
+  <p>
+    然后点击 <strong>▶ 让他们移动</strong>。每隔约 ⅓ 秒,就有一张不开心的脸<strong>飞</strong>到一个随机空位 —
+    你能看到笑容在网格里扩散。或者点击 <strong>⏭ 走一步</strong> 一次只移动一个形状。
+    等不及了?<strong>⏩ 跳到稳定态</strong>会快进到最终布局。
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 2 — The tolerance dial -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">容忍度旋钮</p>
+    <canvas id="sim2" class="sim-canvas"></canvas>
+
+    <div class="sim-controls">
+      <label class="slider-block">
+        <span class="slider-label">
+          <span>要开心,最少需要多少同色邻居</span>
+          <span class="value">30%</span>
+        </span>
+        <input type="range" min="0" max="90" value="30" step="5" data-fmt="{v}%">
+      </label>
+    </div>
+
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="sim2-play">▶ 让他们移动</button>
+      <button class="btn" id="sim2-step">⏭ 走一步</button>
+      <button class="btn" id="sim2-skip" title="立即跳到完全稳定的状态">⏩ 跳到稳定态</button>
+      <button class="btn btn-ghost" id="sim2-reset">↺ 重开一个社区</button>
+    </div>
+
+    <div style="margin-top:16px;">
+      <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:4px;">
+        <span>隔离度</span><span id="sim2-seg-text">—</span>
+      </div>
+      <div class="meter"><div class="meter-fill" id="sim2-seg-fill" style="width:50%"></div></div>
+    </div>
+
+    <div class="sim-metrics">
+      <div class="metric" id="sim2-steps">
+        <div class="label">已移动次数</div><div class="value">0</div><div class="delta">每步一个</div>
+      </div>
+      <div class="metric" id="sim2-unhappy2">
+        <div class="label">不开心的形状</div><div class="value">—</div><div class="delta">想要搬家</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout aha">
+    <strong>试试这个。</strong>把滑块设成 <strong>30%</strong>。这不是"我想当大多数" —
+    而是"我可以接受当 70% 的少数,只要我不是<em>几乎完全</em>孤身一人"。
+    点播放,给它几千步。隔离度应该会爬到 ~0.80。
+    模拟中没有任何一个人要求过这种结果。然而我们就是在这里。
+  </div>
+
+  <h2>刚才发生了什么?</h2>
+  <p>
+    诀窍是:"不开心"并不需要种族主义 — 它只需要<em>一个下限</em>。
+    某些蓝色会偶然地落在太多橙色旁边。它们搬家。它们腾出的位置变空;
+    附近某个本来邻居挺好的橙色现在周围都是空位 — 它的比例也变了。
+    它可能也想搬。局部的小动作一波波传开。簇形成了,一旦形成就自我强化,
+    因为簇正是让每个人感到开心的东西。
+  </p>
+  <p>
+    托马斯·谢林(1971)给了我们这个尖锐的版本:<strong>微观动机不等于宏观行为</strong>。
+    个体上合理的偏好,聚合成了没人想要的结果。
+    这就是为什么"大家宽容一点就好了"无法消除隔离 — 几何结构本身就在对抗你。
+  </p>
+
+  <blockquote>
+    "极端情形比温和情形更容易理解……你可以是色盲,但最终还是住在一个隔离的社区里,
+    因为你的邻居不是。"
+    <br>— 托马斯·谢林,《微观动机与宏观行为》(1978)
+  </blockquote>
+
+  <h2>慢慢转动旋钮</h2>
+  <p>
+    惊喜来了。随着你把容忍度旋钮调高,均衡态下的隔离度并不是线性上升的。它跳跃式上升。
+    低于 ~10% 几乎什么也不发生。高于 ~50% 模型甚至无法稳定下来 —
+    太多形状永远不满意。在中间那段区间,同一条看似无害的规则,产生了剧烈的分离。
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 3 — The tolerance scan (three snapshots) -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">三种容忍度,同一套规则</p>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+      <div>
+        <canvas id="sim3a" class="sim-canvas" style="height:180px;"></canvas>
+        <p class="center" style="margin-top:8px;font-size:14px;">
+          <strong>τ = 10%</strong><br>
+          <span style="color:var(--muted);" id="sim3a-seg">隔离度 —</span>
+        </p>
+      </div>
+      <div>
+        <canvas id="sim3b" class="sim-canvas" style="height:180px;"></canvas>
+        <p class="center" style="margin-top:8px;font-size:14px;">
+          <strong>τ = 30%</strong><br>
+          <span style="color:var(--muted);" id="sim3b-seg">隔离度 —</span>
+        </p>
+      </div>
+      <div>
+        <canvas id="sim3c" class="sim-canvas" style="height:180px;"></canvas>
+        <p class="center" style="margin-top:8px;font-size:14px;">
+          <strong>τ = 50%</strong><br>
+          <span style="color:var(--muted);" id="sim3c-seg">隔离度 —</span>
+        </p>
+      </div>
+    </div>
+    <div class="sim-controls" style="margin-top:16px;">
+      <button class="btn btn-primary" id="sim3-run">▶ 全部运行</button>
+      <button class="btn btn-ghost" id="sim3-reset">↺ 重置</button>
+    </div>
+  </div>
+
+  <h2>现在你来玩</h2>
+  <p>
+    下面的沙盒把所有旋钮都给你了:网格大小、空格比例、容忍度、颜色偏斜,还有重置。
+    这是模型变成直觉的地方 — 没有什么比花一小时拧旋钮更有效的。
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- SIM 4 — Full sandbox -->
+  <!-- ============================================================ -->
+  <div class="sim">
+    <p class="sim-title">沙盒</p>
+    <canvas id="sim4" class="sim-canvas"></canvas>
+
+    <div class="sim-controls">
+      <label class="slider-block">
+        <span class="slider-label"><span>容忍度 τ</span><span class="value">30%</span></span>
+        <input type="range" min="0" max="90" value="30" step="5" data-fmt="{v}%">
+      </label>
+      <label class="slider-block">
+        <span class="slider-label"><span>网格大小</span><span class="value">14</span></span>
+        <input type="range" min="8" max="24" value="14" step="2" data-fmt="{v}">
+      </label>
+      <label class="slider-block">
+        <span class="slider-label"><span>占用密度</span><span class="value">90%</span></span>
+        <input type="range" min="50" max="98" value="90" step="2" data-fmt="{v}%">
+      </label>
+    </div>
+
+    <div class="sim-controls">
+      <button class="btn btn-primary" id="sim4-play">▶ 播放</button>
+      <button class="btn btn-ghost" id="sim4-reset">↺ 用新种子重置</button>
+    </div>
+
+    <div style="margin-top:16px;">
+      <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:4px;">
+        <span>隔离度</span><span id="sim4-seg-text">—</span>
+      </div>
+      <div class="meter"><div class="meter-fill" id="sim4-seg-fill" style="width:50%"></div></div>
+    </div>
+
+    <div class="sim-metrics">
+      <div class="metric" id="sim4-steps"><div class="label">移动次数</div><div class="value">0</div></div>
+      <div class="metric" id="sim4-unhappy"><div class="label">不开心的</div><div class="value">—</div></div>
+      <div class="metric" id="sim4-status"><div class="label">状态</div><div class="value">闲置</div></div>
+    </div>
+  </div>
+
+  <div class="callout warn">
+    <strong>值得停下来想想。</strong>谢林模型是一个漫画式简化 — 真实的住房选择涉及价格、学校、家庭、通勤。
+    它不是对真实隔离的字面描述。它<em>确实</em>告诉你的是:"结果一定反映了人们想要的"这种说法常常就是错的。
+    制度(学区划分、按揭贷款、税收激励)塑造了迁移;没有谁的个人偏好图能解释最终那张地图。
+  </div>
+
+  <h2>读者作业</h2>
+  <ol>
+    <li>在沙盒里把 <em>τ</em> 设为 <strong>90%</strong>。系统永远无法稳定 —
+      形状们几乎总是不开心。隔离度表还会上升吗?</li>
+    <li>把密度设为 <strong>98%</strong>,<em>τ</em> 设为 <strong>40%</strong>。看看
+      "被困住"的形状怎么表现。这就是房市摩擦的论证。</li>
+    <li>试试小网格(大小 15)vs 大网格(大小 60)。小样本会由于偶然性显得隔离更剧烈 —
+      一个藏在角落里的 <a href="zh.html">中心极限定理</a>故事。</li>
+  </ol>
+
+
+  <h2>相关模型</h2>
+  <ul>
+    <li><a href="../life-and-majority/zh.html">🎮 生命游戏 &amp; 局部多数</a> — 同一个"网格上的局部规则"家族。生命产生计算,多数冻结成簇,方式和谢林一样。</li>
+    <li><a href="../network/zh.html">🕸️ 网络</a> — 当邻居不再是相邻的格子而是朋友的朋友时,隔离会以不同方式展开。</li>
+    <li><a href="../nk/zh.html">🏔 NK 崎岖地貌</a> — 另一个基于个体的模型,简单的局部决策导致复杂的、路径依赖的结果。</li>
+  </ul>
+
+  <div class="next-nav">
+    <a href="../zh.html">← 所有模型</a>
+    <a href="../life-and-majority/zh.html">生命游戏 &amp; 局部多数 →</a>
+  </div>
+
+</main>
+
+<script type="module" src="schelling.js?v=3"></script>
+</body>
+</html>
