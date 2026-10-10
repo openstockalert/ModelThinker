@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Boids 鸟群 · 一个关于“三条规则造出一个群”的可玩模型</title>
+<link rel="stylesheet" href="../shared/style.css">
+<style>
+  /* ---- Preset chips --------------------------------------------- */
+  .chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 12px 0 10px;
+  }
+  .chip-btn {
+    padding: 7px 14px;
+    border-radius: 999px;
+    border: 1.5px solid var(--line);
+    background: white;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    transition: all 0.12s ease;
+  }
+  .chip-btn:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-1px); }
+  .chip-btn[aria-pressed="true"] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+  }
+
+  /* ---- The three rules row ------------------------------------- */
+  .rule-row { display: grid; grid-template-columns: 1fr; gap: 10px; margin: 10px 0 0; }
+  .rule-item {
+    background: var(--bg-soft);
+    border-radius: 10px;
+    padding: 10px 14px;
+  }
+  .rule-item .rule-head {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 4px;
+  }
+  .rule-item .rule-name {
+    flex: 1; font-weight: 700; font-size: 14px; line-height: 1.2;
+  }
+  .rule-item .rule-name small {
+    display: block;
+    color: var(--muted);
+    font-weight: 400;
+    font-size: 11.5px;
+    margin-top: 2px;
+  }
+  .rule-item .rule-val {
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 12px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    min-width: 44px;
+    text-align: right;
+  }
+  .rule-item input[type=checkbox] {
+    width: 16px; height: 16px; accent-color: var(--accent); flex-shrink: 0;
+  }
+  .rule-item input[type=range] { width: 100%; margin-top: 2px; }
+
+  /* ---- Finer-controls expandable ------------------------------ */
+  details.advanced {
+    margin: 20px 0 0;
+    border-top: 1px dashed var(--line);
+    padding-top: 14px;
+  }
+  details.advanced > summary {
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--primary);
+    padding: 4px 0;
+    user-select: none;
+    list-style: none;
+  }
+  details.advanced > summary::-webkit-details-marker { display: none; }
+  details.advanced > summary::before {
+    content: "▸ ";
+    display: inline-block;
+    transition: transform 0.15s ease;
+  }
+  details.advanced[open] > summary::before { content: "▾ "; }
+  details.advanced > summary:hover { color: var(--accent); }
+
+  .adv-group { margin: 14px 0 20px; }
+  .adv-group h4 {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 10px;
+    font-weight: 700;
+  }
+  .adv-group .ctl {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 6px 10px;
+    margin-bottom: 10px;
+  }
+  .adv-group .ctl label { font-size: 13px; }
+  .adv-group .ctl input[type=range] { grid-column: 1 / -1; }
+  .adv-group .ctl .val {
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 12px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .adv-group .toggles {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 10px 0;
+  }
+  .adv-group .toggles label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .adv-group .toggles input[type=checkbox] {
+    width: 15px; height: 15px; accent-color: var(--accent); flex-shrink: 0;
+  }
+
+  .section-label {
+    margin: 16px 0 0;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .boids-hint {
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    margin: 6px 0 0;
+  }
+
+  .boids-state {
+    font-size: 15px !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 700 !important;
+  }
+
+  #boids-canvas {
+    height: 480px;
+    cursor: crosshair;
+  }
+  @media (max-width: 640px) { #boids-canvas { height: 380px; } }
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <nav class="top-nav">
+    <a href="../zh.html">← 所有可玩模型</a>
+    <span class="spacer"></span>
+    <a href="index.html" class="lang-switch">EN</a>
+    <span class="crumb">ModelThinker · web</span>
+  </nav>
+
+  <p class="byline">局部交互</p>
+  <h1>三条规则。一个群。</h1>
+  <p class="subtitle">
+    你不是给鸟群做动画。你只是给<em>一只</em>鸟写规则 —— 然后跑许多个副本。
+    <br>群,是副产品。
+  </p>
+
+  <p>
+    1987 年,Craig Reynolds 在 SIGGRAPH 大会上把这个小把戏公开。在 boids 之前,
+    给一群鸟做动画意味着手工编写每一只鸟的轨迹。Reynolds 的洞见是<em>不要那样做</em> ——
+    给一只鸟写规则,然后跑很多个副本。这个方法直接进了好莱坞:
+    <em>蝙蝠侠归来</em>(1992)里成群的蝙蝠、<em>狮子王</em>(1994)里的角马奔逃、
+    1998 年奥斯卡科学与工程奖。它可能是整个计算史上被重现最多的基于主体的模型。
+    而整件事只有<strong>三条规则</strong>,每一条都在说一只鸟看到其他鸟时要做什么。
+  </p>
+
+  <!-- =================================================================
+       SIM · 实验室
+       ================================================================= -->
+  <div class="sim">
+    <p class="sim-title">实验室 · 选一个模式,再试试关掉某条规则</p>
+    <canvas id="boids-canvas" class="sim-canvas"></canvas>
+    <p class="boids-hint">在场内拖动即可化身捕食者 · 按空格键暂停</p>
+
+    <p class="section-label">模式</p>
+    <div class="chip-row" id="boids-presets"></div>
+    <p id="boids-why" style="font-size:13px;color:var(--muted);line-height:1.5;min-height:3em;margin:0 0 14px;"></p>
+
+    <p class="section-label">三条规则</p>
+    <div class="rule-row">
+      <div class="rule-item">
+        <div class="rule-head">
+          <input type="checkbox" id="on-sep" checked aria-label="分离开启">
+          <span class="rule-name">分离
+            <small>推开靠得太近的邻居</small>
+          </span>
+          <span class="rule-val" id="v-sep">1.00</span>
+        </div>
+        <input type="range" id="w-sep" min="0" max="3" step="0.05" value="1">
+      </div>
+      <div class="rule-item">
+        <div class="rule-head">
+          <input type="checkbox" id="on-ali" checked aria-label="对齐开启">
+          <span class="rule-name">对齐
+            <small>与邻居的朝向保持一致</small>
+          </span>
+          <span class="rule-val" id="v-ali">0.25</span>
+        </div>
+        <input type="range" id="w-ali" min="0" max="1" step="0.01" value="0.25">
+      </div>
+      <div class="rule-item">
+        <div class="rule-head">
+          <input type="checkbox" id="on-coh" checked aria-label="凝聚开启">
+          <span class="rule-name">凝聚
+            <small>朝邻居的中心靠拢</small>
+          </span>
+          <span class="rule-val" id="v-coh">0.030</span>
+        </div>
+        <input type="range" id="w-coh" min="0" max="0.2" step="0.002" value="0.03">
+      </div>
+    </div>
+
+    <details class="advanced">
+      <summary>更多参数 — 感知、飞行、显示</summary>
+
+      <div class="adv-group">
+        <h4>空间与生物</h4>
+        <div class="chip-row" id="dims" style="margin:0 0 10px"></div>
+        <div class="chip-row" id="shapes" style="margin:0"></div>
+      </div>
+
+      <div class="adv-group">
+        <h4>感知</h4>
+        <div class="ctl"><label>视野半径</label><span class="val" id="v-vis">50</span>
+          <input type="range" id="r-vis" min="12" max="160" step="1" value="50"></div>
+        <div class="ctl"><label>分离半径</label><span class="val" id="v-rsep">10</span>
+          <input type="range" id="r-sep" min="3" max="40" step="1" value="10"></div>
+        <div class="ctl"><label>视场角</label><span class="val" id="v-view">300°</span>
+          <input type="range" id="r-view" min="90" max="360" step="5" value="300"></div>
+        <div class="toggles">
+          <label><input type="checkbox" id="topo"> 按邻居数量而非距离计数(椋鸟约为 7 只)</label>
+        </div>
+        <div class="ctl" id="kwrap" hidden><label>跟踪的邻居数 (k)</label><span class="val" id="v-k">7</span>
+          <input type="range" id="r-k" min="2" max="16" step="1" value="7"></div>
+      </div>
+
+      <div class="adv-group">
+        <h4>飞行</h4>
+        <div class="ctl"><label>鸟数</label><span class="val" id="v-n">260</span>
+          <input type="range" id="r-n" min="20" max="1600" step="10" value="260"></div>
+        <div class="ctl"><label>巡航速度</label><span class="val" id="v-spd">3.0</span>
+          <input type="range" id="r-spd" min="0.8" max="7" step="0.1" value="3"></div>
+        <div class="ctl"><label>转向力</label><span class="val" id="v-force">0.60</span>
+          <input type="range" id="r-force" min="0.05" max="2" step="0.05" value="0.6"></div>
+        <div class="ctl" id="depthwrap" hidden><label>盒子深度</label><span class="val" id="v-depth">1.0</span>
+          <input type="range" id="r-depth" min="0.2" max="2" step="0.05" value="1"></div>
+      </div>
+
+      <div class="adv-group">
+        <h4>显示</h4>
+        <div class="toggles">
+          <label><input type="checkbox" id="trails" checked> 运动拖尾</label>
+          <label><input type="checkbox" id="showvis"> 显示一只鸟的视野锥与连线</label>
+          <label><input type="checkbox" id="speedtint" checked> 按速度与深度上色</label>
+        </div>
+        <div class="sim-controls" style="margin-top:14px">
+          <button class="btn" id="pause">⏸ 暂停</button>
+          <button class="btn" id="reset">↺ 重置群</button>
+          <button class="btn btn-ghost" id="scatter">💥 散开</button>
+        </div>
+      </div>
+    </details>
+
+    <div class="sim-metrics">
+      <div class="metric">
+        <div class="label">极化度</div>
+        <div class="value" id="m-pol">0.00</div>
+        <div class="delta">0 混乱 · 1 完全同向</div>
+      </div>
+      <div class="metric">
+        <div class="label">旋转度</div>
+        <div class="value" id="m-rot">0.00</div>
+        <div class="delta">环流有多强</div>
+      </div>
+      <div class="metric">
+        <div class="label">最近邻距</div>
+        <div class="value" id="m-nnd">0.0</div>
+        <div class="delta">以身长为单位的平均间距</div>
+      </div>
+      <div class="metric">
+        <div class="label">当前状态</div>
+        <div class="value boids-state" id="m-state">初始化</div>
+        <div class="delta" id="m-fps">0 只 · 0 fps</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout aha">
+    <strong>试试把“分离”关掉。</strong>点击“无分离”模式,或取消勾选上面的“分离”复选框。
+    一两秒之内,整个群就塌缩成了一个点 —— 方向完全一致,间距为零,毫无物理感。
+    这就是对齐和凝聚各自为战的结果。再把分离打开,看每只鸟如何重新夺回自己的空间。
+    一条规则撑起了整个幻觉。
+  </div>
+
+  <h2>三条规则究竟在说什么</h2>
+  <p>
+    每只 boid 只能看到自己的邻居 —— 视野半径以内、视场角以内的鸟(鸟的眼睛也不是朝正后方的)。
+    从这一小群可见的邻居中,三条规则各自提议一个要转向的方向:
+  </p>
+  <ul>
+    <li><strong>分离。</strong>推开任何靠得太近的邻居。距离越近,力越陡 ——
+      Reynolds 最初用的是 1/d²。范围:小,大约是视野半径的五分之一。</li>
+    <li><strong>对齐。</strong>朝邻居的<em>平均朝向</em>转向。范围:中。</li>
+    <li><strong>凝聚。</strong>朝邻居的<em>平均位置</em>(即群的局部中心)转向。范围:大。</li>
+  </ul>
+  <p>
+    近距排斥、中距朝向匹配、远距吸引。加权求和。加速度被夹到最大力;速度被夹在一段区间内;
+    <strong>就这些</strong>。规则里没有一条写着“保持距离邻居 2 个身长”——
+    但你看<em>最近邻距</em>这个数,它会稳定在一个你从没要求过的间距上。这就是涌现。
+  </p>
+
+  <div class="callout warn">
+    <strong>裁剪为什么重要。</strong>把力的裁剪去掉,鸟会瞬间跳到理想速度 ——
+    看上去像粒子在弹跳。把速度的裁剪去掉,最快的那只会跑出群。正是这两道裁剪,
+    把模拟从“物理玩具”推到了“看起来像一只飞行动物”。
+  </div>
+
+  <h2>一套规则,四种格局</h2>
+  <p>
+    同样的三条规则,配上不同的权重和范围,会产生明显不同的集体行为。
+    每个上面的预设都是一组被反复测量过的参数:
+  </p>
+  <ul>
+    <li><strong>群飞。</strong>经典设定。极化接近 1.0,间距稳定在几个身长。你心中“鸟群”的样子。</li>
+    <li><strong>蜂群。</strong>强凝聚、弱对齐。密集的云团原地打转、不前进 ——
+      极化掉到 ~0.15,但群保持紧凑。蚊蚋就长这样。</li>
+    <li><strong>环流。</strong>转弯半径大(转向力小)加上强凝聚:群体合拢成一个绕空心旋转的圆环 ——
+      看<em>旋转</em>这个数,不是极化。真实的鱼群和行军蚁就这样。</li>
+    <li><strong>隧道视野。</strong>视场角很窄。鸟看不到身侧或身后,
+      群体伸展成不安分的线条,而不是整齐的团块。</li>
+  </ul>
+
+  <h2>2008 年罗马的椋鸟研究</h2>
+  <p>
+    以上一切都基于<em>度量</em>规则:“我关注距离 R 以内的任何鸟。”但这带来一个问题 ——
+    如果群变稀,每只鸟看到的邻居就变少,凝聚力就减弱,群就更稀。它应该散架才对。
+    椋鸟的群飞却从不散架。为什么?
+  </p>
+  <p>
+    由 Andrea Cavagna 和 Irene Giardina 领导的意大利团队,在 2005 到 2008 年间
+    在罗马特米尼火车站上空用立体相机拍摄真实的椋鸟群,重建了每只鸟的三维位置,然后问:
+    每只鸟实际跟踪的是多少只邻居?答案是<strong>大约 7 只</strong>——
+    一个固定的<em>数量</em>,而不是固定的<em>距离</em>。这就是“拓扑”型交互。
+    在“更多参数”里把“按邻居数量而非距离计数”打开,或直接选<strong>椋鸟</strong>模式,
+    群就能在任何疏密下保持聚合。
+  </p>
+
+  <div class="callout aha">
+    <strong>试试椋鸟模式,再把“鸟数”拉到 60。</strong>如果用度量规则,
+    稀疏的群早就散了;用拓扑规则,它仍然紧紧抱在一起。感知规则上这一点小小的改动 ——
+    一个生物学事实 —— 把模型从“没人设计过的非物理行为”里救了回来。
+  </div>
+
+  <h2>Boids 后来去了哪里</h2>
+  <p>
+    直接的应用大家都知道 —— <em>蝙蝠侠归来</em>(1992)里的蝙蝠、
+    <em>狮子王</em>(1994)里的角马、后来数不清的游戏和电影。
+    但这个<em>想法</em>走得更远:
+  </p>
+  <ul>
+    <li><strong>基于主体的建模。</strong>Boids 是开山之作。它证明了集体行为可以从局部规则中涌现 ——
+      Schelling、生命游戏、投票者模型以及一切后续工作都站在这之上。</li>
+    <li><strong>群体机器人。</strong>无人机群和仓库机器人用这几条规则的变体,
+      让整支舰队不需要中央调度就能协调。</li>
+    <li><strong>人群模拟。</strong>行人流、恐慌疏散、演唱会人群 —— 不同的权重,同一副骨架。</li>
+    <li><strong>自动驾驶。</strong>把每辆车当成一只 boid,加三条规则,再加一条“保持在车道里”的力,
+      交通流就免费有了。</li>
+  </ul>
+
+  <h2>相关模型</h2>
+  <ul>
+    <li><a href="../life-and-majority/zh.html">🎮 生命游戏与局部多数</a> —— 另一个经典的
+      “简单的局部规则 → 惊人的全局行为”示范,只不过是在网格上,而不是在连续空间里。</li>
+    <li><a href="../schelling/zh.html">🟦🟧 Schelling 隔离</a> —— 同一个家族(主体在共享空间上遵循局部规则),
+      不同的结局:温和的个体偏好居然产出剧烈的全局模式。</li>
+    <li><a href="../nk/zh.html">🏔 NK 适应度地形</a> —— 一旦你有了一群搜索者,
+      问题就变成他们在爬哪一张地形。Boids 跑在 NK 之上,就是“搜索即群飞”的故事。</li>
+  </ul>
+
+  <div class="next-nav">
+    <a href="../life-and-majority/zh.html">← 生命游戏与局部多数</a>
+    <a href="../zh.html">所有模型 →</a>
+  </div>
+</main>
+
+  <!-- visit-counter · 打开下面这个 URL 可以看到当前访问计数的徽章图:
+       https://hits.sh/openstockalert.github.io/ModelThinker/boids-zh.svg -->
+  <img src="https://hits.sh/openstockalert.github.io/ModelThinker/boids-zh.svg" alt="" width="1" height="1"
+       style="position:absolute;left:-9999px;top:-9999px;opacity:0;pointer-events:none;" decoding="async" aria-hidden="true" referrerpolicy="no-referrer">
+<script type="module" src="boids.js?v=2"></script>
+</body>
+</html>

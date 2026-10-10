@@ -16,6 +16,55 @@ const TAU = Math.PI * 2;
 const MAX = 1600;
 const CAM = 1250;   // focal length for the perspective projection in 3D
 
+// Language detection — EN by default; the Chinese page sets lang="zh-Hans"
+const LANG = (document.documentElement.lang || 'en').toLowerCase().startsWith('zh') ? 'zh' : 'en';
+const T = {
+  en: {
+    birds: 'Birds', fish: 'Fish',
+    presets: [
+      ['Flock',          'The canonical setting. Polarization settles near 1.0 and spacing stabilises at a few body lengths — even though nothing in the rules names a target spacing.'],
+      ['Swarm',          'Strong cohesion, weak alignment. A dense cloud that mills about and travels nowhere — polarization crashes to ~0.15 while the group stays tight.'],
+      ['Mill',           'Wide turning circle plus firm cohesion: the flock closes into a rotating torus around an empty centre. Watch the rotation number. Real fish and army ants do this.'],
+      ['No separation',  'Alignment + cohesion only. Every boid converges on the same point — perfectly aligned, zero spacing, utterly unphysical.'],
+      ['No alignment',   'Spacing stays reasonable but no shared heading ever appears, and the group fractures into drifting sub-flocks.'],
+      ['No cohesion',    'Aligned but slowly inflating: nothing pulls the edges back, so the flock thins out until neighbours fall out of sight.'],
+      ['Starling',       'Each boid tracks its 7 nearest neighbours instead of a fixed radius — the 2008 Rome result. Cohesion survives changes in density.'],
+      ['Tunnel vision',  'A 100-degree field of view. Boids cannot see what is beside or behind them, so the flock stretches into restless lines and strings.'],
+    ],
+    regimes: {
+      settling:   'settling',
+      collapsed:  'collapsed to a point',
+      polarized:  'polarized flock',
+      mill:       'mill / torus',
+      fragmented: 'fragmented',
+      swarm:      'disordered swarm',
+    },
+    fpsLabel: (n, f) => `${n} boids · ${f} fps`,
+  },
+  zh: {
+    birds: '🐦 鸟', fish: '🐟 鱼',
+    presets: [
+      ['群飞',       '经典设置。极化稳定在接近 1.0,间距稳定在几个身长 —— 可规则里没有一条写明目标间距。'],
+      ['蜂群',       '强凝聚、弱对齐。密集的云团原地打转,整体不前进 —— 极化掉到 ~0.15,但群保持紧凑。蚊群就这样。'],
+      ['环流',       '转弯半径大加上强凝聚:群体合拢成一个绕空心旋转的圆环。看旋转这个数,不是极化。真实的鱼群和行军蚁就这样。'],
+      ['无分离',     '只有对齐与凝聚。每只鸟汇聚到同一点 —— 完全对齐、零间距、完全不符合物理。'],
+      ['无对齐',     '间距保持合理,但从没出现共同的朝向,群体碎成多个漂移的小队。'],
+      ['无凝聚',     '对齐,但缓慢膨胀:没有力把边缘拉回,群体稀释直到邻居从视野中消失。'],
+      ['椋鸟',       '每只鸟跟踪最近的 7 只邻居,而不是固定半径 —— 2008 年罗马研究的结果。密度变化时凝聚力依然成立。'],
+      ['隧道视野',   '视场角 100°。鸟看不到身侧或身后,群体伸展成不安分的线条与带子。'],
+    ],
+    regimes: {
+      settling:   '初始化',
+      collapsed:  '塌缩成一点',
+      polarized:  '极化群飞',
+      mill:       '环流 / 圆环',
+      fragmented: '碎裂',
+      swarm:      '无序群',
+    },
+    fpsLabel: (n, f) => `${n} 只 · ${f} fps`,
+  },
+}[LANG];
+
 // ---------------------------------------------------------------------------
 // Theme colours — read from ModelThinker CSS variables so a theme change
 // (if we ever add dark mode) automatically propagates to the canvas.
@@ -307,11 +356,11 @@ function measure() {
 }
 
 function regime() {
-  if (nnd > 0 && nnd < Math.max(1.4, P.Rsep * 0.18) && pol > 0.6) return ['collapsed to a point', C.danger];
-  if (pol > 0.82) return ['polarized flock', C.accent];
-  if (rot > 0.42) return ['mill / torus',    C.accent2];
-  if (nbrAvg < 1.2) return ['fragmented',    C.warn];
-  return ['disordered swarm', C.muted];
+  if (nnd > 0 && nnd < Math.max(1.4, P.Rsep * 0.18) && pol > 0.6) return [T.regimes.collapsed,  C.danger];
+  if (pol > 0.82)   return [T.regimes.polarized,  C.accent];
+  if (rot > 0.42)   return [T.regimes.mill,       C.accent2];
+  if (nbrAvg < 1.2) return [T.regimes.fragmented, C.warn];
+  return              [T.regimes.swarm,      C.muted];
 }
 
 // ---------------------------------------------------------------------------
@@ -441,7 +490,7 @@ function paintMetrics() {
   $('m-pol').textContent = pol.toFixed(2);
   $('m-rot').textContent = rot.toFixed(2);
   $('m-nnd').textContent = nnd.toFixed(1);
-  $('m-fps').textContent = `${P.n} boids · ${fps} fps`;
+  $('m-fps').textContent = T.fpsLabel(P.n, fps);
   const [t, c] = regime();
   const el = $('m-state'); el.textContent = t; el.style.color = c;
 }
@@ -561,38 +610,26 @@ chipGroup($('dims'), [{id: 2, label: '2D'}, {id: 3, label: '3D'}], P.dim, id => 
   D = depthOf();
   reset(false);
 });
-chipGroup($('shapes'), [{id: 'bird', label: 'Birds'}, {id: 'fish', label: 'Fish'}], P.shape, id => { P.shape = id; });
+chipGroup($('shapes'), [{id: 'bird', label: T.birds}, {id: 'fish', label: T.fish}], P.shape, id => { P.shape = id; });
 $('depthwrap').hidden = P.dim !== 3;
 
 // ---------------------------------------------------------------------------
 // Regimes — each a measured parameter set with a one-sentence lesson
 // ---------------------------------------------------------------------------
-const PRESETS = [
-  { name: 'Flock',
-    why: 'The canonical setting. Polarization settles near 1.0 and spacing stabilises at a few body lengths — even though nothing in the rules names a target spacing.',
-    s: { ws:1, wa:0.25, wc:0.03,  R:50,  Rsep:10, view:300, vmax:3,   fmax:0.6,  topo:false, sepOn:1, aliOn:1, cohOn:1 } },
-  { name: 'Swarm',
-    why: 'Strong cohesion, weak alignment. A dense cloud that mills about and travels nowhere — polarization crashes to ~0.15 while the group stays tight.',
-    s: { ws:1, wa:0.08, wc:0.09,  R:50,  Rsep:10, view:300, vmax:3,   fmax:0.6,  topo:false, sepOn:1, aliOn:1, cohOn:1 } },
-  { name: 'Mill',
-    why: 'Wide turning circle plus firm cohesion: the flock closes into a rotating torus around an empty centre. Watch the rotation number. Real fish and army ants do this.',
-    s: { ws:0.8, wa:0.2, wc:0.02, R:70,  Rsep:8,  view:300, vmax:3.6, fmax:0.18, topo:false, sepOn:1, aliOn:1, cohOn:1 } },
-  { name: 'No separation',
-    why: 'Alignment + cohesion only. Every boid converges on the same point — perfectly aligned, zero spacing, utterly unphysical.',
-    s: { ws:0, wa:0.25, wc:0.03,  R:50,  Rsep:10, view:300, vmax:3,   fmax:0.6,  topo:false, sepOn:0, aliOn:1, cohOn:1 } },
-  { name: 'No alignment',
-    why: 'Spacing stays reasonable but no shared heading ever appears, and the group fractures into drifting sub-flocks.',
-    s: { ws:1, wa:0,    wc:0.03,  R:50,  Rsep:10, view:300, vmax:3,   fmax:0.6,  topo:false, sepOn:1, aliOn:0, cohOn:1 } },
-  { name: 'No cohesion',
-    why: 'Aligned but slowly inflating: nothing pulls the edges back, so the flock thins out until neighbours fall out of sight.',
-    s: { ws:1, wa:0.25, wc:0,     R:50,  Rsep:10, view:300, vmax:3,   fmax:0.6,  topo:false, sepOn:1, aliOn:1, cohOn:0 } },
-  { name: 'Starling',
-    why: 'Each boid tracks its 7 nearest neighbours instead of a fixed radius — the 2008 Rome result. Cohesion survives changes in density.',
-    s: { ws:1, wa:0.3,  wc:0.04,  R:140, Rsep:11, view:340, vmax:3.2, fmax:0.6,  topo:true,  k:7, sepOn:1, aliOn:1, cohOn:1 } },
-  { name: 'Tunnel vision',
-    why: 'A 100-degree field of view. Boids cannot see what is beside or behind them, so the flock stretches into restless lines and strings.',
-    s: { ws:1, wa:0.3,  wc:0.04,  R:60,  Rsep:10, view:100, vmax:3,   fmax:0.6,  topo:false, sepOn:1, aliOn:1, cohOn:1 } },
+// Preset parameter sets. The user-facing name + description are drawn from
+// the T.presets table above (same order), so a translated page shows the
+// same regimes with localised labels.
+const PRESET_SETTINGS = [
+  { ws:1,   wa:0.25, wc:0.03,  R:50,  Rsep:10, view:300, vmax:3,   fmax:0.6,  topo:false, sepOn:1, aliOn:1, cohOn:1 },
+  { ws:1,   wa:0.08, wc:0.09,  R:50,  Rsep:10, view:300, vmax:3,   fmax:0.6,  topo:false, sepOn:1, aliOn:1, cohOn:1 },
+  { ws:0.8, wa:0.2,  wc:0.02,  R:70,  Rsep:8,  view:300, vmax:3.6, fmax:0.18, topo:false, sepOn:1, aliOn:1, cohOn:1 },
+  { ws:0,   wa:0.25, wc:0.03,  R:50,  Rsep:10, view:300, vmax:3,   fmax:0.6,  topo:false, sepOn:0, aliOn:1, cohOn:1 },
+  { ws:1,   wa:0,    wc:0.03,  R:50,  Rsep:10, view:300, vmax:3,   fmax:0.6,  topo:false, sepOn:1, aliOn:0, cohOn:1 },
+  { ws:1,   wa:0.25, wc:0,     R:50,  Rsep:10, view:300, vmax:3,   fmax:0.6,  topo:false, sepOn:1, aliOn:1, cohOn:0 },
+  { ws:1,   wa:0.3,  wc:0.04,  R:140, Rsep:11, view:340, vmax:3.2, fmax:0.6,  topo:true,  k:7, sepOn:1, aliOn:1, cohOn:1 },
+  { ws:1,   wa:0.3,  wc:0.04,  R:60,  Rsep:10, view:100, vmax:3,   fmax:0.6,  topo:false, sepOn:1, aliOn:1, cohOn:1 },
 ];
+const PRESETS = T.presets.map(([name, why], i) => ({ name, why, s: PRESET_SETTINGS[i] }));
 const chips = $('boids-presets');
 PRESETS.forEach((p, idx) => {
   const b = document.createElement('button');
