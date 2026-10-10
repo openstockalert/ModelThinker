@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Boids · a playable model about three rules and one flock</title>
+<link rel="stylesheet" href="../shared/style.css">
+<style>
+  /* ---- Preset chips --------------------------------------------- */
+  .chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 12px 0 10px;
+  }
+  .chip-btn {
+    padding: 7px 14px;
+    border-radius: 999px;
+    border: 1.5px solid var(--line);
+    background: white;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    transition: all 0.12s ease;
+  }
+  .chip-btn:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-1px); }
+  .chip-btn[aria-pressed="true"] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+  }
+
+  /* ---- The three rules row ------------------------------------- */
+  .rule-row { display: grid; grid-template-columns: 1fr; gap: 10px; margin: 10px 0 0; }
+  .rule-item {
+    background: var(--bg-soft);
+    border-radius: 10px;
+    padding: 10px 14px;
+  }
+  .rule-item .rule-head {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 4px;
+  }
+  .rule-item .rule-name {
+    flex: 1; font-weight: 700; font-size: 14px; line-height: 1.2;
+  }
+  .rule-item .rule-name small {
+    display: block;
+    color: var(--muted);
+    font-weight: 400;
+    font-size: 11.5px;
+    margin-top: 2px;
+  }
+  .rule-item .rule-val {
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 12px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    min-width: 44px;
+    text-align: right;
+  }
+  .rule-item input[type=checkbox] {
+    width: 16px; height: 16px; accent-color: var(--accent); flex-shrink: 0;
+  }
+  .rule-item input[type=range] { width: 100%; margin-top: 2px; }
+
+  /* ---- Finer-controls expandable ------------------------------ */
+  details.advanced {
+    margin: 20px 0 0;
+    border-top: 1px dashed var(--line);
+    padding-top: 14px;
+  }
+  details.advanced > summary {
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--primary);
+    padding: 4px 0;
+    user-select: none;
+    list-style: none;
+  }
+  details.advanced > summary::-webkit-details-marker { display: none; }
+  details.advanced > summary::before {
+    content: "▸ ";
+    display: inline-block;
+    transition: transform 0.15s ease;
+  }
+  details.advanced[open] > summary::before { content: "▾ "; }
+  details.advanced > summary:hover { color: var(--accent); }
+
+  .adv-group { margin: 14px 0 20px; }
+  .adv-group h4 {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 10px;
+    font-weight: 700;
+  }
+  .adv-group .ctl {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 6px 10px;
+    margin-bottom: 10px;
+  }
+  .adv-group .ctl label { font-size: 13px; }
+  .adv-group .ctl input[type=range] { grid-column: 1 / -1; }
+  .adv-group .ctl .val {
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 12px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .adv-group .toggles {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 10px 0;
+  }
+  .adv-group .toggles label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .adv-group .toggles input[type=checkbox] {
+    width: 15px; height: 15px; accent-color: var(--accent); flex-shrink: 0;
+  }
+
+  .section-label {
+    margin: 16px 0 0;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .boids-hint {
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    margin: 6px 0 0;
+  }
+
+  .boids-state {
+    font-size: 15px !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 700 !important;
+  }
+
+  #boids-canvas {
+    height: 480px;
+    cursor: crosshair;
+  }
+  @media (max-width: 640px) { #boids-canvas { height: 380px; } }
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <nav class="top-nav">
+    <a href="../">← All playable models</a>
+    <span class="spacer"></span>
+    <a href="zh.html" class="lang-switch">中文</a>
+    <span class="crumb">ModelThinker · web</span>
+  </nav>
+
+  <p class="byline">Local interactions</p>
+  <h1>Three rules. One flock.</h1>
+  <p class="subtitle">
+    You don't animate the flock. You write the rules for a <em>single</em> bird — then run
+    many copies.
+    <br>The flock is a side effect.
+  </p>
+
+  <p>
+    Craig Reynolds published this trick at SIGGRAPH in 1987. Before boids, animating a flock
+    meant scripting every bird's path by hand. Reynolds' insight was <em>don't</em> — write
+    the rules for one bird and run many copies. The method went straight into production:
+    the swarming bats in <em>Batman Returns</em> (1992), the wildebeest stampede in
+    <em>The Lion King</em> (1994), a Scientific and Engineering Academy Award in 1998. It's
+    probably the most-reimplemented agent-based model in existence. And the whole thing is
+    <strong>three rules</strong>, each one about what a bird does with the birds it can see.
+  </p>
+
+  <!-- =================================================================
+       SIM · The lab
+       ================================================================= -->
+  <div class="sim">
+    <p class="sim-title">The lab · pick a regime, then try turning a rule off</p>
+    <canvas id="boids-canvas" class="sim-canvas"></canvas>
+    <p class="boids-hint">drag inside the field to play predator · press space to pause</p>
+
+    <p class="section-label">Regimes</p>
+    <div class="chip-row" id="boids-presets"></div>
+    <p id="boids-why" style="font-size:13px;color:var(--muted);line-height:1.5;min-height:3em;margin:0 0 14px;"></p>
+
+    <p class="section-label">The three rules</p>
+    <div class="rule-row">
+      <div class="rule-item">
+        <div class="rule-head">
+          <input type="checkbox" id="on-sep" checked aria-label="separation on">
+          <span class="rule-name">Separation
+            <small>steer away from close neighbours</small>
+          </span>
+          <span class="rule-val" id="v-sep">1.00</span>
+        </div>
+        <input type="range" id="w-sep" min="0" max="3" step="0.05" value="1">
+      </div>
+      <div class="rule-item">
+        <div class="rule-head">
+          <input type="checkbox" id="on-ali" checked aria-label="alignment on">
+          <span class="rule-name">Alignment
+            <small>match the heading of neighbours</small>
+          </span>
+          <span class="rule-val" id="v-ali">0.25</span>
+        </div>
+        <input type="range" id="w-ali" min="0" max="1" step="0.01" value="0.25">
+      </div>
+      <div class="rule-item">
+        <div class="rule-head">
+          <input type="checkbox" id="on-coh" checked aria-label="cohesion on">
+          <span class="rule-name">Cohesion
+            <small>steer toward the centre of neighbours</small>
+          </span>
+          <span class="rule-val" id="v-coh">0.030</span>
+        </div>
+        <input type="range" id="w-coh" min="0" max="0.2" step="0.002" value="0.03">
+      </div>
+    </div>
+
+    <details class="advanced">
+      <summary>Finer controls — perception, flight, view</summary>
+
+      <div class="adv-group">
+        <h4>Space &amp; creature</h4>
+        <div class="chip-row" id="dims" style="margin:0 0 10px"></div>
+        <div class="chip-row" id="shapes" style="margin:0"></div>
+      </div>
+
+      <div class="adv-group">
+        <h4>Perception</h4>
+        <div class="ctl"><label>Vision radius</label><span class="val" id="v-vis">50</span>
+          <input type="range" id="r-vis" min="12" max="160" step="1" value="50"></div>
+        <div class="ctl"><label>Separation radius</label><span class="val" id="v-rsep">10</span>
+          <input type="range" id="r-sep" min="3" max="40" step="1" value="10"></div>
+        <div class="ctl"><label>Field of view</label><span class="val" id="v-view">300°</span>
+          <input type="range" id="r-view" min="90" max="360" step="5" value="300"></div>
+        <div class="toggles">
+          <label><input type="checkbox" id="topo"> Count neighbours, not distance (starlings use ≈ 7)</label>
+        </div>
+        <div class="ctl" id="kwrap" hidden><label>Neighbours tracked (k)</label><span class="val" id="v-k">7</span>
+          <input type="range" id="r-k" min="2" max="16" step="1" value="7"></div>
+      </div>
+
+      <div class="adv-group">
+        <h4>Flight</h4>
+        <div class="ctl"><label>Boids</label><span class="val" id="v-n">260</span>
+          <input type="range" id="r-n" min="20" max="1600" step="10" value="260"></div>
+        <div class="ctl"><label>Cruise speed</label><span class="val" id="v-spd">3.0</span>
+          <input type="range" id="r-spd" min="0.8" max="7" step="0.1" value="3"></div>
+        <div class="ctl"><label>Turn force</label><span class="val" id="v-force">0.60</span>
+          <input type="range" id="r-force" min="0.05" max="2" step="0.05" value="0.6"></div>
+        <div class="ctl" id="depthwrap" hidden><label>Box depth</label><span class="val" id="v-depth">1.0</span>
+          <input type="range" id="r-depth" min="0.2" max="2" step="0.05" value="1"></div>
+      </div>
+
+      <div class="adv-group">
+        <h4>View</h4>
+        <div class="toggles">
+          <label><input type="checkbox" id="trails" checked> Motion trails</label>
+          <label><input type="checkbox" id="showvis"> Show one boid's vision cone and links</label>
+          <label><input type="checkbox" id="speedtint" checked> Tint by speed and depth</label>
+        </div>
+        <div class="sim-controls" style="margin-top:14px">
+          <button class="btn" id="pause">⏸ Pause</button>
+          <button class="btn" id="reset">↺ Reset flock</button>
+          <button class="btn btn-ghost" id="scatter">💥 Scatter</button>
+        </div>
+      </div>
+    </details>
+
+    <div class="sim-metrics">
+      <div class="metric">
+        <div class="label">Polarization</div>
+        <div class="value" id="m-pol">0.00</div>
+        <div class="delta">0 chaos · 1 perfectly aligned</div>
+      </div>
+      <div class="metric">
+        <div class="label">Rotation</div>
+        <div class="value" id="m-rot">0.00</div>
+        <div class="delta">how strongly it's milling</div>
+      </div>
+      <div class="metric">
+        <div class="label">Nearest neighbour</div>
+        <div class="value" id="m-nnd">0.0</div>
+        <div class="delta">average spacing in body lengths</div>
+      </div>
+      <div class="metric">
+        <div class="label">Current state</div>
+        <div class="value boids-state" id="m-state">settling</div>
+        <div class="delta" id="m-fps">0 boids · 0 fps</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout aha">
+    <strong>Try turning off separation.</strong> Click the "No separation" chip, or uncheck
+    the Separation box above. Within a second or two the whole flock collapses into a single
+    point — perfectly aligned, zero spacing, utterly unphysical. That's what alignment and
+    cohesion do on their own. Now turn separation back on and watch each bird reclaim its
+    personal space. One rule holding up the whole illusion.
+  </div>
+
+  <h2>What the three rules actually say</h2>
+  <p>
+    Each boid sees only its neighbours — birds inside a vision radius, within a field of view
+    (its own eyes don't look straight behind). From that handful of visible neighbours, three
+    rules each propose a direction to steer:
+  </p>
+  <ul>
+    <li><strong>Separation.</strong> Push away from any neighbour that's too close. The force
+      grows sharply as the distance shrinks — Reynolds originally used 1/d². Range: small,
+      maybe a fifth of the vision radius.</li>
+    <li><strong>Alignment.</strong> Steer toward the <em>average heading</em> of neighbours.
+      Range: medium.</li>
+    <li><strong>Cohesion.</strong> Steer toward the <em>average position</em> of neighbours
+      — the local centre of the flock. Range: long.</li>
+  </ul>
+  <p>
+    Short-range repulsion, mid-range heading match, long-range attraction. Weighted sum. The
+    acceleration is clipped to a maximum force; speed is clipped to a range; and
+    <strong>that's it</strong>. There is no rule in there that says "stay 2 body lengths from
+    your neighbour" — yet watch the <em>nearest neighbour</em> readout. It settles at a
+    stable spacing you never told the model to produce. That's emergence.
+  </p>
+
+  <div class="callout warn">
+    <strong>Why the clipping matters.</strong> Remove the force clip and birds snap instantly
+    to the ideal velocity — the motion looks like particles bouncing. Remove the speed clip
+    and the fastest ones outrun the flock. Those clips are what tip the simulation from
+    "physics toy" to "looks like a flying animal."
+  </div>
+
+  <h2>Four regimes, one set of rules</h2>
+  <p>
+    The same three rules, with different weights and ranges, produce visibly different
+    collective behaviours. Each preset above is a measured parameter set:
+  </p>
+  <ul>
+    <li><strong>Flock.</strong> The canonical setting. Polarization near 1.0, spacing stable
+      at a few body lengths. The thing you expect birds to do.</li>
+    <li><strong>Swarm.</strong> Strong cohesion, weak alignment. A dense cloud that mills
+      about without going anywhere — polarization drops to around 0.15, but the group stays
+      tight. Mosquitoes and gnats look like this.</li>
+    <li><strong>Mill.</strong> Wide turning circle (low turn force) plus firm cohesion. The
+      group closes into a rotating torus around an empty centre — watch the <em>rotation</em>
+      metric, not polarization. Real fish and army ants do this.</li>
+    <li><strong>Tunnel vision.</strong> A narrow field of view. Birds can't see what's beside
+      or behind them, so the flock stretches into restless lines instead of coherent
+      clumps.</li>
+  </ul>
+
+  <h2>The 2008 Rome starling result</h2>
+  <p>
+    Everything above assumes a <em>metric</em> rule: "I pay attention to anyone within
+    distance R." But that creates a problem — if the flock thins out, each bird sees fewer
+    neighbours, so cohesion weakens, and the flock thins further. It should fall apart.
+    Starling murmurations don't fall apart. Why?
+  </p>
+  <p>
+    An Italian team led by Andrea Cavagna and Irene Giardina took stereo photos of real
+    starling flocks over Rome's Termini station between 2005 and 2008, reconstructed each
+    bird's 3-D position, and asked: how many neighbours does each bird actually track? The
+    answer was <strong>about seven</strong> — a fixed <em>count</em>, not a fixed
+    <em>distance</em>. That's "topological" interaction. Switch it on in the Finer controls
+    (the "Count neighbours, not distance" box) or load the <strong>Starling</strong> preset,
+    and the flock holds together regardless of how spread out it is.
+  </p>
+
+  <div class="callout aha">
+    <strong>Try the Starling preset, then crank Boids down to 60.</strong> With a metric rule
+    a thinning flock would fall apart; with the topological rule it stays coherent. One tiny
+    change in the perception rule — a biological fact — rescues the model from an unphysical
+    behaviour that nobody designed in.
+  </div>
+
+  <h2>Where boids actually went</h2>
+  <p>
+    The direct uses are the famous ones — the bats in <em>Batman Returns</em> (1992), the
+    wildebeest stampede in <em>The Lion King</em> (1994), countless games and movies since.
+    But the <em>idea</em> travelled further:
+  </p>
+  <ul>
+    <li><strong>Agent-based modelling in general.</strong> Boids is the opening move. The
+      proof-of-concept that collective behaviour emerges from local rules — the move that
+      Schelling, Life, voter models, and everything downstream build on.</li>
+    <li><strong>Swarm robotics.</strong> Drone swarms and warehouse robots use variants of
+      these rules so the whole fleet behaves without a central planner.</li>
+    <li><strong>Crowd simulation.</strong> Pedestrian flows, panic evacuations, concert
+      crowds — different weights, same skeleton.</li>
+    <li><strong>Autonomous driving.</strong> Each car as a boid with the three rules plus a
+      lane-keeping force gives you traffic flow for free.</li>
+  </ul>
+
+  <h2>Related models</h2>
+  <ul>
+    <li><a href="../life-and-majority/">🎮 Life &amp; Local Majority</a> — the other canonical
+      "simple local rules → surprising global behaviour" demonstration, but on a grid instead
+      of in continuous space.</li>
+    <li><a href="../schelling/">🟦🟧 Schelling segregation</a> — same family (agents following
+      local rules on a shared space), different outcome: mild individual preferences producing
+      strong global patterns.</li>
+    <li><a href="../nk/">🏔 NK rugged landscape</a> — once you have a flock of searchers, the
+      question becomes which landscape they're climbing. Boids on an NK surface is the
+      "search as flocking" story.</li>
+  </ul>
+
+  <div class="next-nav">
+    <a href="../life-and-majority/">← Life &amp; Local Majority</a>
+    <a href="../">All models →</a>
+  </div>
+</main>
+
+  <!-- visit-counter · open this URL to see the hit count rendered as a badge:
+       https://hits.sh/openstockalert.github.io/ModelThinker/boids-en.svg -->
+  <img src="https://hits.sh/openstockalert.github.io/ModelThinker/boids-en.svg" alt="" width="1" height="1"
+       style="position:absolute;left:-9999px;top:-9999px;opacity:0;pointer-events:none;" decoding="async" aria-hidden="true" referrerpolicy="no-referrer">
+<script type="module" src="boids.js?v=1"></script>
+</body>
+</html>
